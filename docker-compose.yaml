@@ -1,0 +1,36 @@
+services:
+  # Database for .NET Order Service (Relational)
+  order-db:
+    image: postgres:16-alpine
+    container_name: order-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: orders_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - order_data:/var/lib/postgresql/data
+
+  # Database for Node.js Payment Service (Document-based)
+  payment-db:
+    image: mongo:7.0
+    container_name: payment-db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    ports:
+      - "27017:27017"
+    volumes:
+      - payment_data:/data/db
+
+  # Distributed Cache & Saga State Storage
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+
+volumes:
+  order_data:
+  payment_data:
