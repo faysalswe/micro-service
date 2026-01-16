@@ -1,0 +1,13 @@
+node_modules/
+bin/
+obj/
+.env
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+out/
+dist/
+
