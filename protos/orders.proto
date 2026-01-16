@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package orders;
+
+// The csharp_namespace option is important for .NET code generation.
+// It ensures the generated classes are placed in the correct namespace.
+option csharp_namespace = "Microservice.Orders.Grpc";
+
+// The OrderService defines the entry point for creating orders.
+// In our Synchronous Saga, this will be called by the API Gateway or 
+// initiated via a REST call that the Order service transcodes to gRPC.
+service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (OrderResponse);
+}
+
+message CreateOrderRequest {
+  string user_id = 1;
+  string product_id = 2;
+  double amount = 3;
+}
+
+message OrderResponse {
+  string order_id = 1;
+  string status = 2; // e.g., "PENDING", "SUCCESS", "FAILED"
+  string message = 3;
+}

@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package payments;
+
+option csharp_namespace = "Microservice.Payments.Grpc";
+
+// The PaymentService handles transaction processing.
+// In the Saga flow, the Order Service (Orchestrator) will call this
+// service to process payments for a newly created order.
+service PaymentService {
+  rpc ProcessPayment (PaymentRequest) returns (PaymentResponse);
+  
+  // Compensating Transaction (The "Undo" logic)
+  // If the Saga fails later, the Orchestrator calls this to refund.
+  rpc RefundPayment (RefundRequest) returns (PaymentResponse);
+}
+
+message PaymentRequest {
+  string order_id = 1;
+  double amount = 2;
+  string user_id = 3;
+}
+
+message RefundRequest {
+  string payment_id = 1;
+  string reason = 2;
+}
+
+message PaymentResponse {
+  string payment_id = 1;
+  bool success = 2;
+  string status_message = 3;
+}
