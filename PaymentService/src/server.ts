@@ -4,8 +4,15 @@ import * as path from 'path';
 import { MongoClient } from 'mongodb';
 import * as dotenv from 'dotenv';
 import CircuitBreaker from 'opossum';
+import { initializeTracing } from './tracing';
+import { logger, logWithContext } from './logger';
 
 dotenv.config();
+
+// Initialize OpenTelemetry tracing FIRST
+initializeTracing();
+
+logger.info('Starting PaymentService');
 
 // Load the protobuf file
 const PROTO_PATH = path.resolve(__dirname, '../../protos/payments.proto');
@@ -65,7 +72,13 @@ const processPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: gr
   const correlationId = metadata['x-correlation-id'] || 'no-correlation-id';
   
   const { order_id, amount, user_id } = call.request;
-  console.log(`[${correlationId}] [PaymentService] Processing payment for Order: ${order_id}, Amount: ${amount}`);
+  
+  logger.info('Processing payment', {
+    order_id,
+    amount,
+    user_id,
+    correlation_id: correlationId
+  });
 
   try {
     const success = amount < 1000;
@@ -81,13 +94,24 @@ const processPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: gr
     // Use Circuit Breaker to perform the DB insertion
     const result = await dbBreaker.fire(paymentRecord);
     
+    logger.info('Payment processed successfully', {
+      payment_id: result.insertedId.toString(),
+      order_id,
+      status: success ? 'COMPLETED' : 'DECLINED'
+    });
+    
     callback(null, {
       payment_id: result.insertedId.toString(),
       success: success,
       status_message: success ? 'Payment authorized successfully.' : 'Payment declined: Amount too high.',
     });
   } catch (err: any) {
-    console.error(`[${correlationId}] Error in PaymentService: ${err.message}`);
+    logger.error('Error processing payment', {
+      error: err.message,
+      stack: err.stack,
+      order_id,
+      correlation_id: correlationId
+    });
     
     // Check if error is from the Circuit Breaker
     const isCircuitOpen = err.message.includes('Circuit is OPEN');
@@ -104,7 +128,8 @@ const processPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: gr
  */
 const refundPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: grpc.sendUnaryData<any>) => {
   const { payment_id, reason } = call.request;
-  console.log(`[PaymentService] Refunding payment: ${payment_id}, Reason: ${reason}`);
+  
+  logger.info('Processing refund', { payment_id, reason });
 
   try {
     await updateBreaker.fire({
@@ -112,13 +137,19 @@ const refundPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: grp
       update: { status: 'REFUNDED', refund_reason: reason, refunded_at: new Date() }
     });
 
+    logger.info('Refund processed successfully', { payment_id });
+
     callback(null, {
       payment_id: payment_id,
       success: true,
       status_message: 'Refund processed successfully.',
     });
   } catch (err: any) {
-    console.error(`[PaymentService] Refund Error: ${err.message}`);
+    logger.error('Refund processing failed', {
+      error: err.message,
+      stack: err.stack,
+      payment_id
+    });
     callback({
       code: grpc.status.INTERNAL,
       message: `Refund error: ${err.message}`,
@@ -134,9 +165,9 @@ async function main() {
   try {
     const client = await MongoClient.connect(mongoUri);
     db = client.db(dbName);
-    console.log('[PaymentService] Connected to MongoDB');
-  } catch (err) {
-    console.error(`[PaymentService] Failed to connect to MongoDB: ${err}`);
+    logger.info('Connected to MongoDB', { database: dbName });
+  } catch (err: any) {
+    logger.error('Failed to connect to MongoDB', { error: err.message, stack: err.stack });
     process.exit(1);
   }
 
@@ -146,13 +177,13 @@ async function main() {
     refundPayment: refundPayment,
   });
 
-  const port = '0.0.0.0:50051';
+  const port = `0.0.0.0:${process.env.PORT || '50051'}`;
   server.bindAsync(port, grpc.ServerCredentials.createInsecure(), (err, actualPort) => {
     if (err) {
-      console.error(`Failed to bind server: ${err.message}`);
+      logger.error('Failed to bind gRPC server', { error: err.message });
       return;
     }
-    console.log(`[PaymentService] gRPC Server running at ${port}`);
+    logger.info('gRPC server started', { address: port, actualPort });
   });
 }
 
