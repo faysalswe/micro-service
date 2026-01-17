@@ -1,0 +1,66 @@
+global:
+  scrape_interval: 15s       # How often to scrape targets
+  evaluation_interval: 15s    # How often to evaluate rules
+  external_labels:
+    monitor: 'microservice-monitor'
+    environment: 'development'
+
+# Prometheus scrapes itself for self-monitoring
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # OpenTelemetry Collector metrics (gathers service metrics)
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8888']
+    metrics_path: '/metrics'
+
+  # Order Service metrics (via Prometheus exporter)
+  - job_name: 'order-service'
+    static_configs:
+      - targets: ['localhost:9091']  # OrderService Prometheus exporter port
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    labels:
+      service: 'OrderService'
+      team: 'platform'
+
+  # Payment Service metrics (via Prometheus exporter)
+  - job_name: 'payment-service'
+    static_configs:
+      - targets: ['localhost:9092']  # PaymentService Prometheus exporter port
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    labels:
+      service: 'PaymentService'
+      team: 'platform'
+
+  # PostgreSQL metrics (via postgres_exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['localhost:9187']
+    labels:
+      database: 'order_db'
+
+  # MongoDB metrics (via mongodb_exporter)
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['localhost:9216']
+    labels:
+      database: 'payment_db'
+
+# Alerting rules for detecting issues
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
+
+# Recording rules for common queries (pre-compute expensive queries)
+# These rules are evaluated regularly and stored in TSDB for fast access
