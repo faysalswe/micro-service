@@ -24,7 +24,10 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
     public override async Task<OrderResponse> CreateOrder(CreateOrderRequest request, ServerCallContext context)
     {
         var correlationId = context.RequestHeaders.GetValue("x-correlation-id") ?? Guid.NewGuid().ToString();
-        _logger.LogInformation("[{CorrelationId}] Creating order for user {UserId}", correlationId, request.UserId);
+        
+        _logger.LogInformation(
+            "Creating order for user {UserId}, Product: {ProductId}, Amount: {Amount}",
+            request.UserId, request.ProductId, request.Amount);
 
         // 1. Persist Order to Database (Step 6)
         var order = new Order
@@ -39,8 +42,10 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
         _dbContext.Orders.Add(order);
         await _dbContext.SaveChangesAsync();
 
+        _logger.LogInformation("Order persisted to database with ID: {OrderId}", order.Id);
+
         // 2. Call Payment Service (Step 9 - gRPC Communication)
-        _logger.LogInformation("[{CorrelationId}] Calling PaymentService for Order {OrderId}", correlationId, order.Id);
+        _logger.LogInformation("Calling PaymentService for Order {OrderId}", order.Id);
         
         var metadata = new Metadata { { "x-correlation-id", correlationId } };
         
@@ -55,13 +60,15 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
 
             if (paymentResponse.Success)
             {
-                _logger.LogInformation("[{CorrelationId}] Payment successful. Proceeding to final step...", correlationId);
+                _logger.LogInformation("Payment successful for Order {OrderId}", order.Id);
 
                 // 3. Mock the "Final Step" (e.g., Inventory Reservation)
                 // We will force a failure if the product ID is "fail-me" to test compensation
                 if (request.ProductId == "fail-me")
                 {
-                    _logger.LogWarning("[{CorrelationId}] Final step failed! Triggering COMPENSATING TRANSACTION (Refund)...", correlationId);
+                    _logger.LogWarning(
+                        "Final step failed for Order {OrderId}! Triggering compensation (Refund)",
+                        order.Id);
                     
                     try 
                     {
@@ -71,11 +78,16 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
                             Reason = "Final order processing step failed."
                         }, metadata);
                         
-                        _logger.LogInformation("[{CorrelationId}] Compensation: Refund processed successfully.", correlationId);
+                        _logger.LogInformation(
+                            "Compensation successful: Refunded payment {PaymentId}",
+                            paymentResponse.PaymentId);
                     }
                     catch (Exception refundEx)
                     {
-                        _logger.LogCritical(refundEx, "[{CorrelationId}] FATAL: Compensation (Refund) failed! Manual intervention required.", correlationId);
+                        _logger.LogCritical(
+                            refundEx,
+                            "FATAL: Compensation failed for payment {PaymentId}! Manual intervention required",
+                            paymentResponse.PaymentId);
                     }
 
                     order.Status = "CANCELLED_AFTER_FAILURE";
@@ -114,7 +126,11 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
         }
         catch (Polly.CircuitBreaker.BrokenCircuitException ex)
         {
-            _logger.LogWarning(ex, "[{CorrelationId}] Circuit represents as OPEN. Failing fast.", correlationId);
+            _logger.LogWarning(
+                ex,
+                "Circuit breaker OPEN for Order {OrderId}. Failing fast",
+                order.Id);
+            
             order.Status = "SYSTEM_OVERLOADED_RETRY_LATER";
             await _dbContext.SaveChangesAsync();
 
@@ -127,7 +143,11 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
         }
         catch (RpcException ex)
         {
-            _logger.LogError(ex, "[{CorrelationId}] gRPC call to PaymentService failed", correlationId);
+            _logger.LogError(
+                ex,
+                "gRPC call failed for Order {OrderId}: {StatusCode} - {Detail}",
+                order.Id, ex.StatusCode, ex.Status.Detail);
+            
             return new OrderResponse
             {
                 OrderId = order.Id.ToString(),
@@ -137,7 +157,11 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{CorrelationId}] Unexpected error during gRPC call", correlationId);
+            _logger.LogError(
+                ex,
+                "Unexpected error during order processing for Order {OrderId}",
+                order.Id);
+            
             return new OrderResponse
             {
                 OrderId = order.Id.ToString(),

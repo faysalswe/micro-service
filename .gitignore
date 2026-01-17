@@ -11,3 +11,7 @@ obj/
 out/
 dist/
 
+test_output.txt
+build_output.txt
+**/test_output.txt
+**/build_output.txt
