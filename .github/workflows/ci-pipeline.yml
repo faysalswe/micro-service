@@ -1,0 +1,154 @@
+name: Microservices CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '20.x'
+
+jobs:
+  # Job 1: Build and Test .NET OrderService
+  orderservice-build-test:
+    name: OrderService (.NET) - Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore Dependencies
+      run: dotnet restore OrderService/OrderService.csproj
+      
+    - name: Build OrderService
+      run: dotnet build OrderService/OrderService.csproj --configuration Release --no-restore
+      
+    - name: Run Unit Tests
+      run: dotnet test OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
+      
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: orderservice-build
+        path: OrderService/bin/Release/
+        retention-days: 1
+
+  # Job 2: Build and Test Node.js PaymentService
+  paymentservice-build-test:
+    name: PaymentService (Node.js) - Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: PaymentService/package-lock.json
+        
+    - name: Install Dependencies
+      working-directory: PaymentService
+      run: npm ci
+      
+    - name: Run Tests
+      working-directory: PaymentService
+      run: npm test
+      
+    - name: Upload Test Coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: paymentservice-coverage
+        path: PaymentService/coverage/
+        retention-days: 1
+
+  # Job 3: Build and Test IdentityService
+  identityservice-build-test:
+    name: IdentityService (.NET) - Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore Dependencies
+      run: dotnet restore IdentityService/IdentityService.csproj
+      
+    - name: Build IdentityService
+      run: dotnet build IdentityService/IdentityService.csproj --configuration Release --no-restore
+
+  # Job 4: Contract Testing with Pact
+  contract-tests:
+    name: Contract Tests (Pact)
+    runs-on: ubuntu-latest
+    needs: [orderservice-build-test, paymentservice-build-test, identityservice-build-test]
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore Test Dependencies
+      run: dotnet restore OrderService.Tests/OrderService.Tests.csproj
+      
+    - name: Run Contract Tests (Consumer)
+      run: dotnet test OrderService.Tests/OrderService.Tests.csproj --filter "FullyQualifiedName~ContractTests" --verbosity normal
+      
+    - name: Upload Pact Files
+      uses: actions/upload-artifact@v4
+      with:
+        name: pact-contracts
+        path: pacts/
+        retention-days: 30
+        
+    - name: Publish Pact Contracts (Optional)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "🔍 Pact files generated:"
+        ls -la pacts/
+        echo "ℹ️  In production, these would be published to a Pact Broker"
+        echo "ℹ️  Example: pact-broker publish pacts/ --consumer-app-version=${{ github.sha }}"
+
+  # Job 5: Integration Check
+  integration-check:
+    name: Integration Status Check
+    runs-on: ubuntu-latest
+    needs: [orderservice-build-test, paymentservice-build-test, identityservice-build-test, contract-tests]
+    if: always()
+    
+    steps:
+    - name: Check All Jobs Status
+      run: |
+        if [[ "${{ needs.orderservice-build-test.result }}" == "success" && \
+              "${{ needs.paymentservice-build-test.result }}" == "success" && \
+              "${{ needs.identityservice-build-test.result }}" == "success" && \
+              "${{ needs.contract-tests.result }}" == "success" ]]; then
+          echo "✅ All services passed CI checks"
+          exit 0
+        else
+          echo "❌ One or more services failed CI checks"
+          echo "OrderService: ${{ needs.orderservice-build-test.result }}"
+          echo "PaymentService: ${{ needs.paymentservice-build-test.result }}"
+          echo "IdentityService: ${{ needs.identityservice-build-test.result }}"
+          echo "Contract Tests: ${{ needs.contract-tests.result }}"
+          exit 1
+        fi
