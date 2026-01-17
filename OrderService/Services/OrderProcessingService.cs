@@ -55,14 +55,48 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
 
             if (paymentResponse.Success)
             {
-                order.Status = "PAID";
+                _logger.LogInformation("[{CorrelationId}] Payment successful. Proceeding to final step...", correlationId);
+
+                // 3. Mock the "Final Step" (e.g., Inventory Reservation)
+                // We will force a failure if the product ID is "fail-me" to test compensation
+                if (request.ProductId == "fail-me")
+                {
+                    _logger.LogWarning("[{CorrelationId}] Final step failed! Triggering COMPENSATING TRANSACTION (Refund)...", correlationId);
+                    
+                    try 
+                    {
+                        await _paymentClient.RefundPaymentAsync(new RefundRequest
+                        {
+                            PaymentId = paymentResponse.PaymentId,
+                            Reason = "Final order processing step failed."
+                        }, metadata);
+                        
+                        _logger.LogInformation("[{CorrelationId}] Compensation: Refund processed successfully.", correlationId);
+                    }
+                    catch (Exception refundEx)
+                    {
+                        _logger.LogCritical(refundEx, "[{CorrelationId}] FATAL: Compensation (Refund) failed! Manual intervention required.", correlationId);
+                    }
+
+                    order.Status = "CANCELLED_AFTER_FAILURE";
+                    await _dbContext.SaveChangesAsync();
+
+                    return new OrderResponse
+                    {
+                        OrderId = order.Id.ToString(),
+                        Status = "FAILED",
+                        Message = "Order failed during final processing. Payment has been refunded."
+                    };
+                }
+
+                order.Status = "COMPLETED";
                 await _dbContext.SaveChangesAsync();
 
                 return new OrderResponse
                 {
                     OrderId = order.Id.ToString(),
                     Status = "SUCCESS",
-                    Message = "Order created and paid successfully."
+                    Message = "Order completed successfully."
                 };
             }
             else

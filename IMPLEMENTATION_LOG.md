@@ -24,8 +24,8 @@ This document is the **Master Directive** for both Human developers and AI assis
 
 ## 📈 Current Status
 - **Selected Path**: Plan 1 (Synchronous gRPC)
-- **Overall Progress**: 70% Completed
-- **Next Step**: Step 12: Compensating Transactions (The "Undo" logic)
+- **Overall Progress**: 75% Completed
+- **Next Step**: Phase 4: Quality & Verification (Testing)
 
 ---
 
@@ -47,7 +47,7 @@ This document is the **Master Directive** for both Human developers and AI assis
 - **Step 9: gRPC Communication & Metadata** - [x] Completed
 - **Step 10: Synchronous Orchestration Saga Implementation** - [x] Completed
 - **Step 11: Resilience Integration (Polly & Opossum)** - [x] Completed
-- **Step 12: Compensating Transactions (Undo logic)** - [ ] Not Started
+- **Step 12: Compensating Transactions (Undo logic)** - [x] Completed
 
 ### Phase 4: Quality, Verification & CI/CD
 - **Step 13: Unit & Integration Testing Strategy** - [ ] Not Started
@@ -135,3 +135,12 @@ This document is the **Master Directive** for both Human developers and AI assis
 **Config Details**:
 - `kong.yml`: Defines the services and routes.
 - `docker-compose.yaml`: Configures Kong to run without a separate database for maximum simplicity.
+
+### Step 12: Compensating Transactions (The "Undo" logic)
+**Status**: [x] Completed
+**Decision**: Orchestrator-led Compensation.
+**Why**: In a synchronous saga, the Orchestrator (Order Service) is responsible for detecting failures in the chain and explicitly calling the "Undo" methods of previous services.
+**Implementation**:
+- **Order Service**: Added logic to detect a failure in the "Final Step." If it fails, it calls the `RefundPayment` gRPC method.
+- **Payment Service**: Implemented `RefundPayment` which updates the MongoDB record status to `REFUNDED`.
+**Key Educational Concept**: "Eventually Consistent." Distributed transactions don't use locks (ACID). Instead, they use a sequence of actions and their corresponding "undos" to ensure the system eventually reaches a valid state.

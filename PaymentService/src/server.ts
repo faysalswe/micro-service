@@ -39,8 +39,21 @@ const insertPayment = async (paymentRecord: any) => {
 
 const dbBreaker = new CircuitBreaker(insertPayment, breakerOptions);
 
+// Define a separate breaker or use the same for updates
+const updatePayment = async ({ id, update }: { id: string, update: any }) => {
+  const { ObjectId } = require('mongodb');
+  return await db.collection('payments').updateOne(
+    { _id: new ObjectId(id) },
+    { $set: update }
+  );
+};
+const updateBreaker = new CircuitBreaker(updatePayment, breakerOptions);
+
 // Fallback logic if the circuit is open
 dbBreaker.fallback(() => {
+  throw new Error('Database is currently unavailable. Circuit is OPEN.');
+});
+updateBreaker.fallback(() => {
   throw new Error('Database is currently unavailable. Circuit is OPEN.');
 });
 
@@ -94,10 +107,10 @@ const refundPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: grp
   console.log(`[PaymentService] Refunding payment: ${payment_id}, Reason: ${reason}`);
 
   try {
-    await db.collection('payments').updateOne(
-      { _id: payment_id },
-      { $set: { status: 'REFUNDED', refund_reason: reason, refunded_at: new Date() } }
-    );
+    await updateBreaker.fire({
+      id: payment_id,
+      update: { status: 'REFUNDED', refund_reason: reason, refunded_at: new Date() }
+    });
 
     callback(null, {
       payment_id: payment_id,
@@ -105,9 +118,10 @@ const refundPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: grp
       status_message: 'Refund processed successfully.',
     });
   } catch (err: any) {
+    console.error(`[PaymentService] Refund Error: ${err.message}`);
     callback({
       code: grpc.status.INTERNAL,
-      message: 'Refund error',
+      message: `Refund error: ${err.message}`,
     });
   }
 };
