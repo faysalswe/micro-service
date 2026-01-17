@@ -5,7 +5,7 @@ A robust microservices architecture using synchronous gRPC communication and an 
 
 - **Service A (.NET 8)**: Orchestrator + PostgreSQL.
 - **Service B (Node.js)**: Participant + MongoDB.
-- **Shared Infrastructure**: Redis (Caching/Saga State), Keycloak (IAM).
+- **Shared Infrastructure**: Redis (Caching/Saga State), Custom Identity Service (STS).
 
 ## 2. Core Architecture & Patterns
 

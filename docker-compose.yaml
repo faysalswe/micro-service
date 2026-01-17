@@ -31,6 +31,37 @@ services:
     ports:
       - "6379:6379"
 
+  # Custom Identity Service (STS)
+  identity-service:
+    build:
+      context: .
+      dockerfile: IdentityService/Dockerfile
+    container_name: identity-service
+    ports:
+      - "5050:8080" # Changed from 5000 to 5050 to avoid Kong conflict
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Jwt__Key=ThisIsAVerySecretKeyForDevelopmentOnly123!
+      - Jwt__Issuer=IdentityService
+      - Jwt__Audience=MicroserviceApp
+
+  # API Gateway (Kong)
+  kong:
+    image: kong:3.4
+    container_name: kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl, 0.0.0.0:9080 http2, 0.0.0.0:9091 ssl http2
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    ports:
+      - "8000:8000"     # HTTP Proxy
+      - "8443:8443"     # HTTPS Proxy
+      - "8001:8001"     # Admin API
+      - "9080:9080"     # gRPC Proxy
+    volumes:
+      - ./kong.yml:/usr/local/kong/declarative/kong.yml
+
 volumes:
   order_data:
   payment_data:

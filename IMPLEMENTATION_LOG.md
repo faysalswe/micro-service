@@ -24,29 +24,29 @@ This document is the **Master Directive** for both Human developers and AI assis
 
 ## 📈 Current Status
 - **Selected Path**: Plan 1 (Synchronous gRPC)
-- **Overall Progress**: 0% Completed
-- **Next Step**: Step 1: Define Protobuf Contracts
+- **Overall Progress**: 70% Completed
+- **Next Step**: Step 12: Compensating Transactions (The "Undo" logic)
 
 ---
 
 ## Roadmap Overview
 
 ### Phase 1: Foundation
-- **Step 1: Define Protobuf Contracts** - [ ] Not Started
-- **Step 2: Scaffold .NET Order Service (Orchestrator)** - [ ] Not Started
-- **Step 3: Scaffold Node.js Payment Service (Participant)** - [ ] Not Started
-- **Step 4: Repository Setup & Git Architecture** - [ ] Not Started
+- **Step 1: Define Protobuf Contracts** - [x] Completed
+- **Step 2: Scaffold .NET Order Service (Orchestrator)** - [x] Completed
+- **Step 3: Scaffold Node.js Payment Service (Participant)** - [x] Completed
+- **Step 4: Repository Setup & Git Architecture** - [x] Completed
 
 ### Phase 2: Local Environment & Infrastructure
-- **Step 5: Docker Compose Infrastructure** - [ ] Not Started
-- **Step 6: Database Persistence Layer (SQL vs NoSQL)** - [ ] Not Started
-- **Step 7: Keycloak Identity Management** - [ ] Not Started
+- **Step 5: Docker Compose Infrastructure** - [x] Completed
+- **Step 6: Database Persistence Layer (SQL vs NoSQL)** - [x] Completed
+- **Step 7: Custom Identity Service (STS)** - [x] Completed
 - **Step 8: API Gateway (Kong/NGINX)** - [ ] Not Started
 
 ### Phase 3: Business Logic & Saga Pattern
-- **Step 9: gRPC Communication & Metadata** - [ ] Not Started
-- **Step 10: Synchronous Orchestration Saga Implementation** - [ ] Not Started
-- **Step 11: Resilience Integration (Polly & Opossum)** - [ ] Not Started
+- **Step 9: gRPC Communication & Metadata** - [x] Completed
+- **Step 10: Synchronous Orchestration Saga Implementation** - [x] Completed
+- **Step 11: Resilience Integration (Polly & Opossum)** - [x] Completed
 - **Step 12: Compensating Transactions (Undo logic)** - [ ] Not Started
 
 ### Phase 4: Quality, Verification & CI/CD
@@ -106,6 +106,32 @@ This document is the **Master Directive** for both Human developers and AI assis
     - **Decision**: Docker Compose vs. Local Native Install.
     - **Reasoning**: Ensures environment parity and isolates dependencies like SQL, NoSQL, and Redis.
     - **Tools Added**: Postgres (Orders), MongoDB (Payments), Redis (Cache/State).
-- **Step 6: Database Persistence Layer (SQL vs NoSQL)** - [x] In Progress
+- **Step 6: Database Persistence Layer (SQL vs NoSQL)** - [x] Completed
+    - **Decision**: SQL for Orders (Relational integrity) and NoSQL for Payments (Flexible schema).
+    - **Implementation (.NET)**: Configured Entity Framework Core with Npgsql (PostgreSQL provider).
+    - **Trade-off**: "Database per Service" prevents tight coupling but requires distributed transaction handling (Saga).
+- **Step 8: API Gateway (Kong)** - [x] Completed
 
-... (Details for further steps will be added as we reach them) ...
+### Step 7: Custom Identity Service (STS)
+**Status**: [x] Completed
+**Decision**: Instead of using Keycloak, we built a lightweight .NET 9 "Custom STS" (Security Token Service).
+**Why**: 
+1. **Educational Depth**: We can see exactly how the `SigningCredentials` and `JwtSecurityToken` are created.
+2. **Speed**: Lightweight for local development compared to Keycloak.
+**Key Features**:
+- `/login` endpoint takes a username/password.
+- Signs tokens using `SymmetricSecurityKey` (HMAC SHA-256).
+- Includes custom claims like `role: Admin`.
+**Impact on Services**:
+- Verification will happen locally in `OrderService` and `PaymentService` using the shared secret key.
+
+### Step 8: API Gateway (Kong)
+**Status**: [x] Completed
+**Decision**: We used **Kong** in "DB-less" mode using a `kong.yml` declarative configuration.
+**Why**: 
+1. **Single Entry Point**: All external traffic now comes through Port `8000` (REST) or `9080` (gRPC).
+2. **Abstraction**: Clients don't need to know the internal IP addresses or ports of our services.
+3. **Internal Routing**: Identity Service is reached via `/auth`, and Order Service is reached via the gRPC package name `/OrderService`.
+**Config Details**:
+- `kong.yml`: Defines the services and routes.
+- `docker-compose.yaml`: Configures Kong to run without a separate database for maximum simplicity.
