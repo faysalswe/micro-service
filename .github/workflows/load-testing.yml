@@ -1,0 +1,157 @@
+name: Load Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of load test to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - load
+          - stress
+          - all
+      service:
+        description: 'Service to test'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - order-service
+          - payment-service
+          - all
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  load-test-setup:
+    name: Setup Load Test Environment
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Start Docker Compose Services
+      run: |
+        docker-compose up -d
+        echo "Waiting for services to be ready..."
+        sleep 30
+        
+    - name: Verify Services Health
+      run: |
+        curl -f http://localhost:8000/auth/login || exit 1
+        echo "✅ Services are ready"
+
+  orderservice-load-test:
+    name: OrderService Load Test
+    runs-on: ubuntu-latest
+    needs: load-test-setup
+    if: github.event.inputs.service == 'order-service' || github.event.inputs.service == 'all' || github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup k6
+      run: |
+        curl https://github.com/grafana/k6/releases/download/v0.48.0/k6-v0.48.0-linux-amd64.tar.gz -L | tar xvz --strip-components 1
+        sudo mv k6 /usr/local/bin/
+        k6 version
+        
+    - name: Start Services
+      run: docker-compose up -d
+      
+    - name: Wait for Services
+      run: sleep 30
+      
+    - name: Run Load Test
+      run: |
+        TEST_TYPE="${{ github.event.inputs.test_type || 'smoke' }}"
+        if [ "$TEST_TYPE" = "all" ]; then
+          k6 run --out json=orderservice-results.json load-tests/order-service.js
+        else
+          k6 run --env SCENARIO=$TEST_TYPE --out json=orderservice-results.json load-tests/order-service.js
+        fi
+        
+    - name: Upload Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: orderservice-load-test-results
+        path: orderservice-results.json
+        retention-days: 30
+
+  paymentservice-load-test:
+    name: PaymentService Load Test
+    runs-on: ubuntu-latest
+    needs: load-test-setup
+    if: github.event.inputs.service == 'payment-service' || github.event.inputs.service == 'all' || github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup k6
+      run: |
+        curl https://github.com/grafana/k6/releases/download/v0.48.0/k6-v0.48.0-linux-amd64.tar.gz -L | tar xvz --strip-components 1
+        sudo mv k6 /usr/local/bin/
+        
+    - name: Start Services
+      run: docker-compose up -d
+      
+    - name: Wait for Services
+      run: sleep 30
+      
+    - name: Run gRPC Load Test
+      run: k6 run --out json=paymentservice-results.json load-tests/payment-service.js
+        
+    - name: Upload Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: paymentservice-load-test-results
+        path: paymentservice-results.json
+        retention-days: 30
+
+  load-test-report:
+    name: Generate Load Test Report
+    runs-on: ubuntu-latest
+    needs: [orderservice-load-test, paymentservice-load-test]
+    if: always()
+    
+    steps:
+    - name: Download OrderService Results
+      uses: actions/download-artifact@v4
+      with:
+        name: orderservice-load-test-results
+        path: results/
+      continue-on-error: true
+        
+    - name: Download PaymentService Results
+      uses: actions/download-artifact@v4
+      with:
+        name: paymentservice-load-test-results
+        path: results/
+      continue-on-error: true
+        
+    - name: Generate Summary
+      run: |
+        echo "# Load Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Date**: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Type**: ${{ github.event.inputs.test_type || 'nightly' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f results/orderservice-results.json ]; then
+          echo "## OrderService Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Load test completed" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ -f results/paymentservice-results.json ]; then
+          echo "## PaymentService Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Load test completed" >> $GITHUB_STEP_SUMMARY
+        fi
