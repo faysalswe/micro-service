@@ -1,0 +1,98 @@
+{
+  "consumer": {
+    "name": "OrderService"
+  },
+  "interactions": [
+    {
+      "description": "a request to process a payment",
+      "pending": false,
+      "request": {
+        "body": {
+          "content": {
+            "amount": 99.99,
+            "order_id": "order-123",
+            "user_id": "user-456"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/payments.PaymentService/ProcessPayment"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "payment_id": "pay-789",
+            "status_message": "Payment accepted",
+            "success": true
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a request to refund a payment",
+      "pending": false,
+      "request": {
+        "body": {
+          "content": {
+            "payment_id": "pay-789",
+            "reason": "Customer cancelled"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/payments.PaymentService/RefundPayment"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "payment_id": "pay-789",
+            "status_message": "Refund processed",
+            "success": true
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactRust": {
+      "ffi": "0.4.27",
+      "models": "1.2.8"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "PaymentService"
+  }
+}
