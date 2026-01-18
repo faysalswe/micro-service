@@ -1,60 +1,9 @@
-// logger.ts - Winston Configuration for PaymentService
+// logger.ts - Winston Configuration for PaymentService with Loki
 import winston from 'winston';
-import * as net from 'net';
+import LokiTransport from 'winston-loki';
 import { api, context } from '@opentelemetry/api';
 
-// Custom transport to send logs to Logstash via TCP
-class LogstashTransport extends winston.transports.Stream {
-  private client: net.Socket | null = null;
-  private host: string;
-  private port: number;
-
-  constructor(options?: { host?: string; port?: number }) {
-    super({ stream: process.stdout });
-    this.host = options?.host || process.env.LOGSTASH_HOST || 'localhost';
-    this.port = options?.port || parseInt(process.env.LOGSTASH_PORT || '5000', 10);
-    this.connect();
-  }
-
-  connect() {
-    this.client = net.createConnection({ host: this.host, port: this.port }, () => {
-      console.log('Connected to Logstash');
-    });
-
-    this.client.on('error', (err) => {
-      console.error('Logstash connection error:', err.message);
-      // Retry connection after 5 seconds
-      setTimeout(() => this.connect(), 5000);
-    });
-
-    this.client.on('close', () => {
-      console.log('Logstash connection closed. Reconnecting...');
-      setTimeout(() => this.connect(), 5000);
-    });
-  }
-
-  log(info: any, callback: () => void) {
-    setImmediate(() => this.emit('logged', info));
-
-    // Add OpenTelemetry trace context
-    const span = api.trace.getSpan(context.active());
-    if (span) {
-      const spanContext = span.spanContext();
-      info.trace_id = spanContext.traceId;
-      info.span_id = spanContext.spanId;
-    }
-
-    const logEntry = JSON.stringify(info) + '\n';
-
-    if (this.client && this.client.writable) {
-      this.client.write(logEntry, (err) => {
-        if (err) console.error('Error sending log to Logstash:', err);
-      });
-    }
-
-    callback();
-  }
-}
+const lokiHost = process.env.LOKI_URL || 'http://localhost:3100';
 
 // Create logger instance
 export const logger = winston.createLogger({
@@ -71,7 +20,7 @@ export const logger = winston.createLogger({
     environment: process.env.NODE_ENV || 'development',
   },
   transports: [
-    // Console output (JSON format for Docker logs)
+    // Console output (colorized for local dev)
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
@@ -80,8 +29,18 @@ export const logger = winston.createLogger({
         })
       ),
     }),
-    // Logstash TCP transport
-    new LogstashTransport(),
+    // Loki transport
+    new LokiTransport({
+      host: lokiHost,
+      labels: {
+        service: 'PaymentService',
+        environment: process.env.NODE_ENV || 'development',
+      },
+      json: true,
+      format: winston.format.json(),
+      replaceTimestamp: true,
+      onConnectionError: (err) => console.error('Loki connection error:', err),
+    }),
   ],
 });
 

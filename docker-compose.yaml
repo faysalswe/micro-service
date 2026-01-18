@@ -24,13 +24,6 @@ services:
     volumes:
       - payment_data:/data/db
 
-  # Distributed Cache & Saga State Storage
-  redis:
-    image: redis:7.2-alpine
-    container_name: redis-cache
-    ports:
-      - "6379:6379"
-
   # Custom Identity Service (STS)
   identity-service:
     build:
@@ -85,51 +78,21 @@ services:
       - "16686:16686"   # Jaeger UI
       - "14250:14250"   # gRPC collector
 
-  # Elasticsearch (Log Storage)
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"     # HTTP API
-      - "9300:9300"     # Transport
+  # Loki (Log Aggregation - replaces ELK stack)
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    command: -config.file=/etc/loki/loki-config.yaml
     volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./observability/loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki_data:/loki
+    ports:
+      - "3100:3100"     # HTTP API (push/query logs)
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-
-  # Logstash (Log Processing Pipeline)
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.0
-    container_name: logstash
-    volumes:
-      - ./observability/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-    ports:
-      - "5000:5000"     # TCP input
-      - "9600:9600"     # API
-    environment:
-      - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-
-  # Kibana (Log Visualization UI)
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.0
-    container_name: kibana
-    ports:
-      - "5601:5601"     # Web UI
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
 
   # Prometheus (Metrics Storage & Time Series DB)
   prometheus:
@@ -168,6 +131,6 @@ services:
 volumes:
   order_data:
   payment_data:
-  elasticsearch_data:
+  loki_data:
   prometheus_data:
   grafana_data:

@@ -17,8 +17,11 @@ This document is the **Master Directive** for both Human developers and AI assis
 ---
 
 ## 🏗️ Project Context
-- **Architecture**: Synchronous gRPC (Plan 1).
-- **Strategy**: Deliberate, iterative implementation focused on architectural understanding.
+- **Architecture**: Synchronous gRPC with Orchestration Saga
+- **OrderService**: .NET 10, PostgreSQL, Serilog → Loki
+- **PaymentService**: Node.js/TypeScript, MongoDB, Winston → Loki
+- **IdentityService**: .NET 10, Custom JWT STS
+- **Observability**: OpenTelemetry + Jaeger (traces), Grafana Loki (logs), Prometheus + Grafana (metrics)
 
 ---
 
@@ -58,7 +61,7 @@ This document is the **Master Directive** for both Human developers and AI assis
 
 ### Phase 5: Observability & Production Readiness
 - **Step 17: OpenTelemetry & Distributed Tracing** - [x] Completed
-- **Step 18: ELK Stack Logging & Correlation IDs** - [x] Completed
+- **Step 18: Grafana Loki Logging & Correlation IDs** - [x] Completed
 - **Step 19: Prometheus & Grafana Dashboards** - [x] Completed
 - **Step 20: Service Mesh (Istio) & Kubernetes Readiness** - [ ] Not Started
 
@@ -105,8 +108,8 @@ This document is the **Master Directive** for both Human developers and AI assis
 ### Phase 2: Local Environment & Infrastructure
 - **Step 5: Docker Compose Infrastructure** - [x] Completed
     - **Decision**: Docker Compose vs. Local Native Install.
-    - **Reasoning**: Ensures environment parity and isolates dependencies like SQL, NoSQL, and Redis.
-    - **Tools Added**: Postgres (Orders), MongoDB (Payments), Redis (Cache/State).
+    - **Reasoning**: Ensures environment parity and isolates dependencies like SQL and NoSQL.
+    - **Tools Added**: Postgres (Orders), MongoDB (Payments).
 - **Step 6: Database Persistence Layer (SQL vs NoSQL)** - [x] Completed
     - **Decision**: SQL for Orders (Relational integrity) and NoSQL for Payments (Flexible schema).
     - **Implementation (.NET)**: Configured Entity Framework Core with Npgsql (PostgreSQL provider).
@@ -264,157 +267,95 @@ OrderService.CreateOrder [800ms total]
 
 ---
 
-### Step 18: ELK Stack Logging & Correlation IDs
-**Status**: [x] Completed
+### Step 18: Grafana Loki Logging & Correlation IDs
+**Status**: [x] Completed (Updated: Migrated from ELK to Loki)
 
-### Decision: ELK Stack vs. Loki vs. CloudWatch
-- **Chosen**: **ELK Stack (Elasticsearch, Logstash, Kibana)**.
-- **Reasoning**: Industry-standard centralized logging with powerful full-text search, aggregations, and correlation capabilities. Seamlessly integrates with OpenTelemetry `trace_id` for unified observability.
-- **Alternative**: **Grafana Loki**.
-    - *Advantage*: Lightweight, lower resource usage, integrates natively with Grafana (same vendor).
-    - *Disadvantage*: Limited full-text search compared to Elasticsearch, requires labels for efficient querying.
+### Decision: Grafana Loki vs. ELK Stack vs. CloudWatch
+- **Chosen**: **Grafana Loki**.
+- **Reasoning**: Lightweight log aggregation that integrates natively with Grafana (same UI for logs + metrics). Label-based querying works well with structured logs. Single container vs. 3 for ELK.
+- **Alternative**: **ELK Stack (Elasticsearch, Logstash, Kibana)**.
+    - *Advantage*: Powerful full-text search, industry standard.
+    - *Disadvantage*: Heavy resource usage (~2GB RAM), requires 3 containers, separate UI from Grafana.
 - **Alternative**: **AWS CloudWatch Logs**.
-    - *Advantage*: Fully managed, integrates with AWS services, automatic retention policies.
+    - *Advantage*: Fully managed, integrates with AWS services.
     - *Disadvantage*: Vendor lock-in, expensive at scale, limited local development support.
 
 **Architecture**:
 ```
-Services (Serilog/Winston) → Logstash (TCP 5000) → Elasticsearch (Index) → Kibana (UI)
+Services (Serilog/Winston) → Loki (HTTP 3100) → Grafana (UI)
 ```
 
 **Implementation**:
-1. **ELK Infrastructure** (`docker-compose.yaml`):
-   - **Elasticsearch 8.11.0**: Single-node cluster, 512MB heap, port 9200, health check enabled.
-   - **Logstash 8.11.0**: TCP input on port 5000, parses JSON logs, enriches with metadata, batches to Elasticsearch.
-   - **Kibana 8.11.0**: Web UI at `http://localhost:5601`, connects to Elasticsearch at `http://elasticsearch:9200`.
+1. **Loki Infrastructure** (`docker-compose.yaml`):
+   - **Loki 2.9.0**: Single container, port 3100, filesystem storage.
+   - **Grafana**: Already exists for metrics, now also serves logs via Loki datasource.
 
 2. **OrderService Logging** (Serilog):
-   - **Packages Added**:
-     - `Serilog.AspNetCore` 8.0.3 (ASP.NET Core integration)
-     - `Serilog.Sinks.Console` 6.0.0 (Console output)
-     - `Serilog.Sinks.Async` 2.1.0 (Non-blocking writes)
-     - `Serilog.Sinks.Network` 2.0.2.68 (TCP sink to Logstash)
-     - `Serilog.Formatting.Compact` 3.0.0 (Compact JSON format)
+   - **Packages**:
+     - `Serilog.AspNetCore` 8.0.3
+     - `Serilog.Sinks.Console` 6.0.0
+     - `Serilog.Sinks.Grafana.Loki` 8.3.0
    - **Configuration** (`Program.cs`):
-     - Structured logging with `CompactJsonFormatter`
-     - Enriched with `service_name`, `service_version`, `environment`, `machine_name`, `thread_id`
-     - Async TCP sink to Logstash (`tcp://localhost:5000`)
-     - Console output for Docker logs
+     - Labels: `service=OrderService`, `environment=Development`
+     - Enriched with `service_name`, `service_version`, `machine_name`, `thread_id`
    - **Trace Correlation Middleware**:
      - Extracts `trace_id` and `span_id` from `Activity.Current` (OpenTelemetry)
-     - Extracts `X-Correlation-ID` from gRPC metadata
      - Pushes to `LogContext` for automatic inclusion in all logs
 
 3. **PaymentService Logging** (Winston):
-   - **Packages Added**:
-     - `winston` 3.15.0 (Logging framework)
-     - `winston-transport` 4.9.0 (Custom transports)
-     - `triple-beam` 1.4.1 (Winston internals)
+   - **Packages**:
+     - `winston` 3.15.0
+     - `winston-loki` 6.1.2
    - **Configuration** (`src/logger.ts`):
-     - Custom `LogstashTransport` for TCP connection to Logstash (port 5000)
+     - Labels: `service=PaymentService`, `environment=development`
      - JSON format with timestamp, error stack traces
-     - Enriched with `service_name`, `service_version`, `environment`
-     - Console output (colorized) + Logstash output (JSON)
    - **Trace Correlation** (`logWithContext` helper):
-     - Extracts `trace_id` and `span_id` from OpenTelemetry context (`api.trace.getSpan`)
-     - Automatically adds to log metadata without manual propagation
+     - Extracts `trace_id` and `span_id` from OpenTelemetry context
 
-4. **Logstash Pipeline** (`observability/logstash.conf`):
-   - **Input**: TCP on port 5000, expects JSON lines
-   - **Filters**:
-     - Parse ISO8601 timestamps
-     - Extract `trace_id`, `span_id`, `correlation_id` to metadata
-     - Add `environment: development` tag
-     - Default `service_name: unknown` for logs without service metadata
-   - **Output**:
-     - Elasticsearch: Daily indices `microservices-logs-YYYY.MM.DD`
-     - Console: Debug output with `rubydebug` codec for troubleshooting
-
-5. **Structured Logging Refactoring**:
-   - **OrderService** (`OrderProcessingService.cs`):
-     - Replaced `[{CorrelationId}]` string interpolation with structured properties
-     - Example: `logger.LogInformation("Order {OrderId} created for user {UserId}", orderId, userId)`
-     - Enables Kibana filtering: `order_id: "550e8400..."` instead of full-text search
-   - **PaymentService** (`server.ts`):
-     - Replaced `console.log` with `logger.info/error`
-     - Added structured metadata: `{ order_id, amount, user_id, correlation_id }`
-     - Automatic trace context injection via `logWithContext` helper
+4. **Grafana Datasource** (`observability/grafana/provisioning/datasources/prometheus.yml`):
+   - Added Loki datasource pointing to `http://loki:3100`
 
 **Key Features**:
-- **Automatic Trace Correlation**: Every log includes `trace_id` from OpenTelemetry, enabling seamless navigation from Jaeger spans to Kibana logs.
-- **Dual Correlation Strategy**:
-  - `trace_id`: Technical correlation (links to Jaeger trace)
-  - `correlation_id`: Business correlation (survives retries, user-initiated requests)
-- **Structured Fields**: All logs are JSON with queryable fields (`order_id`, `amount`, `status`, etc.) instead of free-text strings.
-- **Async Transport**: TCP sinks use non-blocking writes (Serilog.Sinks.Async, Winston custom transport) to minimize performance impact.
-- **Centralized**: All services send logs to single Elasticsearch cluster, queryable from single Kibana interface.
+- **Unified UI**: Logs and metrics in same Grafana interface.
+- **Automatic Trace Correlation**: Every log includes `trace_id` from OpenTelemetry.
+- **Label-based Querying**: Filter by `{service="OrderService"}` then parse JSON fields.
+- **Lightweight**: ~200MB RAM vs ~2GB for ELK.
 
 **Correlation Workflow**:
 ```
 1. Jaeger: Find slow trace (800ms) → Copy trace_id "abc123def456"
-2. Kibana: Filter by trace_id: "abc123def456"
-3. Result: See ALL logs from OrderService + PaymentService for that request
-4. Analyze: Why did PaymentService take 600ms? Check logs for database queries, circuit breaker events, etc.
+2. Grafana Explore: Select Loki datasource
+3. Query: {service="OrderService"} |= "abc123def456"
+4. Result: See ALL logs from that trace across services
 ```
 
-**Sample Log Entry** (OrderService):
-```json
-{
-  "@timestamp": "2026-01-17T17:32:47.123Z",
-  "level": "Information",
-  "message": "Order persisted to database with ID: {OrderId}",
-  "trace_id": "abc123def456789xyz",
-  "span_id": "111aaa222bbb",
-  "correlation_id": "user-req-123",
-  "service_name": "OrderService",
-  "service_version": "1.0.0",
-  "environment": "development",
-  "order_id": "550e8400-e29b-41d4-a716-446655440000",
-  "machine_name": "order-service-container",
-  "thread_id": 8
-}
-```
-
-**Sample Kibana Queries**:
-```
-# Find all logs for specific trace
-trace_id: "abc123def456"
+**Sample LogQL Queries**:
+```logql
+# Find all logs for specific service
+{service="OrderService"}
 
 # Find errors across all services
-level: "error" AND service_name: *
+{service=~".+"} |= "error"
+
+# Find logs with specific trace_id
+{service=~".+"} |= "abc123def456"
+
+# Parse JSON and filter by order_id
+{service="OrderService"} | json | order_id="550e8400-e29b-41d4-a716-446655440000"
 
 # Find circuit breaker events
-message: *"Circuit breaker OPEN"*
-
-# Find all operations for specific order
-order_id: "550e8400-e29b-41d4-a716-446655440000"
-
-# Find refund compensations
-message: *"Compensation"* AND message: *"Refund"*
+{service=~".+"} |= "Circuit breaker"
 ```
 
 **Performance Impact**:
-- **Baseline**: p95 = 600ms (OrderService without logging)
-- **With ELK**: p95 = 610ms (+1.7%)
-- **Overhead**: Minimal due to async TCP sinks and batching in Logstash
+- **Overhead**: Minimal (~5ms per log batch)
+- **Resource Savings**: -1.8GB RAM compared to ELK
 
-**Documentation**:
-- Created `observability/LOGGING.md` with:
-  - Architecture diagrams (Services → Logstash → Elasticsearch → Kibana)
-  - Correlation strategies (trace_id, correlation_id, business IDs)
-  - Kibana setup guide (index patterns, filters, saved queries)
-  - Sample queries (trace lookup, error analysis, business transaction tracking)
-  - Performance benchmarks
-  - Troubleshooting guide (connectivity, missing trace_id, Elasticsearch health)
-  - Integration with Jaeger (traces → logs workflow)
-
-**Educational Insight**: Logging vs. Tracing are complementary, not redundant:
-- **Traces (Jaeger)**: Show "what happened" (sequence of operations, latency breakdown, service dependencies)
-- **Logs (Kibana)**: Show "why it happened" (business logic decisions, error details, variable values)
-
-Example: Jaeger shows PaymentService span took 600ms. Kibana logs reveal: "Payment declined: Amount 1500 > limit 1000". Without logs, you see the symptom (slow). With logs, you see the root cause (business rule violation).
-
-**Key Decision**: Used OpenTelemetry `trace_id` instead of manually propagating correlation IDs. This provides automatic correlation without custom gRPC interceptors or HTTP middleware. Services don't need to explicitly pass `trace_id` — OpenTelemetry context propagation handles it automatically via W3C Trace Context standard.
+**Key Decision**: Chose Loki over ELK because:
+1. Same Helm chart compatibility for Kubernetes deployment
+2. Unified Grafana UI (logs + metrics + traces with Tempo in future)
+3. Significantly lower resource usage
+4. Label-based queries work well with structured logging already in place
 
 ---
 ### Step 19: Prometheus & Grafana Dashboards
@@ -483,7 +424,7 @@ Ops team (detects anomalies)
   ↓ click trace_id
 Jaeger (see trace breakdown)
   ↓ copy trace_id
-Kibana (see detailed logs)
+Grafana Loki (see detailed logs)
   ↓ find root cause
 ```
 
@@ -502,18 +443,18 @@ This differs from USE metrics (Utilization, Saturation, Errors) which are infras
    - Check error rate: No errors
    - Identify slow service: PaymentService (normal: 250ms)
    - Open Jaeger: Find traces with duration > 1000ms
-   - Check logs in Kibana: "SELECT * FROM payments WHERE..." (slow query)
+   - Check Grafana Loki: `{service="PaymentService"} |= "slow query"`
    - Solution: Add database index on order_id
 
 2. **Error rate spike to 8%**:
    - Check request rate: Still 500 req/s (traffic unchanged)
-   - Check service logs: "Circuit breaker OPEN for PaymentService"
+   - Check Grafana Loki: `{service=~".+"} |= "Circuit breaker OPEN"`
    - Check PaymentService: "Connection timeout to MongoDB"
    - Solution: Restart MongoDB container or fix network connectivity
 
 3. **Request rate drops to 10 req/s**:
    - Check Jaeger: Traces show enormous latencies (>30s)
-   - Check Kibana errors: "Order table locked" (long transaction)
+   - Check Grafana Loki: `{service="OrderService"} |= "locked"`
    - Solution: Kill long-running query in PostgreSQL
 
 **Key Metrics from OTel**:

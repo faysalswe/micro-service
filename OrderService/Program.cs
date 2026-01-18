@@ -7,10 +7,12 @@ using Polly.Extensions.Http;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
-using Serilog.Formatting.Compact;
+using Serilog.Sinks.Grafana.Loki;
 using System.Diagnostics;
 
 // Configure Serilog FIRST (before WebApplicationBuilder)
+var lokiUrl = Environment.GetEnvironmentVariable("LOKI_URL") ?? "http://localhost:3100";
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .Enrich.FromLogContext()
@@ -19,10 +21,15 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.WithProperty("environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development")
     .Enrich.WithMachineName()
     .Enrich.WithThreadId()
-    .WriteTo.Console(new CompactJsonFormatter())
-    .WriteTo.Async(a => a.TCPSink(
-        "tcp://localhost:5000",
-        new CompactJsonFormatter()))
+    .WriteTo.Console()
+    .WriteTo.GrafanaLoki(
+        lokiUrl,
+        labels: new List<LokiLabel>
+        {
+            new LokiLabel { Key = "service", Value = "OrderService" },
+            new LokiLabel { Key = "environment", Value = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development" }
+        },
+        propertiesAsLabels: new[] { "level" })
     .CreateLogger();
 
 try

@@ -3,63 +3,73 @@
 ## 1. Project Overview
 A robust microservices architecture using synchronous gRPC communication and an Orchestration Saga for distributed transactions.
 
-- **Service A (.NET 8)**: Orchestrator + PostgreSQL.
-- **Service B (Node.js)**: Participant + MongoDB.
-- **Shared Infrastructure**: Redis (Caching/Saga State), Custom Identity Service (STS).
+- **OrderService (.NET 10)**: Orchestrator + PostgreSQL.
+- **PaymentService (Node.js)**: Participant + MongoDB.
+- **IdentityService (.NET 10)**: Custom STS for JWT authentication.
 
 ## 2. Core Architecture & Patterns
 
 ### Communication & API
 - **gRPC/Protobuf**: Primary inter-service transport.
-- **Gateway & Documentation**: Kong/NGINX with gRPC-JSON Transcoding for Swagger-enabled REST access.
+- **Gateway**: Kong (DB-less mode) for routing and CORS.
 
 ### Distributed Transactions (Saga)
-- **Synchronous Orchestration**: Service A manages the flow via sequential gRPC calls.
-- **Compensating Transactions**: Orchestrator triggers "undo" operations on failure.
-- **Idempotency**: Services must handle duplicate requests safely to support retries.
+- **Synchronous Orchestration**: OrderService manages the flow via sequential gRPC calls.
+- **Compensating Transactions**: Orchestrator triggers "undo" operations (RefundPayment) on failure.
+- **Saga Pattern**: Synchronous orchestration handles rollback; no external state persistence needed.
 
-### Resilience (Zero-Trust Network)
+### Resilience
 - **Circuit Breaker & Retries**: Managed by **Polly** (.NET) and **Opossum** (Node.js).
-- **Service Mesh**: Istio handles mTLS and network-level traffic management.
-- **Saga Persistence**: Active saga state stored in Redis to survive service restarts.
 
-### Observability & Tracing
-- **Unified Tracing**: OpenTelemetry for cross-service spans.
-- **Correlation**: `X-Correlation-ID` propagated through gRPC metadata.
-- **Analysis**: ELK Stack for logs; Prometheus/Grafana for metrics.
+### Observability
+- **Distributed Tracing**: OpenTelemetry + Jaeger for cross-service spans.
+- **Centralized Logging**: Grafana Loki with automatic trace correlation.
+- **Metrics**: Prometheus + Grafana dashboards (RED metrics).
 
 ## 3. Technology Stack Summary
 
 | Category | Tools |
 | :--- | :--- |
-| **Languages/Frameworks** | C# (.NET 8), TypeScript (Node.js) |
-| **Databases** | PostgreSQL, MongoDB, Redis |
-| **Communication** | gRPC, Protobuf, gRPC-JSON Transcoding |
-| **Resilience** | Polly, Opossum, Istio |
-| **Infrastructure** | Docker Compose (Local IaC), Helm, Kubernetes |
-| **Security/Config** | Keycloak (OIDC), .env, K8s ConfigMaps |
+| **Languages/Frameworks** | C# (.NET 10), TypeScript (Node.js) |
+| **Databases** | PostgreSQL, MongoDB |
+| **Communication** | gRPC, Protobuf |
+| **Resilience** | Polly, Opossum |
+| **Infrastructure** | Docker Compose (Local), Helm/Kubernetes (Production) |
+| **Security** | Custom STS (JWT), .env |
 | **Testing** | xUnit, Jest, Pact (Contract), k6 (Load) |
-| **Observability** | OpenTelemetry, ELK Stack, Prometheus, Grafana |
+| **Observability** | OpenTelemetry, Jaeger, Grafana Loki, Prometheus, Grafana |
 | **CI/CD** | GitHub Actions |
 
 ## 4. Implementation Roadmap
 
-### Phase 1: Foundation
-- [ ] Protobuf contracts & scaffolding (Swagger included).
-- [ ] Basic gRPC communication with Correlation ID propagation.
+### Phase 1: Foundation (Completed)
+- [x] Step 1: Protobuf contracts
+- [x] Step 2: OrderService scaffold (.NET gRPC)
+- [x] Step 3: PaymentService scaffold (Node.js gRPC)
+- [x] Step 4: Repository setup (Monorepo)
 
-### Phase 2: Infrastructure & Security
-- [ ] `docker-compose` for all dependencies (DBs, Redis, Keycloak, ELK).
-- [ ] API Gateway and Service Mesh configuration.
+### Phase 2: Infrastructure & Security (Completed)
+- [x] Step 5: Docker Compose (PostgreSQL, MongoDB)
+- [x] Step 6: Database persistence (EF Core, MongoDB driver)
+- [x] Step 7: Custom Identity Service (STS)
+- [x] Step 8: API Gateway (Kong)
 
-### Phase 3: Transaction Logic & Resilience
-- [ ] Synchronous Saga flow with compensating logic.
-- [ ] Integration of Polly/Opossum for Circuit Breakers.
+### Phase 3: Business Logic & Saga (Completed)
+- [x] Step 9: gRPC communication & metadata propagation
+- [x] Step 10: Synchronous Orchestration Saga
+- [x] Step 11: Resilience (Polly, Opossum circuit breakers)
+- [x] Step 12: Compensating transactions (RefundPayment)
 
-### Phase 4: Quality & Verification
-- [ ] Unit, Integration, and **Pact** contract tests.
-- [ ] **k6** load testing and GitHub Actions pipeline setup.
+### Phase 4: Quality & CI/CD (Completed)
+- [x] Step 13: Unit & Integration testing (xUnit, Jest)
+- [x] Step 14: Contract testing (Pact)
+- [x] Step 15: GitHub Actions CI/CD pipeline
+- [x] Step 16: Load testing (k6)
 
-### Phase 5: Full Observability
-- [ ] OpenTelemetry instrumentation and Grafana dashboarding.
+### Phase 5: Observability (Completed)
+- [x] Step 17: OpenTelemetry & Jaeger tracing
+- [x] Step 18: Grafana Loki logging
+- [x] Step 19: Prometheus & Grafana dashboards
 
+### Phase 6: Production Readiness (Next)
+- [ ] Step 20: Service Mesh (Istio) & Kubernetes deployment

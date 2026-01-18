@@ -12,45 +12,14 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # OpenTelemetry Collector metrics (gathers service metrics)
+  # OpenTelemetry Collector metrics
+  # All service metrics (OrderService, PaymentService) flow through OTel Collector.
+  # The collector exposes aggregated metrics on port 8888 in Prometheus format.
+  # This avoids needing separate Prometheus exporters in each service.
   - job_name: 'otel-collector'
     static_configs:
       - targets: ['otel-collector:8888']
     metrics_path: '/metrics'
-
-  # Order Service metrics (via Prometheus exporter)
-  - job_name: 'order-service'
-    static_configs:
-      - targets: ['localhost:9091']  # OrderService Prometheus exporter port
-    scrape_interval: 10s
-    scrape_timeout: 5s
-    labels:
-      service: 'OrderService'
-      team: 'platform'
-
-  # Payment Service metrics (via Prometheus exporter)
-  - job_name: 'payment-service'
-    static_configs:
-      - targets: ['localhost:9092']  # PaymentService Prometheus exporter port
-    scrape_interval: 10s
-    scrape_timeout: 5s
-    labels:
-      service: 'PaymentService'
-      team: 'platform'
-
-  # PostgreSQL metrics (via postgres_exporter)
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['localhost:9187']
-    labels:
-      database: 'order_db'
-
-  # MongoDB metrics (via mongodb_exporter)
-  - job_name: 'mongodb'
-    static_configs:
-      - targets: ['localhost:9216']
-    labels:
-      database: 'payment_db'
 
 # Alerting rules for detecting issues
 rule_files:
