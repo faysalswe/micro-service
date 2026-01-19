@@ -1,0 +1,58 @@
+# Docker Compose for debugging services in containers
+# Usage: docker-compose -f docker-compose.yaml -f docker-compose.debug.yaml up -d
+
+services:
+  # .NET Order Service with remote debugging
+  order-service:
+    build:
+      context: .
+      dockerfile: OrderService/Dockerfile.debug
+    container_name: order-service
+    ports:
+      - "8080:8080"   # gRPC
+      - "2222:2222"   # Debug port
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=order-db;Database=orders_db;Username=admin;Password=password123
+      - GrpcSettings__PaymentServiceUrl=http://payment-service:50051
+      - OpenTelemetry__Endpoint=http://otel-collector:4317
+    depends_on:
+      - order-db
+      - otel-collector
+
+  # Node.js Payment Service with remote debugging
+  payment-service:
+    build:
+      context: .
+      dockerfile: PaymentService/Dockerfile.debug
+    container_name: payment-service
+    ports:
+      - "50051:50051"  # gRPC
+      - "9229:9229"    # Debug port (Node.js inspector)
+    environment:
+      - NODE_ENV=development
+      - PORT=50051
+      - MONGO_URI=mongodb://admin:password123@payment-db:27017
+      - MONGO_DB_NAME=payments_db
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - SERVICE_NAME=PaymentService
+    depends_on:
+      - payment-db
+      - otel-collector
+
+  # .NET Identity Service with remote debugging
+  identity-service:
+    build:
+      context: .
+      dockerfile: IdentityService/Dockerfile.debug
+    container_name: identity-service
+    ports:
+      - "5050:5050"   # HTTP
+      - "2223:2222"   # Debug port (different host port to avoid conflict)
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5050
+      - Jwt__Key=ThisIsAVerySecretKeyForDevelopmentOnly123!
+      - Jwt__Issuer=IdentityService
+      - Jwt__Audience=MicroserviceApp

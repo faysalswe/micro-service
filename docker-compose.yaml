@@ -24,20 +24,6 @@ services:
     volumes:
       - payment_data:/data/db
 
-  # Custom Identity Service (STS)
-  identity-service:
-    build:
-      context: .
-      dockerfile: IdentityService/Dockerfile
-    container_name: identity-service
-    ports:
-      - "5050:8080" # Changed from 5000 to 5050 to avoid Kong conflict
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - Jwt__Key=ThisIsAVerySecretKeyForDevelopmentOnly123!
-      - Jwt__Issuer=IdentityService
-      - Jwt__Audience=MicroserviceApp
-
   # API Gateway (Kong)
   kong:
     image: kong:3.4

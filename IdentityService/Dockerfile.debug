@@ -1,0 +1,34 @@
+# Debug Dockerfile for IdentityService
+# Enables remote debugging via vsdbg
+
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+COPY ["IdentityService/IdentityService.csproj", "IdentityService/"]
+RUN dotnet restore "IdentityService/IdentityService.csproj"
+COPY . .
+WORKDIR "/src/IdentityService"
+RUN dotnet publish "IdentityService.csproj" -c Debug -o /app/publish
+
+# Debug runtime image
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS runtime
+WORKDIR /app
+
+# Install vsdbg debugger
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl unzip \
+    && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg \
+    && apt-get remove -y curl unzip \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy published application
+COPY --from=build /app/publish .
+
+# Expose ports
+EXPOSE 5050 2222
+
+# Set environment for debugging
+ENV ASPNETCORE_ENVIRONMENT=Development
+
+ENTRYPOINT ["dotnet", "IdentityService.dll"]

@@ -1,0 +1,43 @@
+# Debug Dockerfile for PaymentService
+# Enables remote debugging via Node.js inspector
+
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# Copy package files and install all dependencies
+COPY PaymentService/package*.json ./
+RUN npm ci
+
+# Copy TypeScript source and config
+COPY PaymentService/tsconfig.json ./
+COPY PaymentService/src/ ./src/
+
+# Compile TypeScript (with source maps for debugging)
+RUN npm run build
+
+# Debug runtime (single stage - keeps devDependencies for ts-node if needed)
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+# Copy all dependencies (including dev for debugging)
+COPY PaymentService/package*.json ./
+RUN npm ci
+
+# Copy compiled JavaScript with source maps
+COPY --from=build /app/dist ./dist
+
+# Copy TypeScript source (for source map resolution)
+COPY PaymentService/src/ ./src/
+COPY PaymentService/tsconfig.json ./
+
+# Copy proto files (required at runtime)
+COPY protos/ ./protos/
+
+# Expose ports
+EXPOSE 50051 9229
+
+# Set environment for debugging
+ENV NODE_ENV=development
+
+# Start with inspector enabled (0.0.0.0 allows remote connections)
+CMD ["node", "--inspect=0.0.0.0:9229", "dist/server.js"]
