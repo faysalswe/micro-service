@@ -228,7 +228,7 @@ async function main() {
   });
 
   // Add gRPC Health service for Kubernetes probes
-  server.addService(healthImpl.service, healthImpl.implementation);
+  healthImpl.addToServer(server);
   logger.info('gRPC Health service registered');
 
   const port = `0.0.0.0:${process.env.PORT || '50051'}`;

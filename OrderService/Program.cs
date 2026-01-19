@@ -7,6 +7,7 @@ using Polly.Extensions.Http;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
+using Serilog.Context;
 using Serilog.Sinks.Grafana.Loki;
 using System.Diagnostics;
 using Microsoft.Extensions.Diagnostics.HealthChecks;

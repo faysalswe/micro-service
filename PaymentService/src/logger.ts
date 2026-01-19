@@ -1,7 +1,7 @@
 // logger.ts - Winston Configuration for PaymentService with Loki
 import winston from 'winston';
 import LokiTransport from 'winston-loki';
-import { api, context } from '@opentelemetry/api';
+import { trace, context } from '@opentelemetry/api';
 
 const lokiHost = process.env.LOKI_URL || 'http://localhost:3100';
 
@@ -47,7 +47,7 @@ export const logger = winston.createLogger({
 // Helper function to add correlation ID to logs
 export function logWithContext(level: string, message: string, meta: any = {}) {
   // Add trace context from OpenTelemetry
-  const span = api.trace.getSpan(context.active());
+  const span = trace.getSpan(context.active());
   if (span) {
     const spanContext = span.spanContext();
     meta.trace_id = spanContext.traceId;
