@@ -16,6 +16,13 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Health check endpoints for Kubernetes probes
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "IdentityService", timestamp = DateTime.UtcNow }));
+
+app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
+
+app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
+
 app.MapPost("/login", (LoginRequest request, IConfiguration config) =>
 {
     // Mock user validation - In a real app, this would check a database

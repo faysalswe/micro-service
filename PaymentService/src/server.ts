@@ -1,11 +1,12 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import * as path from 'path';
-import { MongoClient } from 'mongodb';
+import { MongoClient, Db } from 'mongodb';
 import * as dotenv from 'dotenv';
 import CircuitBreaker from 'opossum';
 import { initializeTracing } from './tracing';
 import { logger, logWithContext } from './logger';
+import { HealthImplementation, ServingStatusMap } from 'grpc-health-check';
 
 dotenv.config();
 
@@ -31,7 +32,14 @@ const paymentPackage = paymentProto.payments;
 // MongoDB Setup
 const mongoUri = process.env.MONGO_URI || 'mongodb://admin:password123@localhost:27017';
 const dbName = process.env.MONGO_DB_NAME || 'payments_db';
-let db: any;
+let db: Db;
+
+// gRPC Health Check Setup
+const healthStatusMap: ServingStatusMap = {
+  '': 'SERVING',  // Overall service status
+  'payments.PaymentService': 'SERVING'  // Specific service status
+};
+const healthImpl = new HealthImplementation(healthStatusMap);
 
 // Circuit Breaker Options
 const breakerOptions = {
@@ -63,6 +71,46 @@ dbBreaker.fallback(() => {
 updateBreaker.fallback(() => {
   throw new Error('Database is currently unavailable. Circuit is OPEN.');
 });
+
+// Update health status based on circuit breaker state
+dbBreaker.on('open', () => {
+  logger.warn('Circuit breaker OPEN - marking service as NOT_SERVING');
+  healthImpl.setStatus('payments.PaymentService', 'NOT_SERVING');
+  healthImpl.setStatus('', 'NOT_SERVING');
+});
+
+dbBreaker.on('halfOpen', () => {
+  logger.info('Circuit breaker HALF_OPEN - service recovering');
+});
+
+dbBreaker.on('close', () => {
+  logger.info('Circuit breaker CLOSED - marking service as SERVING');
+  healthImpl.setStatus('payments.PaymentService', 'SERVING');
+  healthImpl.setStatus('', 'SERVING');
+});
+
+// Health check function to verify MongoDB connectivity
+async function checkDatabaseHealth(): Promise<boolean> {
+  try {
+    await db.command({ ping: 1 });
+    return true;
+  } catch (err) {
+    logger.error('Database health check failed', { error: (err as Error).message });
+    return false;
+  }
+}
+
+// Periodic health check (every 30 seconds)
+setInterval(async () => {
+  const isHealthy = await checkDatabaseHealth();
+  if (!isHealthy) {
+    healthImpl.setStatus('payments.PaymentService', 'NOT_SERVING');
+    healthImpl.setStatus('', 'NOT_SERVING');
+  } else {
+    healthImpl.setStatus('payments.PaymentService', 'SERVING');
+    healthImpl.setStatus('', 'SERVING');
+  }
+}, 30000);
 
 /**
  * Implements the ProcessPayment RPC method.
@@ -172,10 +220,16 @@ async function main() {
   }
 
   const server = new grpc.Server();
+
+  // Add Payment service
   server.addService(paymentPackage.PaymentService.service, {
     processPayment: processPayment,
     refundPayment: refundPayment,
   });
+
+  // Add gRPC Health service for Kubernetes probes
+  server.addService(healthImpl.service, healthImpl.implementation);
+  logger.info('gRPC Health service registered');
 
   const port = `0.0.0.0:${process.env.PORT || '50051'}`;
   server.bindAsync(port, grpc.ServerCredentials.createInsecure(), (err, actualPort) => {
@@ -188,3 +242,23 @@ async function main() {
 }
 
 main();
+
+// Graceful shutdown handling for Kubernetes
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received - initiating graceful shutdown');
+  healthImpl.setStatus('', 'NOT_SERVING');
+  healthImpl.setStatus('payments.PaymentService', 'NOT_SERVING');
+
+  // Allow time for load balancer to stop sending traffic
+  setTimeout(() => {
+    logger.info('Shutting down gRPC server');
+    process.exit(0);
+  }, 5000);
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received - initiating graceful shutdown');
+  healthImpl.setStatus('', 'NOT_SERVING');
+  healthImpl.setStatus('payments.PaymentService', 'NOT_SERVING');
+  process.exit(0);
+});

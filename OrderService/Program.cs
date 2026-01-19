@@ -9,6 +9,7 @@ using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Sinks.Grafana.Loki;
 using System.Diagnostics;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 // Configure Serilog FIRST (before WebApplicationBuilder)
 var lokiUrl = Environment.GetEnvironmentVariable("LOKI_URL") ?? "http://localhost:3100";
@@ -90,6 +91,10 @@ builder.Services.AddGrpcClient<PaymentService.PaymentServiceClient>(o =>
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add gRPC Health Checks for Kubernetes probes
+builder.Services.AddGrpcHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "postgresql");
+
 var app = builder.Build();
 
 // Add middleware to enrich logs with trace context
@@ -123,7 +128,30 @@ app.Use(async (context, next) =>
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<OrderProcessingService>();
+
+// Map gRPC health check service for Kubernetes probes (grpc_health_probe)
+app.MapGrpcHealthChecksService();
+
+// HTTP health endpoints for compatibility with HTTP-based probes
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "OrderService", timestamp = DateTime.UtcNow }));
+
+app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
+
+app.MapGet("/health/ready", async (OrderDbContext db) =>
+{
+    try
+    {
+        await db.Database.CanConnectAsync();
+        return Results.Ok(new { status = "ready", database = "connected" });
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Readiness check failed - database connection issue");
+        return Results.Json(new { status = "not_ready", database = "disconnected" }, statusCode: 503);
+    }
+});
 
 app.Run();
 }

@@ -16,20 +16,56 @@ This document is the **Master Directive** for both Human developers and AI assis
 
 ---
 
-## 🏗️ Project Context
-- **Architecture**: Synchronous gRPC with Orchestration Saga
-- **OrderService**: .NET 10, PostgreSQL, Serilog → Loki
-- **PaymentService**: Node.js/TypeScript, MongoDB, Winston → Loki
-- **IdentityService**: .NET 10, Custom JWT STS
-- **Observability**: OpenTelemetry + Jaeger (traces), Grafana Loki (logs), Prometheus + Grafana (metrics)
+## 🏗️ Project Overview
+
+A robust microservices architecture using synchronous gRPC communication and an Orchestration Saga for distributed transactions.
+
+### Services
+| Service | Technology | Database | Logging |
+|---------|------------|----------|---------|
+| **OrderService** | .NET 10 | PostgreSQL | Serilog → Loki |
+| **PaymentService** | Node.js/TypeScript | MongoDB | Winston → Loki |
+| **IdentityService** | .NET 10 | In-Memory | Custom JWT STS |
+
+### Core Architecture & Patterns
+
+**Communication & API**
+- **gRPC/Protobuf**: Primary inter-service transport
+- **Gateway**: Kong (DB-less mode) for routing and CORS
+
+**Distributed Transactions (Saga)**
+- **Synchronous Orchestration**: OrderService manages the flow via sequential gRPC calls
+- **Compensating Transactions**: Orchestrator triggers "undo" operations (RefundPayment) on failure
+
+**Resilience**
+- **Circuit Breaker & Retries**: Managed by Polly (.NET) and Opossum (Node.js)
+
+**Observability**
+- **Distributed Tracing**: OpenTelemetry + Jaeger for cross-service spans
+- **Centralized Logging**: Grafana Loki with automatic trace correlation
+- **Metrics**: Prometheus + Grafana dashboards (RED metrics)
+
+### Technology Stack
+
+| Category | Tools |
+|----------|-------|
+| **Languages/Frameworks** | C# (.NET 10), TypeScript (Node.js) |
+| **Databases** | PostgreSQL, MongoDB |
+| **Communication** | gRPC, Protobuf |
+| **Resilience** | Polly, Opossum |
+| **Infrastructure** | Docker Compose (Local), Helm/Kubernetes (Production) |
+| **Security** | Custom STS (JWT), .env |
+| **Testing** | xUnit, Jest, Pact (Contract), k6 (Load) |
+| **Observability** | OpenTelemetry, Jaeger, Grafana Loki, Prometheus, Grafana |
+| **CI/CD** | GitHub Actions |
 
 ---
 
 ## 📈 Current Status
 - **Selected Path**: Plan 1 (Synchronous gRPC)
-- **Overall Progress**: 99% Completed (Steps 1-19 Complete & Committed)
-- **Next Step**: Step 20: Service Mesh (Istio) & Kubernetes Readiness
-- **Git State**: Clean working tree (all changes committed)
+- **Overall Progress**: 100% Completed (Steps 1-20 Complete)
+- **Current Step**: Step 20 - Kubernetes Readiness (Istio removed)
+- **Git State**: Step 20 implementation complete
 
 ---
 
@@ -63,7 +99,7 @@ This document is the **Master Directive** for both Human developers and AI assis
 - **Step 17: OpenTelemetry & Distributed Tracing** - [x] Completed
 - **Step 18: Grafana Loki Logging & Correlation IDs** - [x] Completed
 - **Step 19: Prometheus & Grafana Dashboards** - [x] Completed
-- **Step 20: Service Mesh (Istio) & Kubernetes Readiness** - [ ] Not Started
+- **Step 20: Kubernetes Readiness** - [x] Completed (Istio removed - Polly/Opossum handle resilience)
 
 ---
 
@@ -468,5 +504,110 @@ This differs from USE metrics (Utilization, Saturation, Errors) which are infras
 - **RED Dashboard**: Search "Microservices RED" in Grafana
 
 **Performance**: +5% latency overhead (acceptable for observability benefits)
+
+---
+
+### Step 20: Kubernetes Readiness
+**Status**: [x] Completed
+
+**Purpose**: Transform the Docker Compose-based microservices into a production-ready Kubernetes deployment.
+
+### Decision: Kubernetes Deployment Strategy
+- **Chosen**: **Kustomize + Helm Charts** for flexibility.
+- **Reasoning**: Kustomize provides base/overlay pattern for environment-specific configs. Helm charts enable package management and templating.
+- **Alternative**: Plain YAML manifests.
+    - *Disadvantage*: No templating, harder to manage across environments.
+
+### Decision: Service Mesh (Istio) - Removed
+- **Original Plan**: Istio for mTLS, traffic management, observability.
+- **Decision**: **Removed Istio** - not needed for this project.
+- **Reasoning**:
+  - **Polly (.NET) and Opossum (Node.js)** already provide retries, circuit breakers, and timeouts at the application level.
+  - **mTLS**: Nice-to-have for production, but adds complexity for a learning project.
+  - **Canary Deployments**: Can be achieved with native K8s (multiple Deployments + service selector).
+  - **Resource Savings**: No sidecar overhead (+50MB RAM per pod avoided).
+
+**Implementation**:
+
+**1. Dockerfiles Created**:
+- **OrderService/Dockerfile**: Multi-stage .NET 9.0 build with grpc_health_probe
+- **PaymentService/Dockerfile**: Multi-stage Node.js 20 build with grpc_health_probe
+- Both run as non-root users for security
+
+**2. Health Checks Added**:
+- **OrderService**: gRPC Health service (`Grpc.AspNetCore.HealthChecks`) + HTTP endpoints (`/health`, `/health/live`, `/health/ready`)
+- **PaymentService**: gRPC Health service (`grpc-health-check`) with circuit breaker integration
+- **IdentityService**: HTTP endpoints (`/health/live`, `/health/ready`)
+
+**3. Kubernetes Manifests** (`k8s/base/`):
+```
+k8s/
+├── base/
+│   ├── namespace.yaml              # microservices namespace
+│   ├── kustomization.yaml          # Kustomize config
+│   ├── configmaps/                 # Service configurations
+│   ├── secrets/                    # Example secret templates
+│   ├── deployments/                # Deployment specs with probes
+│   ├── services/                   # ClusterIP services
+│   └── databases/                  # PostgreSQL & MongoDB StatefulSets
+└── overlays/
+    └── dev/                        # Development overrides (single replica)
+```
+
+**4. Helm Charts** (`helm/`):
+```
+helm/
+├── order-service/                  # Per-service chart
+├── payment-service/
+├── identity-service/
+└── microservices-umbrella/         # Umbrella chart for full deployment
+```
+
+**5. Deployment Scripts** (`scripts/`):
+- `k8s-setup.sh`: Build images, create namespace/secrets, deploy to K8s
+- `helm-deploy.sh`: Deploy via Helm umbrella chart
+
+**6. CI/CD Pipeline Updated**:
+- Added Docker build job that builds and pushes images to ghcr.io on main branch merge
+- Images tagged with: full SHA, short SHA, and `latest`
+
+**Key Kubernetes Features**:
+- **Liveness Probes**: `grpc_health_probe` for gRPC services, HTTP GET for REST
+- **Readiness Probes**: Verify database connectivity before accepting traffic
+- **Resource Limits**: CPU/Memory requests and limits defined
+- **Pod Anti-Affinity**: Spread replicas across nodes
+- **Graceful Shutdown**: 30s termination grace period
+
+**Usage**:
+
+```bash
+# Option 1: Direct Kubernetes deployment
+./scripts/k8s-setup.sh
+
+# Option 2: Helm deployment
+./scripts/helm-deploy.sh dev
+```
+
+**Verification**:
+```bash
+# Check pods
+kubectl get pods -n microservices
+
+# Test health probes
+kubectl exec -it deploy/order-service -n microservices -- /bin/grpc_health_probe -addr=:8080
+```
+
+**Why No Istio?**
+
+| Feature | How We Handle It |
+|---------|-----------------|
+| Retries | Polly (.NET), Opossum (Node.js) - app-level |
+| Circuit Breaking | Polly, Opossum - app-level |
+| Timeouts | Polly, Opossum - app-level |
+| mTLS | Not needed for learning (can add later with cert-manager) |
+| Observability | OpenTelemetry + Prometheus + Grafana already in place |
+| Load Balancing | Kubernetes Services (ClusterIP) |
+
+**Educational Insight**: Kubernetes provides the foundation for container orchestration (self-healing, scaling, rolling updates). For this project, application-level resilience (Polly/Opossum) combined with OpenTelemetry observability provides everything needed. Istio would be valuable in larger production environments requiring automatic mTLS or advanced traffic splitting (canary/blue-green), but adds operational complexity that isn't justified for a learning project.
 
 ---

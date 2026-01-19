@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# IDE folders
+.vscode/
+.idea/
+
+# Test files and coverage
+coverage/
+*.test.ts
+*.spec.ts
+__tests__/
+jest.config.js
+
+# Environment files (secrets)
+.env
+.env.local
+.env.*.local
+
+# Docker files (avoid recursive copies)
+Dockerfile
+.dockerignore
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Pact files
+pacts/
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript source (compiled to dist/)
+src/
+
+# Config files not needed in container
+tsconfig.json
