@@ -12,13 +12,17 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # OpenTelemetry Collector metrics
-  # All service metrics (OrderService, PaymentService) flow through OTel Collector.
-  # The collector exposes aggregated metrics on port 8888 in Prometheus format.
-  # This avoids needing separate Prometheus exporters in each service.
+  # OpenTelemetry Collector internal telemetry (collector health metrics)
   - job_name: 'otel-collector'
     static_configs:
       - targets: ['otel-collector:8888']
+    metrics_path: '/metrics'
+
+  # Service metrics exported through OTel Collector
+  # All service metrics (OrderService, PaymentService) flow through OTel Collector.
+  - job_name: 'otel-services'
+    static_configs:
+      - targets: ['otel-collector:8889']
     metrics_path: '/metrics'
 
 # Alerting rules for detecting issues

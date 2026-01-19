@@ -26,24 +26,24 @@ exporters:
       insecure: true
 
   # Export to console for debugging
-  logging:
-    loglevel: info
+  debug:
+    verbosity: basic
 
   # Prometheus metrics
   prometheus:
-    endpoint: "0.0.0.0:8888"
+    endpoint: "0.0.0.0:8889"
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch, resource]
-      exporters: [otlp/jaeger, logging]
+      exporters: [otlp/jaeger, debug]
     
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [prometheus, logging]
+      exporters: [prometheus, debug]
 
   telemetry:
     logs:
