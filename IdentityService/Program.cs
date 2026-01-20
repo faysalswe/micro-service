@@ -14,8 +14,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddSwaggerDocumentation();
 
 // Add SQLite database
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Data Source=identity.db";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseSqlite(connectionString));
 
@@ -30,15 +29,17 @@ using (var scope = app.Services.CreateScope())
     // Seed default admin user if no users exist
     if (!db.Users.Any())
     {
+        var adminUsername = builder.Configuration["DefaultAdmin:Username"] ?? "admin";
+        var adminPassword = builder.Configuration["DefaultAdmin:Password"] ?? "password";
         db.Users.Add(new User
         {
-            Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
+            Username = adminUsername,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
             Role = "Admin",
             CreatedAt = DateTime.UtcNow
         });
         db.SaveChanges();
-        Console.WriteLine("Default admin user created (username: admin, password: password)");
+        Console.WriteLine($"Default admin user created (username: {adminUsername})");
     }
 }
 

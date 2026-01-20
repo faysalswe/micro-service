@@ -26,7 +26,7 @@ RUN apt-get update \
 COPY --from=build /app/publish .
 
 # Expose ports
-EXPOSE 5050 2222
+EXPOSE 5010 2222
 
 # Set environment for debugging
 ENV ASPNETCORE_ENVIRONMENT=Development

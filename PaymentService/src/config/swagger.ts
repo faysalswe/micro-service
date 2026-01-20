@@ -13,7 +13,7 @@ export function setupSwagger(app: Express) {
       },
       servers: [
         {
-          url: `http://localhost:${process.env.REST_PORT || '5012'}`,
+          url: `http://localhost:${process.env.REST_PORT}`,
         },
       ],
     },

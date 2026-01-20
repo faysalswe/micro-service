@@ -9,8 +9,8 @@ import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
 
 export function initializeTracing() {
   const resource = new Resource({
-    [ATTR_SERVICE_NAME]: 'PaymentService',
-    [ATTR_SERVICE_VERSION]: '1.0.0',
+    [ATTR_SERVICE_NAME]: process.env.SERVICE_NAME || 'PaymentService',
+    [ATTR_SERVICE_VERSION]: process.env.SERVICE_VERSION || '1.0.0',
   });
 
   const provider = new NodeTracerProvider({ resource });

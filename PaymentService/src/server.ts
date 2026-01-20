@@ -243,7 +243,7 @@ async function main() {
 
   // Start REST API server
   const restApp = createRestApi(db);
-  const restPort = process.env.REST_PORT || '5012';
+  const restPort = process.env.REST_PORT;
   restApp.listen(restPort, () => {
     logger.info('REST API server started', { port: restPort });
   });

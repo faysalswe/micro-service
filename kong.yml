@@ -22,7 +22,7 @@ jwt_secrets:
 services:
   # Identity Service (HTTP REST) - PUBLIC (no JWT required)
   - name: identity-service
-    url: http://host.docker.internal:5050
+    url: http://host.docker.internal:5010
     routes:
       - name: auth-api
         paths:

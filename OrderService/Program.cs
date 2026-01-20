@@ -9,8 +9,15 @@ using Serilog;
 using Serilog.Context;
 using System.Diagnostics;
 
+// Build initial configuration for logging
+var initialConfig = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: true)
+    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
+    .AddEnvironmentVariables()
+    .Build();
+
 // Configure Serilog FIRST
-LoggingConfiguration.ConfigureLogging();
+LoggingConfiguration.ConfigureLogging(initialConfig);
 
 try
 {

@@ -48,11 +48,11 @@ services:
       dockerfile: IdentityService/Dockerfile.debug
     container_name: identity-service
     ports:
-      - "5050:5050"   # HTTP
+      - "5010:5010"   # HTTP
       - "2223:2222"   # Debug port (different host port to avoid conflict)
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5050
+      - ASPNETCORE_URLS=http://+:5010
       - Jwt__Key=ThisIsAVerySecretKeyForDevelopmentOnly123!
       - Jwt__Issuer=IdentityService
       - Jwt__Audience=MicroserviceApp

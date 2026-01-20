@@ -59,6 +59,27 @@ A robust microservices architecture using synchronous gRPC communication and an 
 | **Observability** | OpenTelemetry, Jaeger, Grafana Loki, Prometheus, Grafana |
 | **CI/CD** | GitHub Actions |
 
+### Service Ports
+
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| **IdentityService** | 5010 | HTTP | JWT authentication |
+| **OrderService** | 5011 | HTTP | REST API (local), 8080 (Docker/K8s) |
+| **PaymentService** | 50051 | gRPC | Payment processing |
+| **PaymentService** | 5012 | HTTP | REST API / Swagger |
+| **Kong Gateway** | 8000 | HTTP | API Gateway proxy |
+| **Kong Gateway** | 9080 | gRPC | gRPC proxy |
+| **Kong Admin** | 8001 | HTTP | Admin API |
+| **PostgreSQL** | 5432 | TCP | OrderService database |
+| **MongoDB** | 27017 | TCP | PaymentService database |
+| **OTel Collector** | 4317 | gRPC | OTLP receiver |
+| **OTel Collector** | 8888 | HTTP | Collector health metrics |
+| **OTel Collector** | 8889 | HTTP | Service metrics (Prometheus) |
+| **Jaeger** | 16686 | HTTP | Tracing UI |
+| **Loki** | 3100 | HTTP | Log aggregation |
+| **Prometheus** | 9090 | HTTP | Metrics UI |
+| **Grafana** | 3000 | HTTP | Dashboards UI |
+
 ---
 
 ## 📈 Current Status
@@ -416,10 +437,9 @@ grafana:
 
 **Configuration Files**:
 1. **`observability/prometheus.yml`**:
-   - Scrape configs: OTel Collector (8888), OrderService, PaymentService
+   - Scrape configs: OTel Collector (8888 for health, 8889 for service metrics)
    - Scrape interval: 15s (default)
-   - Targets: otel-collector:8888, localhost:9091 (OrderService), localhost:9092 (PaymentService)
-   - Database targets: PostgreSQL (9187), MongoDB (9216)
+   - Targets: otel-collector:8888, otel-collector:8889 (all service metrics flow through OTel Collector)
 
 2. **`observability/grafana/provisioning/datasources/prometheus.yml`**:
    - Automatically configure Prometheus as Grafana data source

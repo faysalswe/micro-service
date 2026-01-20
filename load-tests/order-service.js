@@ -92,8 +92,8 @@ export const options = {
 // Setup: Get authentication token
 export function setup() {
   const loginPayload = JSON.stringify({
-    username: 'admin',
-    password: 'password',
+    username: __ENV.TEST_USERNAME || 'admin',
+    password: __ENV.TEST_PASSWORD || 'password',
   });
 
   const params = {

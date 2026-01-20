@@ -3,7 +3,7 @@ import winston from 'winston';
 import LokiTransport from 'winston-loki';
 import { trace, context } from '@opentelemetry/api';
 
-const lokiHost = process.env.LOKI_URL || 'http://localhost:3100';
+const lokiHost = process.env.LOKI_URL!;
 
 // Create logger instance
 export const logger = winston.createLogger({
@@ -33,7 +33,7 @@ export const logger = winston.createLogger({
     new LokiTransport({
       host: lokiHost,
       labels: {
-        service: 'PaymentService',
+        service: process.env.SERVICE_NAME || 'PaymentService',
         environment: process.env.NODE_ENV || 'development',
       },
       json: true,

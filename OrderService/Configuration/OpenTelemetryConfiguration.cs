@@ -7,11 +7,14 @@ public static class OpenTelemetryConfiguration
 {
     public static void AddServiceTracing(this IServiceCollection services, IConfiguration configuration)
     {
+        var serviceName = configuration["Service:Name"] ?? "OrderService";
+        var serviceVersion = configuration["Service:Version"] ?? "1.0.0";
+
         services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
                 .AddService(
-                    serviceName: "OrderService",
-                    serviceVersion: "1.0.0"))
+                    serviceName: serviceName,
+                    serviceVersion: serviceVersion))
             .WithTracing(tracing => tracing
                 .AddAspNetCoreInstrumentation(options =>
                 {
