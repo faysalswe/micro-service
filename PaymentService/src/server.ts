@@ -7,6 +7,7 @@ import CircuitBreaker from 'opossum';
 import { initializeTracing } from './tracing';
 import { logger, logWithContext } from './logger';
 import { HealthImplementation, ServingStatusMap } from 'grpc-health-check';
+import { createRestApi } from './rest-api';
 
 dotenv.config();
 
@@ -231,13 +232,20 @@ async function main() {
   healthImpl.addToServer(server);
   logger.info('gRPC Health service registered');
 
-  const port = `0.0.0.0:${process.env.PORT || '50051'}`;
-  server.bindAsync(port, grpc.ServerCredentials.createInsecure(), (err, actualPort) => {
+  const grpcPort = `0.0.0.0:${process.env.PORT || '50051'}`;
+  server.bindAsync(grpcPort, grpc.ServerCredentials.createInsecure(), (err, actualPort) => {
     if (err) {
       logger.error('Failed to bind gRPC server', { error: err.message });
       return;
     }
-    logger.info('gRPC server started', { address: port, actualPort });
+    logger.info('gRPC server started', { address: grpcPort, actualPort });
+  });
+
+  // Start REST API server
+  const restApp = createRestApi(db);
+  const restPort = process.env.REST_PORT || '3001';
+  restApp.listen(restPort, () => {
+    logger.info('REST API server started', { port: restPort });
   });
 }
 

@@ -1,41 +1,69 @@
-_format_version: "1.1"
+_format_version: "3.0"
 _transform: true
 
+# ============================================
+# Consumers (API clients that need JWT)
+# ============================================
+consumers:
+  - username: microservice-app
+
+# ============================================
+# JWT Credentials for the consumer
+# ============================================
+jwt_secrets:
+  - consumer: microservice-app
+    key: IdentityService
+    secret: ThisIsAVerySecretKeyForDevelopmentOnly123!
+    algorithm: HS256
+
+# ============================================
+# Services
+# ============================================
 services:
-  # Identity Service (HTTP REST)
+  # Identity Service (HTTP REST) - PUBLIC (no JWT required)
   - name: identity-service
-    url: http://identity-service:5050
+    url: http://host.docker.internal:5050
     routes:
-      - name: identity-route
+      - name: auth-api
         paths:
           - /auth
-        protocols:
-          - http
-          - https
+        strip_path: true
 
-  # Order Service (gRPC)
+  # Order Service (REST API) - PROTECTED
   - name: order-service
-    url: grpc://order-service:8080
+    url: http://host.docker.internal:5011
     routes:
-      - name: order-route
+      - name: orders-api
         paths:
-          - /orders.OrderService
-        protocols:
-          - grpc
-          - grpcs
+          - /api/orders
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              secret_is_base64: false
+              run_on_preflight: true
 
-  # Payment Service (gRPC)
+  # Payment Service (REST API) - PROTECTED
   - name: payment-service
-    url: grpc://payment-service:50051
+    url: http://host.docker.internal:3001
     routes:
-      - name: payment-route
+      - name: payments-api
         paths:
-          - /payments.PaymentService
-        protocols:
-          - grpc
-          - grpcs
+          - /api/payments
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              secret_is_base64: false
+              run_on_preflight: true
 
+# ============================================
+# Global Plugins
+# ============================================
 plugins:
+  # CORS - Allow browser requests
   - name: cors
     config:
       origins:
@@ -50,5 +78,8 @@ plugins:
         - Accept
         - Authorization
         - Content-Type
+        - X-Correlation-ID
       exposed_headers:
         - X-Correlation-ID
+      credentials: true
+      max_age: 3600

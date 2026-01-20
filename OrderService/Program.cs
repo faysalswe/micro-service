@@ -46,6 +46,10 @@ try
     // Add services to the container.
     builder.Services.AddGrpc();
 
+    // Add REST API controllers
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+
 // Configure OpenTelemetry
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
@@ -129,6 +133,9 @@ app.Use(async (context, next) =>
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<OrderProcessingService>();
+
+// Map REST API controllers
+app.MapControllers();
 
 // Map gRPC health check service for Kubernetes probes (grpc_health_probe)
 app.MapGrpcHealthChecksService();
