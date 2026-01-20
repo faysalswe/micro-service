@@ -46,7 +46,7 @@ services:
 
   # Payment Service (REST API) - PROTECTED
   - name: payment-service
-    url: http://host.docker.internal:3001
+    url: http://host.docker.internal:5012
     routes:
       - name: payments-api
         paths:

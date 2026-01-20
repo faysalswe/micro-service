@@ -50,6 +50,10 @@ try
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
 
+    // Add Saga and Idempotency services
+    builder.Services.AddScoped<OrderService.Services.ISagaService, OrderService.Services.SagaService>();
+    builder.Services.AddScoped<OrderService.Services.IIdempotencyService, OrderService.Services.IdempotencyService>();
+
 // Configure OpenTelemetry
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
