@@ -1,9 +1,13 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { Db, ObjectId } from 'mongodb';
+import { setupSwagger } from './config/swagger';
 import { logger } from './logger';
 
 export function createRestApi(db: Db) {
   const app = express();
+
+  // Swagger Documentation Setup
+  setupSwagger(app);
 
   // Middleware
   app.use(express.json());
@@ -21,7 +25,22 @@ export function createRestApi(db: Db) {
   });
 
   /**
-   * GET /api/payments - List all payments
+   * @openapi
+   * /api/payments:
+   *   get:
+   *     summary: List all payments
+   *     parameters:
+   *       - in: query
+   *         name: userId
+   *         schema:
+   *           type: string
+   *       - in: query
+   *         name: orderId
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: List of payments
    */
   app.get('/api/payments', async (req: Request, res: Response) => {
     try {
@@ -89,7 +108,28 @@ export function createRestApi(db: Db) {
   });
 
   /**
-   * POST /api/payments - Process a new payment
+   * @openapi
+   * /api/payments:
+   *   post:
+   *     summary: Process a new payment
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               orderId:
+   *                 type: string
+   *               userId:
+   *                 type: string
+   *               amount:
+   *                 type: number
+   *     responses:
+   *       201:
+   *         description: Payment processed
+   *       400:
+   *         description: Invalid input
    */
   app.post('/api/payments', async (req: Request, res: Response) => {
     try {

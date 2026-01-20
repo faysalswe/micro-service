@@ -1,38 +1,16 @@
 using OrderService.Services;
 using OrderService.Data;
+using OrderService.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microservice.Payments.Grpc;
 using Polly;
 using Polly.Extensions.Http;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Context;
-using Serilog.Sinks.Grafana.Loki;
 using System.Diagnostics;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-// Configure Serilog FIRST (before WebApplicationBuilder)
-var lokiUrl = Environment.GetEnvironmentVariable("LOKI_URL") ?? "http://localhost:3100";
-
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .Enrich.FromLogContext()
-    .Enrich.WithProperty("service_name", "OrderService")
-    .Enrich.WithProperty("service_version", "1.0.0")
-    .Enrich.WithProperty("environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development")
-    .Enrich.WithMachineName()
-    .Enrich.WithThreadId()
-    .WriteTo.Console()
-    .WriteTo.GrafanaLoki(
-        lokiUrl,
-        labels: new List<LokiLabel>
-        {
-            new LokiLabel { Key = "service", Value = "OrderService" },
-            new LokiLabel { Key = "environment", Value = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development" }
-        },
-        propertiesAsLabels: new[] { "level" })
-    .CreateLogger();
+// Configure Serilog FIRST
+LoggingConfiguration.ConfigureLogging();
 
 try
 {
@@ -48,36 +26,14 @@ try
 
     // Add REST API controllers
     builder.Services.AddControllers();
-    builder.Services.AddEndpointsApiExplorer();
+    
+    // Extension methods for organized configuration
+    builder.Services.AddSwaggerDocumentation();
+    builder.Services.AddServiceTracing(builder.Configuration);
 
     // Add Saga and Idempotency services
-    builder.Services.AddScoped<OrderService.Services.ISagaService, OrderService.Services.SagaService>();
-    builder.Services.AddScoped<OrderService.Services.IIdempotencyService, OrderService.Services.IdempotencyService>();
-
-// Configure OpenTelemetry
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource
-        .AddService(
-            serviceName: "OrderService",
-            serviceVersion: "1.0.0"))
-    .WithTracing(tracing => tracing
-        .AddAspNetCoreInstrumentation(options =>
-        {
-            options.RecordException = true;
-        })
-        .AddGrpcClientInstrumentation(options =>
-        {
-            options.SuppressDownstreamInstrumentation = false;
-        })
-        .AddHttpClientInstrumentation()
-        .AddEntityFrameworkCoreInstrumentation(options =>
-        {
-            options.SetDbStatementForText = true;
-        })
-        .AddOtlpExporter(options =>
-        {
-            options.Endpoint = new Uri(builder.Configuration["OpenTelemetry:Endpoint"] ?? "http://localhost:4317");
-        }));
+    builder.Services.AddScoped<ISagaService, SagaService>();
+    builder.Services.AddScoped<IIdempotencyService, IdempotencyService>();
 
 // Define Resilience Policies
 var retryPolicy = HttpPolicyExtensions
@@ -137,6 +93,9 @@ app.Use(async (context, next) =>
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<OrderProcessingService>();
+
+// Enable Swagger UI
+app.UseSwaggerDocumentation(app.Environment);
 
 // Map REST API controllers
 app.MapControllers();
