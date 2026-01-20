@@ -2,19 +2,35 @@ _format_version: "1.1"
 _transform: true
 
 services:
+  # Identity Service (HTTP REST)
   - name: identity-service
-    url: http://identity-service:8080
+    url: http://identity-service:5050
     routes:
       - name: identity-route
         paths:
           - /auth
+        protocols:
+          - http
+          - https
 
+  # Order Service (gRPC)
   - name: order-service
-    url: grpc://order-service:5000
+    url: grpc://order-service:8080
     routes:
       - name: order-route
         paths:
-          - /OrderService
+          - /orders.OrderService
+        protocols:
+          - grpc
+          - grpcs
+
+  # Payment Service (gRPC)
+  - name: payment-service
+    url: grpc://payment-service:50051
+    routes:
+      - name: payment-route
+        paths:
+          - /payments.PaymentService
         protocols:
           - grpc
           - grpcs

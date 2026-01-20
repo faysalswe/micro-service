@@ -15,3 +15,14 @@ test_output.txt
 build_output.txt
 **/test_output.txt
 **/build_output.txt
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# Root package-lock (not a Node.js project root)
+/package-lock.json
+
+# Claude Code
+.claude/
