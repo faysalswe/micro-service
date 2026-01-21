@@ -85,7 +85,7 @@ A robust microservices architecture using synchronous gRPC communication and an 
 ## 📈 Current Status
 - **Selected Path**: Plan 1 (Synchronous gRPC)
 - **Overall Progress**: 100% Completed (Steps 1-20 Complete)
-- **Current Step**: Step 20 - Kubernetes Readiness (Istio removed)
+- **Current Step**: Step 20 - Kubernetes Readiness
 - **Git State**: Step 20 implementation complete
 
 ---
