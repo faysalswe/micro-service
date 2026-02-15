@@ -8,6 +8,7 @@ using Polly.Extensions.Http;
 using Serilog;
 using Serilog.Context;
 using System.Diagnostics;
+using Scalar.AspNetCore;
 
 // Build initial configuration for logging
 var initialConfig = new ConfigurationBuilder()
@@ -33,9 +34,9 @@ try
 
     // Add REST API controllers
     builder.Services.AddControllers();
-    
-    // Extension methods for organized configuration
-    builder.Services.AddSwaggerDocumentation();
+
+    // Add native OpenAPI
+    builder.Services.AddOpenApi();
     builder.Services.AddServiceTracing(builder.Configuration);
 
     // Add Saga and Idempotency services
@@ -99,10 +100,10 @@ app.Use(async (context, next) =>
 });
 
 // Configure the HTTP request pipeline.
-app.MapGrpcService<OrderProcessingService>();
+app.MapOpenApi();
+app.MapScalarApiReference();
 
-// Enable Swagger UI
-app.UseSwaggerDocumentation(app.Environment);
+app.MapGrpcService<OrderProcessingService>();
 
 // Map REST API controllers
 app.MapControllers();

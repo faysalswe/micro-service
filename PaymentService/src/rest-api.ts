@@ -1,13 +1,13 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { Db, ObjectId } from 'mongodb';
-import { setupSwagger } from './config/swagger';
+import { setupApiDocs } from './config/openapi';
 import { logger } from './logger';
 
 export function createRestApi(db: Db) {
   const app = express();
 
-  // Swagger Documentation Setup
-  setupSwagger(app);
+  // API Documentation Setup (OpenAPI + Scalar UI)
+  setupApiDocs(app);
 
   // Middleware
   app.use(express.json());

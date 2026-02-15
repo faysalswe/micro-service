@@ -3,15 +3,14 @@ using System.Security.Claims;
 using System.Text;
 using IdentityService.Data;
 using IdentityService.Models;
-using IdentityService.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerDocumentation();
 
 // Add SQLite database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -47,8 +46,8 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
-app.UseSwaggerDocumentation(app.Environment);
 
 // Health check endpoints for Kubernetes probes
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "IdentityService", timestamp = DateTime.UtcNow }));

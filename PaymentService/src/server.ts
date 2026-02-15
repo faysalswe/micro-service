@@ -1,20 +1,44 @@
+// Load environment variables FIRST before any other imports
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import * as path from 'path';
 import { MongoClient, Db } from 'mongodb';
-import * as dotenv from 'dotenv';
 import CircuitBreaker from 'opossum';
 import { initializeTracing } from './tracing';
-import { logger, logWithContext } from './logger';
+import { logger } from './logger';
 import { HealthImplementation, ServingStatusMap } from 'grpc-health-check';
 import { createRestApi } from './rest-api';
 
-dotenv.config();
+// Validate required environment variables
+const requiredEnvVars = ['REST_PORT', 'LOKI_URL'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  console.error('\x1b[31m%s\x1b[0m', '❌ Missing required environment variables:');
+  missingEnvVars.forEach(varName => {
+    console.error('\x1b[31m%s\x1b[0m', `   - ${varName}`);
+  });
+  console.error('\x1b[33m%s\x1b[0m', '\n💡 Please set these variables in your .env file or environment.');
+  console.error('\x1b[33m%s\x1b[0m', '\nExample .env file:');
+  console.error('\x1b[36m%s\x1b[0m', '   REST_PORT=3001');
+  console.error('\x1b[36m%s\x1b[0m', '   LOKI_URL=http://localhost:3100');
+  console.error('\x1b[36m%s\x1b[0m', '   PORT=50051 (optional, defaults to 50051)');
+  console.error('\x1b[36m%s\x1b[0m', '   MONGO_URI=mongodb://admin:password123@localhost:27017 (optional)');
+  process.exit(1);
+}
 
 // Initialize OpenTelemetry tracing FIRST
 initializeTracing();
 
-logger.info('Starting PaymentService');
+logger.info('Starting PaymentService', {
+  restPort: process.env.REST_PORT,
+  grpcPort: process.env.PORT || '50051',
+  mongoUri: process.env.MONGO_URI ? '***configured***' : 'using default',
+  mongoDb: process.env.MONGO_DB_NAME || 'payments_db'
+});
 
 // Load the protobuf file
 const PROTO_PATH = path.resolve(__dirname, '../../protos/payments.proto');
@@ -93,6 +117,11 @@ dbBreaker.on('close', () => {
 // Health check function to verify MongoDB connectivity
 async function checkDatabaseHealth(): Promise<boolean> {
   try {
+    // Check if db is initialized before attempting ping
+    if (!db) {
+      logger.warn('Database health check skipped - DB not yet initialized');
+      return false;
+    }
     await db.command({ ping: 1 });
     return true;
   } catch (err) {
@@ -100,18 +129,6 @@ async function checkDatabaseHealth(): Promise<boolean> {
     return false;
   }
 }
-
-// Periodic health check (every 30 seconds)
-setInterval(async () => {
-  const isHealthy = await checkDatabaseHealth();
-  if (!isHealthy) {
-    healthImpl.setStatus('payments.PaymentService', 'NOT_SERVING');
-    healthImpl.setStatus('', 'NOT_SERVING');
-  } else {
-    healthImpl.setStatus('payments.PaymentService', 'SERVING');
-    healthImpl.setStatus('', 'SERVING');
-  }
-}, 30000);
 
 /**
  * Implements the ProcessPayment RPC method.
@@ -215,8 +232,31 @@ async function main() {
     const client = await MongoClient.connect(mongoUri);
     db = client.db(dbName);
     logger.info('Connected to MongoDB', { database: dbName });
+
+    // Start periodic health check AFTER successful MongoDB connection (every 30 seconds)
+    setInterval(async () => {
+      const isHealthy = await checkDatabaseHealth();
+      if (!isHealthy) {
+        healthImpl.setStatus('payments.PaymentService', 'NOT_SERVING');
+        healthImpl.setStatus('', 'NOT_SERVING');
+      } else {
+        healthImpl.setStatus('payments.PaymentService', 'SERVING');
+        healthImpl.setStatus('', 'SERVING');
+      }
+    }, 30000);
+    logger.info('Periodic health check started (30s interval)');
   } catch (err: any) {
     logger.error('Failed to connect to MongoDB', { error: err.message, stack: err.stack });
+
+    // Provide helpful error message for common issues
+    if (err.message.includes('ECONNREFUSED')) {
+      console.error('\x1b[31m%s\x1b[0m', '\n❌ Cannot connect to MongoDB');
+      console.error('\x1b[33m%s\x1b[0m', '💡 Make sure MongoDB is running:');
+      console.error('\x1b[36m%s\x1b[0m', '   Docker: docker run -d -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=password123 mongo');
+      console.error('\x1b[36m%s\x1b[0m', '   Local:  brew services start mongodb-community');
+      console.error('\x1b[33m%s\x1b[0m', `\n   Current MONGO_URI: ${mongoUri}\n`);
+    }
+
     process.exit(1);
   }
 
@@ -243,9 +283,21 @@ async function main() {
 
   // Start REST API server
   const restApp = createRestApi(db);
-  const restPort = process.env.REST_PORT;
+  const restPort = parseInt(process.env.REST_PORT!, 10);
+
   restApp.listen(restPort, () => {
-    logger.info('REST API server started', { port: restPort });
+    logger.info('REST API server started', {
+      port: restPort,
+      docsUrl: `http://localhost:${restPort}/api-docs`,
+      openapiUrl: `http://localhost:${restPort}/openapi.json`
+    });
+  }).on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      logger.error(`Port ${restPort} is already in use. Please choose a different REST_PORT.`, { error: err.message });
+    } else {
+      logger.error('Failed to start REST API server', { error: err.message });
+    }
+    process.exit(1);
   });
 }
 
