@@ -5,6 +5,7 @@ node_modules
 /build
 /public/build
 /.cache
+/.react-router
 
 # Environment variables
 .env
