@@ -30,7 +30,7 @@ Prometheus provides time-series metrics collection and storage, while Grafana vi
         ┌──────────────────────────┐
         │      Grafana             │
         │  (Dashboards & Alerts)   │
-        │  http://localhost:3000   │
+        │  http://localhost:3301   │
         └──────────────────────────┘
 ```
 
@@ -79,7 +79,7 @@ sum(rate(rpc_server_duration_ms_count[1m])) by (service)
 
 ### 3. Grafana
 **Purpose**: Visualize metrics and create alerts
-**Access**: http://localhost:3000
+**Access**: http://localhost:3301
 **Default Credentials**: admin / admin
 
 **Key Features**:
@@ -146,7 +146,7 @@ p95 latency < 500ms for 99.9% of requests
 
 ### 1. Access Grafana
 ```bash
-open http://localhost:3000
+open http://localhost:3301
 # Login: admin / admin
 ```
 

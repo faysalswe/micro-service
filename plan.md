@@ -78,7 +78,7 @@ A robust microservices architecture using synchronous gRPC communication and an 
 | **Jaeger** | 16686 | HTTP | Tracing UI |
 | **Loki** | 3100 | HTTP | Log aggregation |
 | **Prometheus** | 9090 | HTTP | Metrics UI |
-| **Grafana** | 3000 | HTTP | Dashboards UI |
+| **Grafana** | 3301 | HTTP | Dashboards UI |
 
 ---
 
@@ -431,7 +431,7 @@ prometheus:
 
 grafana:
   image: grafana/grafana:11.0.0
-  ports: [3000:3000]
+  ports: [3301:3000]
   volumes: [provisioning dashboards]
 ```
 
@@ -520,7 +520,7 @@ This differs from USE metrics (Utilization, Saturation, Errors) which are infras
 
 **Accessing Dashboards**:
 - **Prometheus UI**: http://localhost:9090 (raw data, test PromQL)
-- **Grafana**: http://localhost:3000 (pretty dashboards, login: admin/admin)
+- **Grafana**: http://localhost:3301 (pretty dashboards, login: admin/admin)
 - **RED Dashboard**: Search "Microservices RED" in Grafana
 
 **Performance**: +5% latency overhead (acceptable for observability benefits)

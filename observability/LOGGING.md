@@ -23,7 +23,7 @@ Grafana Loki provides centralized logging with automatic correlation to OpenTele
     ┌────────────────────────────────┐
     │         Grafana                │
     │   (Query & Visualize)          │
-    │   http://localhost:3000        │
+    │   http://localhost:3301        │
     └────────────────────────────────┘
 ```
 
@@ -79,7 +79,7 @@ Loki uses labels for efficient filtering, then parses log content:
 
 ### Grafana (Logs)
 **Purpose:** Query and visualize logs
-**Access:** http://localhost:3000 → Explore → Select "Loki" datasource
+**Access:** http://localhost:3301 → Explore → Select "Loki" datasource
 
 ## Service Configuration
 

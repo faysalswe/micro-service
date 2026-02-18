@@ -83,7 +83,7 @@ cd PaymentService && npm install && npm start
 | Kong Gateway | 8000 | HTTP |
 | PostgreSQL | 5432 | TCP |
 | MongoDB | 27017 | TCP |
-| Grafana | 3000 | HTTP |
+| Grafana | 3301 | HTTP |
 | Jaeger | 16686 | HTTP |
 | Prometheus | 9090 | HTTP |
 
@@ -252,7 +252,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → test-all
 
 | Tool | URL | Credentials |
 |------|-----|-------------|
-| Grafana | http://localhost:3000 | admin / admin |
+| Grafana | http://localhost:3301 | admin / admin |
 | Jaeger | http://localhost:16686 | - |
 | Prometheus | http://localhost:9090 | - |
 

@@ -103,7 +103,7 @@ services:
     image: grafana/grafana:11.0.0
     container_name: grafana
     ports:
-      - "3000:3000"     # Grafana UI
+      - "3301:3000"     # Grafana UI
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin
