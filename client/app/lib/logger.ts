@@ -4,7 +4,7 @@
  */
 
 const LOG_PREFIX = '[API]';
-const isDevelopment = process.env['NODE_ENV'] === 'development';
+const isDevelopment = import.meta.env.DEV;
 const isServer = typeof window === 'undefined';
 
 const styles = {

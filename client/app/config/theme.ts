@@ -3,7 +3,7 @@
  * Maps design tokens to Mantine's theme structure
  */
 
-import { MantineThemeOverride } from '@mantine/core';
+import { createTheme, MantineThemeOverride } from '@mantine/core';
 import { DESIGN_TOKENS } from './tokens';
 
 /**
@@ -11,8 +11,8 @@ import { DESIGN_TOKENS } from './tokens';
  * @param isDark - Whether dark mode is enabled
  * @returns Mantine theme configuration
  */
-export function createMantineTheme(isDark: boolean): MantineThemeOverride {
-  return {
+export function createMantineTheme(isDark: boolean) {
+  return createTheme({
     // Map design tokens to Mantine colors
     colors: {
       primary: [
@@ -194,7 +194,7 @@ export function createMantineTheme(isDark: boolean): MantineThemeOverride {
         },
       },
     },
-  };
+  });
 }
 
 export default createMantineTheme;

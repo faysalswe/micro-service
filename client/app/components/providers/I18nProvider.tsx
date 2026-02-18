@@ -3,7 +3,7 @@
  */
 
 import { createContext, FC, ReactNode, useContext, useEffect, useRef, useState } from 'react';
-import { I18nextProvider, initReactI18next } from 'node_modules/react-i18next';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
 import i18next, { type i18n as I18nInstance, Resource, InitOptions } from 'i18next';
 import type { SupportedLanguage } from '~/i18n/config';
 import { loadClientTranslations } from '~/i18n/i18n.client';
@@ -92,10 +92,13 @@ export const I18nProvider: FC<I18nProviderProps> = ({
 
   const i18n = i18nRef.current;
 
-  // Mark as hydrated on client-side mount
+  // Mark as hydrated on client-side mount and sync language
   useEffect(() => {
     setIsHydrated(true);
-  }, []);
+    if (i18n.language !== initialLanguage) {
+      i18n.changeLanguage(initialLanguage);
+    }
+  }, [initialLanguage, i18n]);
 
   // Update DOM language attribute when language changes (client-side only)
   useEffect(() => {
@@ -161,7 +164,10 @@ export function useI18nContext(): I18nContextValue {
  */
 export function useLanguage(): SupportedLanguage {
   const context = useContext(I18nContext);
-  return context?.language ?? 'en';
+  if (!context) {
+    throw new Error('useLanguage must be used within I18nProvider');
+  }
+  return context.language;
 }
 
 /**
@@ -169,7 +175,10 @@ export function useLanguage(): SupportedLanguage {
  */
 export function useSetLanguage(): (lang: SupportedLanguage) => Promise<void> {
   const context = useContext(I18nContext);
-  return context?.setLanguage ?? (async () => {});
+  if (!context) {
+    throw new Error('useSetLanguage must be used within I18nProvider');
+  }
+  return context.setLanguage;
 }
 
 export default I18nProvider;

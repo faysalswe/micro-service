@@ -88,7 +88,7 @@ export class AuthService {
    * Decode JWT token to extract user information
    */
   private decodeToken(): void {
-    if (!this.token) {
+    if (!this.token || typeof window === 'undefined') {
       this.user = null;
       return;
     }
@@ -96,7 +96,8 @@ export class AuthService {
     try {
       const payload = this.token.split('.')[1];
       if (!payload) throw new Error('Invalid token format');
-      const decoded = JSON.parse(atob(payload));
+      // Use window.atob safely
+      const decoded = JSON.parse(window.atob(payload));
       this.user = {
         id: decoded.user_id || decoded.sub,
         username: decoded.sub,
@@ -116,7 +117,7 @@ export class AuthService {
    * Check if token is expired
    */
   private isTokenExpired(): boolean {
-    if (!this.user?.exp) return false;
+    if (!this.user?.exp || typeof window === 'undefined') return false;
     const currentTime = Math.floor(Date.now() / 1000);
     return this.user.exp < currentTime;
   }

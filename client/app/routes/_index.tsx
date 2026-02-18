@@ -50,7 +50,7 @@ export default function Index() {
               🌍 i18n Support
             </Title>
             <Text size="sm" c="dimmed">
-              Multi-language support with 4 languages out of the box
+              Multi-language support with 3 languages out of the box
             </Text>
           </Card>
 
@@ -68,73 +68,18 @@ export default function Index() {
               ⚡ Performance
             </Title>
             <Text size="sm" c="dimmed">
-              Server-side rendering with Remix for optimal performance
+              Server-side rendering with React Router for optimal performance
             </Text>
           </Card>
         </div>
 
-        {/* Controls */}
-        <Card shadow="lg" padding="xl" radius="md" className="bg-surface">
-          <Title order={3} className="mb-lg text-center">
-            Try the Features
-          </Title>
-
-          <Stack gap="md">
-            {/* Theme Toggle */}
-            <Group justify="space-between">
-              <div>
-                <Text fw={500}>Theme</Text>
-                <Text size="sm" c="dimmed">
-                  Current: {isDarkMode ? 'Dark' : 'Light'}
-                </Text>
-              </div>
-              <Button onClick={toggleTheme} variant="outline">
-                {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-              </Button>
-            </Group>
-
-            {/* Language Selector */}
-            <Group justify="space-between">
-              <div>
-                <Text fw={500}>Language</Text>
-                <Text size="sm" c="dimmed">
-                  Current: {language.toUpperCase()}
-                </Text>
-              </div>
-              <Group gap="xs">
-                <Button
-                  size="sm"
-                  variant={language === 'en' ? 'filled' : 'outline'}
-                  onClick={() => setLanguage('en')}
-                >
-                  EN
-                </Button>
-                <Button
-                  size="sm"
-                  variant={language === 'bn' ? 'filled' : 'outline'}
-                  onClick={() => setLanguage('bn')}
-                >
-                  BN
-                </Button>
-                <Button
-                  size="sm"
-                  variant={language === 'de' ? 'filled' : 'outline'}
-                  onClick={() => setLanguage('de')}
-                >
-                  DE
-                </Button>
-              </Group>
-            </Group>
-          </Stack>
-        </Card>
-
         {/* Call to Action */}
         <div className="text-center">
           <Text className="mb-md">
-            {t('common.hello', { name: 'Developer' })}
+            Welcome to our modern web application platform.
           </Text>
           <Button size="lg" variant="gradient" gradient={{ from: 'blue', to: 'cyan' }}>
-            {t('common.button_create')}
+            Get Started
           </Button>
         </div>
       </Stack>

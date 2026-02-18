@@ -34,24 +34,14 @@ export interface UseThemeReturn {
  * ```
  */
 export function useTheme(): UseThemeReturn {
-  try {
-    const { isDarkMode, theme, toggleTheme, setTheme } = useThemeContext();
+  const { isDarkMode, theme, toggleTheme, setTheme } = useThemeContext();
 
-    return {
-      isDarkMode,
-      theme,
-      toggleTheme,
-      setTheme,
-    };
-  } catch {
-    // Return default values during SSR or when used outside provider
-    return {
-      isDarkMode: false,
-      theme: 'light',
-      toggleTheme: () => {},
-      setTheme: () => {},
-    };
-  }
+  return {
+    isDarkMode,
+    theme,
+    toggleTheme,
+    setTheme,
+  };
 }
 
 export default useTheme;

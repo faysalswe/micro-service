@@ -6,7 +6,7 @@
 import {
   useTranslation as useI18nextTranslation,
   UseTranslationOptions,
-} from 'node_modules/react-i18next';
+} from 'react-i18next';
 import { useLanguage, useSetLanguage } from '~/components/providers';
 import type { SupportedLanguage } from '~/i18n/config';
 
@@ -52,14 +52,18 @@ export function useTranslation(
   options?: UseTranslationOptions<string>
 ): UseTranslationReturn {
   // Get language utilities from provider
+  // These will now throw if context is missing
   const language = useLanguage();
   const setLanguage = useSetLanguage();
 
   // Use react-i18next's useTranslation hook
-  const { t, ready } = useI18nextTranslation(ns, {
+  const { t, ready, i18n } = useI18nextTranslation(ns, {
     ...options,
     useSuspense: false, // Disable suspense for SSR
   });
+
+  // Ensure i18n instance is the one from our provider if possible
+  // react-i18next usually finds it via I18nextProvider
 
   return {
     t: t as TranslationFunction,

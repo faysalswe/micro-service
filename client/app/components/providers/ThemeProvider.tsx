@@ -160,13 +160,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children, initialTheme }
 export function useThemeContext(): ThemeContextValue {
   const context = useContext(ThemeContext);
   if (!context) {
-    // Return defaults during SSR or outside provider
-    return {
-      isDarkMode: false,
-      theme: 'light',
-      toggleTheme: () => {},
-      setTheme: () => {},
-    };
+    throw new Error('useThemeContext must be used within a ThemeProvider');
   }
   return context;
 }

@@ -48,11 +48,17 @@ interface AuthProviderProps {
  * Auth provider component
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [state, setState] = useState<AuthContextState>({
-    user: null,
-    isAuthenticated: false,
-    isLoading: true,
-    error: null,
+  const [state, setState] = useState<AuthContextState>(() => {
+    // During SSR, we start with isLoading: false because we can't check auth yet
+    // On the client, we'll initialize in useEffect
+    const isServer = typeof window === 'undefined';
+    
+    return {
+      user: null,
+      isAuthenticated: false,
+      isLoading: !isServer, // Only load on client
+      error: null,
+    };
   });
 
   /**

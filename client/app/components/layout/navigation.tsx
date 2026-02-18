@@ -4,10 +4,12 @@
  */
 
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Group, Button, Text, Box, Menu, Avatar, Burger } from '@mantine/core';
+import { Link, useLocation } from 'react-router';
+import { Group, Button, Text, Box, Menu, Avatar, Burger, ActionIcon } from '@mantine/core';
+import { IconLanguage, IconSun, IconMoon } from '@tabler/icons-react';
 import { useAuth } from '~/contexts/auth-context';
 import { useTheme } from '~/hooks/useTheme';
+import { useTranslation } from '~/hooks/useTranslation';
 
 /**
  * Navigation props
@@ -23,6 +25,7 @@ interface NavigationProps {
 export function Navigation({ opened, toggle }: NavigationProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const { language, setLanguage } = useTranslation();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -73,15 +76,38 @@ export function Navigation({ opened, toggle }: NavigationProps) {
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-4">
-            <Button
-              variant="subtle"
-              size="sm"
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Language Switcher */}
+            <Menu shadow="md" width={120}>
+              <Menu.Target>
+                <ActionIcon variant="subtle" size="lg" color="gray" title="Change language">
+                  <IconLanguage size={20} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>Language</Menu.Label>
+                <Menu.Item onClick={() => setLanguage('en')} bg={language === 'en' ? 'var(--mantine-color-blue-light)' : undefined}>
+                  English
+                </Menu.Item>
+                <Menu.Item onClick={() => setLanguage('bn')} bg={language === 'bn' ? 'var(--mantine-color-blue-light)' : undefined}>
+                  বাংলা
+                </Menu.Item>
+                <Menu.Item onClick={() => setLanguage('de')} bg={language === 'de' ? 'var(--mantine-color-blue-light)' : undefined}>
+                  Deutsch
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+
+            {/* Theme Toggle */}
+            <ActionIcon 
+              variant="subtle" 
+              size="lg" 
+              color="gray" 
               onClick={toggleTheme}
-              className="hidden sm:inline-flex"
+              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {isDarkMode ? '☀️ Light' : '🌙 Dark'}
-            </Button>
+              {isDarkMode ? <IconSun size={20} /> : <IconMoon size={20} />}
+            </ActionIcon>
 
             {isAuthenticated ? (
               <Menu shadow="md" width={200}>
@@ -154,16 +180,34 @@ export function Navigation({ opened, toggle }: NavigationProps) {
                   {link.label}
                 </Link>
               ))}
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-                <Button
-                  variant="subtle"
-                  size="sm"
-                  onClick={toggleTheme}
-                  fullWidth
-                  justify="start"
-                >
-                  {isDarkMode ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
-                </Button>
+              
+              <div className="pt-4 mt-2 border-t border-gray-200 dark:border-gray-800">
+                <Text size="xs" fw={700} c="dimmed" px="xs" mb="xs" tt="uppercase">
+                  Settings
+                </Text>
+                <Group gap="sm" px="xs">
+                  <Button 
+                    variant="subtle" 
+                    size="sm" 
+                    leftSection={isDarkMode ? <IconSun size={16} /> : <IconMoon size={16} />}
+                    onClick={toggleTheme}
+                  >
+                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                  </Button>
+                  
+                  <Menu shadow="md" width={150}>
+                    <Menu.Target>
+                      <Button variant="subtle" size="sm" leftSection={<IconLanguage size={16} />}>
+                        {language === 'en' ? 'English' : language === 'bn' ? 'বাংলা' : 'Deutsch'}
+                      </Button>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      <Menu.Item onClick={() => setLanguage('en')}>English</Menu.Item>
+                      <Menu.Item onClick={() => setLanguage('bn')}>বাংলা</Menu.Item>
+                      <Menu.Item onClick={() => setLanguage('de')}>Deutsch</Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
+                </Group>
               </div>
             </nav>
           </div>

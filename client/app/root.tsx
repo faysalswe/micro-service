@@ -13,6 +13,7 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from 'react-router';
+import { ColorSchemeScript } from '@mantine/core';
 import { ThemeProvider, I18nProvider } from '~/components/providers';
 import { getThemeFromRequest, getLanguageFromRequest, getCSSVariables } from '~/utils/theme.server';
 import { logRequest } from '~/utils/request-logger.server';
@@ -20,9 +21,9 @@ import { loadTranslations } from '~/i18n/config';
 import type { Theme } from '~/types';
 import type { SupportedLanguage } from '~/i18n/config';
 
-import globalStyles from '~/styles/globals.css?url';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
+import globalStyles from '~/styles/globals.css?url';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Notifications } from '@mantine/notifications';
 import { AuthProvider } from '~/contexts/auth-context';
@@ -114,6 +115,7 @@ export default function App() {
       <head>
         <Meta />
         <Links />
+        <ColorSchemeScript />
         <style
           dangerouslySetInnerHTML={{
             __html: cssVariables,
