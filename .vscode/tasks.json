@@ -1,0 +1,94 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-identity",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/IdentityService/IdentityService.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-order",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/OrderService/OrderService.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "watch-identity",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/IdentityService/IdentityService.csproj"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "watch-order",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/OrderService/OrderService.csproj"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "setup-all",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup-identity",
+        "setup-order",
+        "setup-payment",
+        "setup-client"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "setup-identity",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["restore", "${workspaceFolder}/IdentityService/IdentityService.csproj"]
+    },
+    {
+      "label": "setup-order",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["restore", "${workspaceFolder}/OrderService/OrderService.csproj"]
+    },
+    {
+      "label": "setup-payment",
+      "command": "npm",
+      "type": "process",
+      "args": ["install"],
+      "options": {
+        "cwd": "${workspaceFolder}/PaymentService"
+      }
+    },
+    {
+      "label": "setup-client",
+      "command": "npm",
+      "type": "process",
+      "args": ["install"],
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      }
+    }
+  ]
+}

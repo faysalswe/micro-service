@@ -1,0 +1,70 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "IdentityService",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-identity",
+      "program": "${workspaceFolder}/IdentityService/bin/Debug/net10.0/IdentityService.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/IdentityService",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "OrderService",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-order",
+      "program": "${workspaceFolder}/OrderService/bin/Debug/net10.0/OrderService.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/OrderService",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "PaymentService",
+      "type": "pwa-node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/PaymentService",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
+      "envFile": "${workspaceFolder}/PaymentService/.env",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Client (WebApp)",
+      "type": "pwa-node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/client",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "envFile": "${workspaceFolder}/client/.env",
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run All Projects",
+      "configurations": [
+        "IdentityService",
+        "OrderService",
+        "PaymentService",
+        "Client (WebApp)"
+      ]
+    }
+  ]
+}
