@@ -5,8 +5,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "react-router dev",
-    "build": "react-router build",
+    "dev": "npm run sync-tokens && react-router dev",
+    "sync-tokens": "tsx scripts/sync-tokens.ts",
+    "build": "npm run sync-tokens && react-router build",
     "start": "react-router-serve ./build/server/index.js",
     "lint": "eslint app --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint app --ext .ts,.tsx --fix",
@@ -49,6 +50,7 @@
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
     "vite-tsconfig-paths": "^5.1.4"

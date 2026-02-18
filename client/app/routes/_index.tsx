@@ -18,8 +18,7 @@ export const meta: MetaFunction = () => [
  * Home page component
  */
 export default function Index() {
-  const { t, language, setLanguage } = useTranslation();
-  const { isDarkMode, toggleTheme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Container size="lg" className="py-xl">

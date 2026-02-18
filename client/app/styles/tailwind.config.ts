@@ -14,114 +14,117 @@ const config: Config = {
 
   theme: {
     extend: {
-      // Colors
+      // Colors - mapped to CSS variables for transparency
       colors: {
         primary: {
-          DEFAULT: DESIGN_TOKENS.COLORS.PRIMARY,
-          light: DESIGN_TOKENS.COLORS.PRIMARY_LIGHT,
-          dark: DESIGN_TOKENS.COLORS.PRIMARY_DARK,
+          DEFAULT: 'var(--color-primary)',
+          light: 'var(--color-primary-light)',
+          dark: 'var(--color-primary-dark)',
         },
         secondary: {
-          DEFAULT: DESIGN_TOKENS.COLORS.SECONDARY,
-          light: DESIGN_TOKENS.COLORS.SECONDARY_LIGHT,
-          dark: DESIGN_TOKENS.COLORS.SECONDARY_DARK,
+          DEFAULT: 'var(--color-secondary)',
+          light: 'var(--color-secondary-light)',
+          dark: 'var(--color-secondary-dark)',
         },
         success: {
-          DEFAULT: DESIGN_TOKENS.COLORS.SUCCESS,
-          light: DESIGN_TOKENS.COLORS.SUCCESS_LIGHT,
-          dark: DESIGN_TOKENS.COLORS.SUCCESS_DARK,
+          DEFAULT: 'var(--color-success)',
+          light: 'var(--color-success-light)',
+          dark: 'var(--color-success-dark)',
         },
         error: {
-          DEFAULT: DESIGN_TOKENS.COLORS.ERROR,
-          light: DESIGN_TOKENS.COLORS.ERROR_LIGHT,
-          dark: DESIGN_TOKENS.COLORS.ERROR_DARK,
+          DEFAULT: 'var(--color-error)',
+          light: 'var(--color-error-light)',
+          dark: 'var(--color-error-dark)',
         },
         warning: {
-          DEFAULT: DESIGN_TOKENS.COLORS.WARNING,
-          light: DESIGN_TOKENS.COLORS.WARNING_LIGHT,
-          dark: DESIGN_TOKENS.COLORS.WARNING_DARK,
+          DEFAULT: 'var(--color-warning)',
+          light: 'var(--color-warning-light)',
+          dark: 'var(--color-warning-dark)',
         },
         info: {
-          DEFAULT: DESIGN_TOKENS.COLORS.INFO,
-          light: DESIGN_TOKENS.COLORS.INFO_LIGHT,
-          dark: DESIGN_TOKENS.COLORS.INFO_DARK,
+          DEFAULT: 'var(--color-info)',
+          light: 'var(--color-info-light)',
+          dark: 'var(--color-info-dark)',
         },
+        surface: 'var(--color-surface)',
+        border: 'var(--color-border)',
+        background: 'var(--color-background)',
       },
 
-      // Spacing
+      // Spacing - mapped to CSS variables
       spacing: {
-        xs: DESIGN_TOKENS.SPACING.XS,
-        sm: DESIGN_TOKENS.SPACING.SM,
-        md: DESIGN_TOKENS.SPACING.MD,
-        lg: DESIGN_TOKENS.SPACING.LG,
-        xl: DESIGN_TOKENS.SPACING.XL,
-        '2xl': DESIGN_TOKENS.SPACING.XXL,
-        '3xl': DESIGN_TOKENS.SPACING.XXXL,
+        xs: 'var(--spacing-xs)',
+        sm: 'var(--spacing-sm)',
+        md: 'var(--spacing-md)',
+        lg: 'var(--spacing-lg)',
+        xl: 'var(--spacing-xl)',
+        '2xl': 'var(--spacing-xxl)',
+        '3xl': 'var(--spacing-xxxl)',
       },
 
       // Font family
       fontFamily: {
-        sans: DESIGN_TOKENS.TYPOGRAPHY.FONT_FAMILY.SANS.split(', '),
-        mono: DESIGN_TOKENS.TYPOGRAPHY.FONT_FAMILY.MONO.split(', '),
+        sans: 'var(--font-family-sans)',
+        mono: 'var(--font-family-mono)',
       },
 
       // Font size
       fontSize: {
-        xs: DESIGN_TOKENS.TYPOGRAPHY.FONT_SIZE.XS,
-        sm: DESIGN_TOKENS.TYPOGRAPHY.FONT_SIZE.SM,
-        base: DESIGN_TOKENS.TYPOGRAPHY.FONT_SIZE.BASE,
-        lg: DESIGN_TOKENS.TYPOGRAPHY.FONT_SIZE.LG,
-        xl: DESIGN_TOKENS.TYPOGRAPHY.FONT_SIZE.XL,
-        '2xl': DESIGN_TOKENS.TYPOGRAPHY.FONT_SIZE.XXL,
-        '3xl': DESIGN_TOKENS.TYPOGRAPHY.FONT_SIZE.XXXL,
-        '4xl': DESIGN_TOKENS.TYPOGRAPHY.FONT_SIZE.XXXXL,
+        xs: 'var(--font-size-xs)',
+        sm: 'var(--font-size-sm)',
+        base: 'var(--font-size-base)',
+        lg: 'var(--font-size-lg)',
+        xl: 'var(--font-size-xl)',
+        '2xl': 'var(--font-size-xxl)',
+        '3xl': 'var(--font-size-xxxl)',
+        '4xl': 'var(--font-size-xxxxl)',
       },
 
       // Font weight
       fontWeight: {
-        normal: String(DESIGN_TOKENS.TYPOGRAPHY.FONT_WEIGHT.NORMAL),
-        medium: String(DESIGN_TOKENS.TYPOGRAPHY.FONT_WEIGHT.MEDIUM),
-        semibold: String(DESIGN_TOKENS.TYPOGRAPHY.FONT_WEIGHT.SEMIBOLD),
-        bold: String(DESIGN_TOKENS.TYPOGRAPHY.FONT_WEIGHT.BOLD),
+        normal: 'var(--font-weight-normal)',
+        medium: 'var(--font-weight-medium)',
+        semibold: 'var(--font-weight-semibold)',
+        bold: 'var(--font-weight-bold)',
       },
 
       // Box shadow
       boxShadow: {
-        sm: DESIGN_TOKENS.SHADOWS.SM,
-        DEFAULT: DESIGN_TOKENS.SHADOWS.MD,
-        md: DESIGN_TOKENS.SHADOWS.MD,
-        lg: DESIGN_TOKENS.SHADOWS.LG,
-        xl: DESIGN_TOKENS.SHADOWS.XL,
-        '2xl': DESIGN_TOKENS.SHADOWS.XXL,
+        sm: 'var(--shadow-sm)',
+        DEFAULT: 'var(--shadow-md)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        xl: 'var(--shadow-xl)',
+        '2xl': 'var(--shadow-xxl)',
       },
 
       // Border radius
       borderRadius: {
-        sm: DESIGN_TOKENS.RADIUS.SM,
-        DEFAULT: DESIGN_TOKENS.RADIUS.MD,
-        md: DESIGN_TOKENS.RADIUS.MD,
-        lg: DESIGN_TOKENS.RADIUS.LG,
-        xl: DESIGN_TOKENS.RADIUS.XL,
-        full: DESIGN_TOKENS.RADIUS.FULL,
+        sm: 'var(--radius-sm)',
+        DEFAULT: 'var(--radius-md)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+        full: 'var(--radius-full)',
       },
 
       // Z-index
       zIndex: {
-        base: String(DESIGN_TOKENS.Z_INDEX.BASE),
-        dropdown: String(DESIGN_TOKENS.Z_INDEX.DROPDOWN),
-        sticky: String(DESIGN_TOKENS.Z_INDEX.STICKY),
-        fixed: String(DESIGN_TOKENS.Z_INDEX.FIXED),
-        'modal-backdrop': String(DESIGN_TOKENS.Z_INDEX.MODAL_BACKDROP),
-        modal: String(DESIGN_TOKENS.Z_INDEX.MODAL),
-        popover: String(DESIGN_TOKENS.Z_INDEX.POPOVER),
-        tooltip: String(DESIGN_TOKENS.Z_INDEX.TOOLTIP),
+        base: 'var(--z-base)',
+        dropdown: 'var(--z-dropdown)',
+        sticky: 'var(--z-sticky)',
+        fixed: 'var(--z-fixed)',
+        'modal-backdrop': 'var(--z-modal-backdrop)',
+        modal: 'var(--z-modal)',
+        popover: 'var(--z-popover)',
+        tooltip: 'var(--z-tooltip)',
       },
 
       // Transitions
       transitionDuration: {
-        fast: DESIGN_TOKENS.TRANSITIONS.DURATION.FAST,
-        normal: DESIGN_TOKENS.TRANSITIONS.DURATION.NORMAL,
-        slow: DESIGN_TOKENS.TRANSITIONS.DURATION.SLOW,
+        fast: 'var(--transition-fast)',
+        normal: 'var(--transition-normal)',
+        slow: 'var(--transition-slow)',
       },
 
       transitionTimingFunction: {
@@ -149,15 +152,15 @@ const config: Config = {
         '.grid-auto': {
           display: 'grid',
           'grid-template-columns': 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: DESIGN_TOKENS.SPACING.MD,
+          gap: 'var(--spacing-md)',
         },
         '.container-fixed': {
           width: '100%',
           'max-width': '1280px',
           'margin-left': 'auto',
           'margin-right': 'auto',
-          'padding-left': DESIGN_TOKENS.SPACING.MD,
-          'padding-right': DESIGN_TOKENS.SPACING.MD,
+          'padding-left': 'var(--spacing-md)',
+          'padding-right': 'var(--spacing-md)',
         },
         '.text-truncate': {
           overflow: 'hidden',

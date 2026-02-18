@@ -21,9 +21,10 @@ import { loadTranslations } from '~/i18n/config';
 import type { Theme } from '~/types';
 import type { SupportedLanguage } from '~/i18n/config';
 
-import '@mantine/core/styles.css';
-import '@mantine/notifications/styles.css';
+import mantineCoreStyles from '@mantine/core/styles.css?url';
+import mantineNotificationsStyles from '@mantine/notifications/styles.css?url';
 import globalStyles from '~/styles/globals.css?url';
+
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Notifications } from '@mantine/notifications';
 import { AuthProvider } from '~/contexts/auth-context';
@@ -46,6 +47,8 @@ export const meta: MetaFunction = () => [
  */
 export const links: LinksFunction = () => [
   { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+  { rel: 'stylesheet', href: mantineCoreStyles },
+  { rel: 'stylesheet', href: mantineNotificationsStyles },
   { rel: 'stylesheet', href: globalStyles },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
@@ -66,7 +69,6 @@ interface RootLoaderData {
   theme: Theme;
   language: SupportedLanguage;
   translations: Record<string, unknown>;
-  cssVariables: string;
   env: {
     NODE_ENV: string;
     API_URL?: string;
@@ -88,14 +90,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Load translations for SSR
   const translations = await loadTranslations(language);
 
-  // Generate CSS variables on server
-  const cssVariables = getCSSVariables(theme);
-
   return json<RootLoaderData>({
     theme,
     language,
     translations,
-    cssVariables,
     env: {
       NODE_ENV: process.env['NODE_ENV'] ?? 'development',
       API_URL: process.env['API_URL'],
@@ -107,20 +105,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
  * Root component
  */
 export default function App() {
-  const { theme, language, translations, cssVariables, env } = useLoaderData<typeof loader>();
+  const { theme, language, translations, env } = useLoaderData<typeof loader>();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <html lang={language} data-theme={theme}>
+    <html lang={language} data-theme={theme} style={{ colorScheme: theme }}>
       <head>
         <Meta />
         <Links />
-        <ColorSchemeScript />
-        <style
-          dangerouslySetInnerHTML={{
-            __html: cssVariables,
-          }}
-        />
+        <ColorSchemeScript defaultColorScheme={theme} />
       </head>
       <body>
         <ThemeProvider initialTheme={theme}>

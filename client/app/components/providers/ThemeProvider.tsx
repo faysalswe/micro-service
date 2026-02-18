@@ -73,18 +73,18 @@ function getStoredTheme(): Theme | null {
  * @param {Theme} [initialTheme] - Initial theme (defaults to stored or system preference)
  * @returns {JSX.Element} Provider component
  */
-export const ThemeProvider: FC<ThemeProviderProps> = ({ children, initialTheme }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (initialTheme) return initialTheme;
-    return getStoredTheme() ?? getSystemTheme();
-  });
-
+export const ThemeProvider: FC<ThemeProviderProps> = ({ children, initialTheme = 'light' }) => {
+  const [theme, setThemeState] = useState<Theme>(initialTheme);
   const [mounted, setMounted] = useState(false);
 
-  // Handle hydration
+  // Sync with localStorage AFTER mount to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
-  }, []);
+    const stored = getStoredTheme();
+    if (stored && stored !== initialTheme) {
+      setThemeState(stored);
+    }
+  }, [initialTheme]);
 
   // Sync theme with document and localStorage (client-side only)
   useEffect(() => {
@@ -148,7 +148,9 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children, initialTheme }
   // Always render MantineProvider, even during SSR
   return (
     <ThemeContext.Provider value={contextValue}>
-      <MantineProvider theme={mantineTheme}>{children}</MantineProvider>
+      <MantineProvider theme={mantineTheme} forceColorScheme={theme}>
+        {children}
+      </MantineProvider>
     </ThemeContext.Provider>
   );
 };
