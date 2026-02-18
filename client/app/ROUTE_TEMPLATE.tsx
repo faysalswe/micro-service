@@ -22,7 +22,7 @@ import { useLoaderData, useActionData, Form, useNavigation } from 'react-router'
 import { Button, Container, Title, Text } from '@mantine/core';
 import { useTranslation } from '~/hooks';
 import { getThemeFromRequest, getLanguageFromRequest } from '~/utils/theme.server';
-import { NotFoundError, ValidationError } from '~/utils/errors';
+import { NotFoundError } from '~/utils/errors';
 
 /**
  * Loader data type
@@ -71,7 +71,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const language = getLanguageFromRequest(request);
 
   // Fetch data (example)
-  const itemId = params.id;
+  const itemId = params['id'];
   if (!itemId) {
     throw new NotFoundError('Item');
   }
@@ -107,7 +107,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       // Validation
       const errors: Record<string, string> = {};
       if (!name || typeof name !== 'string') {
-        errors.name = 'Name is required';
+        errors['name'] = 'Name is required';
       }
 
       if (Object.keys(errors).length > 0) {
@@ -115,13 +115,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
       }
 
       // Update item (example)
-      await updateItem(params.id ?? '', { name: String(name), description: String(description) });
+      await updateItem(params['id'] ?? '', { name: String(name), description: String(description) });
 
-      return redirect(`/items/${params.id ?? ''}`);
+      return redirect(`/items/${params['id'] ?? ''}`);
     }
 
     if (intent === 'delete') {
-      await deleteItem(params.id ?? '');
+      await deleteItem(params['id'] ?? '');
       return redirect('/items');
     }
 
@@ -215,14 +215,14 @@ async function fetchItem(id: string): Promise<LoaderData['item'] | null> {
 }
 
 async function updateItem(
-  id: string,
-  data: { name: string; description: string }
+  _id: string,
+  _data: { name: string; description: string }
 ): Promise<void> {
   // Replace with actual API call
   await Promise.resolve();
 }
 
-async function deleteItem(id: string): Promise<void> {
+async function deleteItem(_id: string): Promise<void> {
   // Replace with actual API call
   await Promise.resolve();
 }

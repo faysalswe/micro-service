@@ -14,20 +14,96 @@ type Pages = {
   "/": {
     params: {};
   };
+  "/login": {
+    params: {};
+  };
+  "/register": {
+    params: {};
+  };
+  "/profile": {
+    params: {};
+  };
+  "/dashboard": {
+    params: {};
+  };
+  "/orders": {
+    params: {};
+  };
+  "/orders/new": {
+    params: {};
+  };
+  "/orders/:id": {
+    params: {
+      "id": string;
+    };
+  };
+  "/payments": {
+    params: {};
+  };
+  "/payments/:id": {
+    params: {
+      "id": string;
+    };
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/";
+    page: "/" | "/login" | "/register" | "/profile" | "/dashboard" | "/orders" | "/orders/new" | "/orders/:id" | "/payments" | "/payments/:id";
   };
   "routes/_index.tsx": {
     id: "routes/_index";
     page: "/";
+  };
+  "routes/login.tsx": {
+    id: "routes/login";
+    page: "/login";
+  };
+  "routes/register.tsx": {
+    id: "routes/register";
+    page: "/register";
+  };
+  "routes/profile.tsx": {
+    id: "routes/profile";
+    page: "/profile";
+  };
+  "routes/dashboard.tsx": {
+    id: "routes/dashboard";
+    page: "/dashboard";
+  };
+  "routes/orders.tsx": {
+    id: "routes/orders";
+    page: "/orders";
+  };
+  "routes/orders.new.tsx": {
+    id: "routes/orders.new";
+    page: "/orders/new";
+  };
+  "routes/orders.$id.tsx": {
+    id: "routes/orders.$id";
+    page: "/orders/:id";
+  };
+  "routes/payments.tsx": {
+    id: "routes/payments";
+    page: "/payments";
+  };
+  "routes/payments.$id.tsx": {
+    id: "routes/payments.$id";
+    page: "/payments/:id";
   };
 };
 
 type RouteModules = {
   "root": typeof import("./app/root.tsx");
   "routes/_index": typeof import("./app/routes/_index.tsx");
+  "routes/login": typeof import("./app/routes/login.tsx");
+  "routes/register": typeof import("./app/routes/register.tsx");
+  "routes/profile": typeof import("./app/routes/profile.tsx");
+  "routes/dashboard": typeof import("./app/routes/dashboard.tsx");
+  "routes/orders": typeof import("./app/routes/orders.tsx");
+  "routes/orders.new": typeof import("./app/routes/orders.new.tsx");
+  "routes/orders.$id": typeof import("./app/routes/orders.$id.tsx");
+  "routes/payments": typeof import("./app/routes/payments.tsx");
+  "routes/payments.$id": typeof import("./app/routes/payments.$id.tsx");
 };

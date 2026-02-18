@@ -56,9 +56,9 @@ export const ComponentName: FC<ComponentNameProps> = ({
   // Define effects here
 
   // ========== EVENT HANDLERS ==========
-  const handleClick = (): void => {
-    // Handler logic
-  };
+  // const handleClick = (): void => {
+  //   // Handler logic
+  // };
 
   // ========== COMPUTED VALUES ==========
   // Define memoized values here

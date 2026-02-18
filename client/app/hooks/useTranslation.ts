@@ -49,7 +49,7 @@ export interface UseTranslationReturn {
  */
 export function useTranslation(
   ns?: string,
-  options?: UseTranslationOptions
+  options?: UseTranslationOptions<string>
 ): UseTranslationReturn {
   // Get language utilities from provider
   const language = useLanguage();

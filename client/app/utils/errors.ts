@@ -199,7 +199,7 @@ export function formatError(error: unknown): {
  * @param {Record<string, unknown>} [context] - Additional context
  */
 export function logError(error: unknown, context?: Record<string, unknown>): void {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env['NODE_ENV'] === 'development') {
     console.error('Error:', error);
     if (context) {
       console.error('Context:', context);

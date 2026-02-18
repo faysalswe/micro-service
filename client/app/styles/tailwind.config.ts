@@ -134,7 +134,7 @@ const config: Config = {
 
   plugins: [
     // Custom utility plugin
-    function ({ addUtilities }) {
+    function ({ addUtilities }: any) {
       const newUtilities = {
         '.flex-center': {
           display: 'flex',

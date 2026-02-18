@@ -4,7 +4,7 @@
 
 import { createContext, FC, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { I18nextProvider, initReactI18next } from 'node_modules/react-i18next';
-import i18next, { type i18n as I18nInstance } from 'i18next';
+import i18next, { type i18n as I18nInstance, Resource, InitOptions } from 'i18next';
 import type { SupportedLanguage } from '~/i18n/config';
 import { loadClientTranslations } from '~/i18n/i18n.client';
 
@@ -42,10 +42,10 @@ function createI18nInstance(language: SupportedLanguage, resources: Record<strin
   instance.use(initReactI18next);
 
   // Initialize with resources - this is synchronous when initImmediate is false
-  instance.init({
+  const initOptions: InitOptions = {
     lng: language,
     fallbackLng: 'en',
-    resources,
+    resources: resources as Resource,
     ns: ['translation'],
     defaultNS: 'translation',
     // Disable separators since we use dots in the keys themselves
@@ -59,7 +59,8 @@ function createI18nInstance(language: SupportedLanguage, resources: Record<strin
     },
     // Force synchronous initialization
     initImmediate: false,
-  });
+  };
+  instance.init(initOptions);
 
   return instance;
 }

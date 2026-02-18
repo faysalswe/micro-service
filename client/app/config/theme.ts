@@ -13,8 +13,6 @@ import { DESIGN_TOKENS } from './tokens';
  */
 export function createMantineTheme(isDark: boolean): MantineThemeOverride {
   return {
-    colorScheme: isDark ? 'dark' : 'light',
-
     // Map design tokens to Mantine colors
     colors: {
       primary: [

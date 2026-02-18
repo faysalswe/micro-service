@@ -26,7 +26,7 @@ export interface MergedTokens extends DesignTokens {
  */
 export interface UseThemeTokensReturn {
   tokens: DesignTokens;
-  isDark: boolean;
+  isDarkMode: boolean;
   current: MergedTokens;
 }
 
@@ -36,7 +36,7 @@ export interface UseThemeTokensReturn {
  * @example
  * ```tsx
  * function MyComponent() {
- *   const { tokens, isDark, current } = useThemeTokens();
+ *   const { tokens, isDarkMode, current } = useThemeTokens();
  *
  *   return (
  *     <div
@@ -47,43 +47,43 @@ export interface UseThemeTokensReturn {
  *         borderRadius: tokens.RADIUS.MD,
  *       }}
  *     >
- *       <p>Current theme: {isDark ? 'Dark' : 'Light'}</p>
+ *       <p>Current theme: {isDarkMode ? 'Dark' : 'Light'}</p>
  *     </div>
  *   );
  * }
  * ```
  */
 export function useThemeTokens(): UseThemeTokensReturn {
-  const { isDark } = useTheme();
+  const { isDarkMode } = useTheme();
 
   // Merge theme-specific color values
   const current = useMemo<MergedTokens>(() => {
     const currentColors = {
-      TEXT_PRIMARY: isDark
+      TEXT_PRIMARY: isDarkMode
         ? DESIGN_TOKENS.COLORS.DARK_TEXT_PRIMARY
         : DESIGN_TOKENS.COLORS.LIGHT_TEXT_PRIMARY,
-      TEXT_SECONDARY: isDark
+      TEXT_SECONDARY: isDarkMode
         ? DESIGN_TOKENS.COLORS.DARK_TEXT_SECONDARY
         : DESIGN_TOKENS.COLORS.LIGHT_TEXT_SECONDARY,
-      TEXT_TERTIARY: isDark
+      TEXT_TERTIARY: isDarkMode
         ? DESIGN_TOKENS.COLORS.DARK_TEXT_TERTIARY
         : DESIGN_TOKENS.COLORS.LIGHT_TEXT_TERTIARY,
-      BACKGROUND: isDark
+      BACKGROUND: isDarkMode
         ? DESIGN_TOKENS.COLORS.DARK_BACKGROUND
         : DESIGN_TOKENS.COLORS.LIGHT_BACKGROUND,
-      SURFACE: isDark ? DESIGN_TOKENS.COLORS.DARK_SURFACE : DESIGN_TOKENS.COLORS.LIGHT_SURFACE,
-      BORDER: isDark ? DESIGN_TOKENS.COLORS.DARK_BORDER : DESIGN_TOKENS.COLORS.LIGHT_BORDER,
+      SURFACE: isDarkMode ? DESIGN_TOKENS.COLORS.DARK_SURFACE : DESIGN_TOKENS.COLORS.LIGHT_SURFACE,
+      BORDER: isDarkMode ? DESIGN_TOKENS.COLORS.DARK_BORDER : DESIGN_TOKENS.COLORS.LIGHT_BORDER,
     };
 
     return {
       ...DESIGN_TOKENS,
       CURRENT_COLORS: currentColors,
     };
-  }, [isDark]);
+  }, [isDarkMode]);
 
   return {
     tokens: DESIGN_TOKENS,
-    isDark,
+    isDarkMode,
     current,
   };
 }

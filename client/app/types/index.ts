@@ -47,7 +47,7 @@ export interface ApiResponse<T = unknown> {
  * API error interface
  */
 export interface ApiError {
-  code: string;
+  code?: string;
   message: string;
   details?: Record<string, string[]>;
   statusCode: number;

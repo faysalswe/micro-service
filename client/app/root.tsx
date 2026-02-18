@@ -15,12 +15,20 @@ import {
 } from 'react-router';
 import { ThemeProvider, I18nProvider } from '~/components/providers';
 import { getThemeFromRequest, getLanguageFromRequest, getCSSVariables } from '~/utils/theme.server';
+import { logRequest } from '~/utils/request-logger.server';
 import { loadTranslations } from '~/i18n/config';
 import type { Theme } from '~/types';
 import type { SupportedLanguage } from '~/i18n/config';
 
 import globalStyles from '~/styles/globals.css?url';
 import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { Notifications } from '@mantine/notifications';
+import { AuthProvider } from '~/contexts/auth-context';
+import { queryClient } from '~/lib/react-query';
+import { Navigation } from '~/components/layout/navigation';
+import { useState } from 'react';
 
 /**
  * Meta tags for the app
@@ -70,6 +78,9 @@ interface RootLoaderData {
  * @returns {Promise<Response>} JSON response with initial data
  */
 export async function loader({ request }: LoaderFunctionArgs) {
+  // Log incoming request in development
+  logRequest(request);
+
   const theme = getThemeFromRequest(request);
   const language = getLanguageFromRequest(request);
 
@@ -85,8 +96,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     translations,
     cssVariables,
     env: {
-      NODE_ENV: process.env.NODE_ENV ?? 'development',
-      API_URL: process.env.API_URL,
+      NODE_ENV: process.env['NODE_ENV'] ?? 'development',
+      API_URL: process.env['API_URL'],
     },
   });
 }
@@ -96,6 +107,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
  */
 export default function App() {
   const { theme, language, translations, cssVariables, env } = useLoaderData<typeof loader>();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <html lang={language} data-theme={theme}>
@@ -111,14 +123,20 @@ export default function App() {
       <body>
         <ThemeProvider initialTheme={theme}>
           <I18nProvider initialLanguage={language} initialResources={translations}>
-            <Outlet />
-            <ScrollRestoration />
-            <Scripts />
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `window.ENV = ${JSON.stringify(env)}`,
-              }}
-            />
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <Notifications />
+                <Navigation opened={mobileMenuOpen} toggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
+                <Outlet />
+                <ScrollRestoration />
+                <Scripts />
+                <script
+                  dangerouslySetInnerHTML={{
+                    __html: `window.ENV = ${JSON.stringify(env)}`,
+                  }}
+                />
+              </AuthProvider>
+            </QueryClientProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>

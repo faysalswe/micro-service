@@ -37,22 +37,34 @@ export const Z_INDEX = {
 } as const;
 
 /**
- * API endpoints
+ * API endpoints (proxied through Vite dev server to avoid CORS)
+ * Proxy configuration in vite.config.ts routes:
+ *   /auth/* → IdentityService (5010)
+ *   /api/orders/* → OrderService (5011)
+ *   /api/payments/* → PaymentService (5012)
  */
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/api/auth/login',
-    LOGOUT: '/api/auth/logout',
-    REGISTER: '/api/auth/register',
-    REFRESH: '/api/auth/refresh',
-    RESET_PASSWORD: '/api/auth/reset-password',
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    // Note: Other auth endpoints not implemented in backend
   },
   USERS: {
-    GET_ALL: '/api/users',
-    GET_BY_ID: (id: string) => `/api/users/${id}`,
-    CREATE: '/api/users',
-    UPDATE: (id: string) => `/api/users/${id}`,
-    DELETE: (id: string) => `/api/users/${id}`,
+    GET_ALL: '/auth/users',
+    GET_BY_ID: (id: string) => `/auth/users/${id}`,
+    // CREATE, UPDATE, DELETE not implemented in backend
+  },
+  ORDERS: {
+    LIST: '/api/orders',
+    DETAIL: (id: string) => `/api/orders/${id}`,
+    CREATE: '/api/orders',
+    CANCEL: (id: string) => `/api/orders/${id}`,
+    SAGA: (id: string) => `/api/orders/${id}/saga`,
+  },
+  PAYMENTS: {
+    LIST: '/api/payments',
+    DETAIL: (id: string) => `/api/payments/${id}`,
+    REFUND: (id: string) => `/api/payments/${id}/refund`,
   },
 } as const;
 

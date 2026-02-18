@@ -3,8 +3,6 @@
  * Internationalization setup for SSR-compatible translations
  */
 
-import i18next, { i18n as I18nInstance } from 'i18next';
-import { initReactI18next } from 'node_modules/react-i18next';
 
 /**
  * Supported languages
