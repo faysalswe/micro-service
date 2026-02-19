@@ -58,6 +58,17 @@ services:
     ports:
       - "50052:50052"
 
+  # Angular Admin Tool
+  admin-tool:
+    build:
+      context: .
+      dockerfile: admin-tool/Dockerfile
+    container_name: admin-tool
+    ports:
+      - "4200:80"
+    depends_on:
+      - inventory-service
+
   # API Gateway (Kong)
   kong:
     image: kong:3.4
