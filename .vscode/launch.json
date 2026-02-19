@@ -36,11 +36,20 @@
       }
     },
     {
+      "name": "InventoryService",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/InventoryService/cmd/server/main.go",
+      "cwd": "${workspaceFolder}/InventoryService",
+      "envFile": "${workspaceFolder}/InventoryService/.env"
+    },
+    {
       "name": "PaymentService",
       "type": "pwa-node",
       "request": "launch",
       "cwd": "${workspaceFolder}/PaymentService",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "start"],
       "envFile": "${workspaceFolder}/PaymentService/.env",
       "console": "integratedTerminal"
@@ -50,9 +59,18 @@
       "type": "pwa-node",
       "request": "launch",
       "cwd": "${workspaceFolder}/storefront",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "dev"],
       "envFile": "${workspaceFolder}/storefront/.env",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Admin Tool (Angular)",
+      "type": "pwa-node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/admin-tool",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "start"],
       "console": "integratedTerminal"
     }
   ],
@@ -62,8 +80,10 @@
       "configurations": [
         "IdentityService",
         "OrderService",
+        "InventoryService",
         "PaymentService",
-        "Storefront (React)"
+        "Storefront (React)",
+        "Admin Tool (Angular)"
       ]
     }
   ]

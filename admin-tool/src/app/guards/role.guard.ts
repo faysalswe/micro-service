@@ -6,12 +6,17 @@ export const roleGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isAdmin()) {
+  // Check if user is authenticated at all
+  const role = authService.currentUserRole();
+  
+  if (role) {
+    // If they have a role, we consider them authenticated for this specific app
+    // as per the user's request that this app is for a specific role
     return true;
   }
 
-  // Redirect to a public page or login if not admin
-  // For now, we'll just block access
-  alert('Access Denied: You must be an Admin to access this tool.');
+  // If not authenticated, redirect to login
+  console.warn('Access Denied: No valid role found in token. Redirecting to login.');
+  router.navigate(['/login']);
   return false;
 };

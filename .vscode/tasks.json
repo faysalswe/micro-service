@@ -55,8 +55,10 @@
       "dependsOn": [
         "setup-identity",
         "setup-order",
+        "setup-inventory",
         "setup-payment",
-        "setup-storefront"
+        "setup-storefront",
+        "setup-admin-tool"
       ],
       "problemMatcher": []
     },
@@ -73,8 +75,17 @@
       "args": ["restore", "${workspaceFolder}/OrderService/OrderService.csproj"]
     },
     {
+      "label": "setup-inventory",
+      "command": "go",
+      "type": "process",
+      "args": ["mod", "download"],
+      "options": {
+        "cwd": "${workspaceFolder}/InventoryService"
+      }
+    },
+    {
       "label": "setup-payment",
-      "command": "npm",
+      "command": "pnpm",
       "type": "process",
       "args": ["install"],
       "options": {
@@ -83,11 +94,20 @@
     },
     {
       "label": "setup-storefront",
-      "command": "npm",
+      "command": "pnpm",
       "type": "process",
       "args": ["install"],
       "options": {
         "cwd": "${workspaceFolder}/storefront"
+      }
+    },
+    {
+      "label": "setup-admin-tool",
+      "command": "pnpm",
+      "type": "process",
+      "args": ["install"],
+      "options": {
+        "cwd": "${workspaceFolder}/admin-tool"
       }
     }
   ]

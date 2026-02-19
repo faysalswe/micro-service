@@ -23,86 +23,91 @@ import { FloatLabelModule } from 'primeng/floatlabel';
     FloatLabelModule
   ],
   template: `
-    <div class="max-w-3xl mx-auto py-12 px-4">
-      <div class="mb-8 flex items-center gap-4">
-        <p-button icon="pi pi-arrow-left" [text]="true" routerLink="/"></p-button>
-        <h2 class="text-3xl font-bold text-gray-900">
-          {{ isEditMode ? 'Edit Product Details' : 'Onboard New Product' }}
-        </h2>
+    <div style="max-width: 800px; margin: 0 auto;">
+      <!-- Header -->
+      <div class="flex items-center gap-3" style="margin-bottom: var(--space-8);">
+        <p-button icon="pi pi-chevron-left" [text]="true" routerLink="/" severity="secondary" 
+                  styleClass="card-base" [style]="{'padding': 'var(--space-4)', 'background': 'white'}"></p-button>
+        <div>
+            <h2 class="title-page">
+              {{ isEditMode ? 'Edit Product' : 'New Product Entry' }}
+            </h2>
+            <p class="subtitle-page">Configure inventory details for the global catalog.</p>
+        </div>
       </div>
 
-      <p-card styleClass="shadow-lg border-t-4 border-indigo-600">
-        <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 p-4">
+      <div class="card-base">
+        <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-10">
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <p-floatlabel variant="on">
-                <input pInputText id="productID" formControlName="productID" [readOnly]="isEditMode" class="w-full" />
-                <label for="productID">Product Identifier (SKU)</label>
-            </p-floatlabel>
+          <div class="flex flex-col gap-6">
+            <h3 class="section-title">General Information</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-8);">
+                <div class="flex flex-col gap-2">
+                    <p-floatlabel variant="on">
+                        <input pInputText id="productID" formControlName="productID" [readOnly]="isEditMode" class="w-full" style="padding: var(--space-4);" />
+                        <label for="productID">SKU Identifier</label>
+                    </p-floatlabel>
+                    <small style="color: var(--error); font-weight: 600; padding-left: var(--space-2);" *ngIf="productForm.get('productID')?.invalid && productForm.get('productID')?.touched">SKU is required.</small>
+                </div>
 
-            <p-floatlabel variant="on">
-                <input pInputText id="name" formControlName="name" class="w-full" />
-                <label for="name">Commercial Name</label>
-            </p-floatlabel>
+                <div class="flex flex-col gap-2">
+                    <p-floatlabel variant="on">
+                        <input pInputText id="name" formControlName="name" class="w-full" style="padding: var(--space-4);" />
+                        <label for="name">Product Name</label>
+                    </p-floatlabel>
+                    <small style="color: var(--error); font-weight: 600; padding-left: var(--space-2);" *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched">Name is required.</small>
+                </div>
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <p-floatlabel variant="on">
-                <p-inputNumber 
-                    id="price" 
-                    formControlName="price" 
-                    mode="currency" 
-                    currency="USD" 
-                    locale="en-US" 
-                    styleClass="w-full"
-                    inputStyleClass="w-full"
-                ></p-inputNumber>
-                <label for="price">Unit Price</label>
-            </p-floatlabel>
+          <div class="flex flex-col gap-6">
+            <h3 class="section-title" style="border-left-color: var(--success);">Inventory & Pricing</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-8);">
+                <div class="flex flex-col gap-2">
+                    <p-floatlabel variant="on">
+                        <p-inputNumber 
+                            id="price" 
+                            formControlName="price" 
+                            mode="currency" 
+                            currency="USD" 
+                            locale="en-US" 
+                            styleClass="w-full"
+                            inputStyleClass="w-full"
+                            [inputStyle]="{'padding': 'var(--space-4)'}"
+                        ></p-inputNumber>
+                        <label for="price">Unit Price</label>
+                    </p-floatlabel>
+                </div>
 
-            <p-floatlabel variant="on">
-                <p-inputNumber 
-                    id="quantity" 
-                    formControlName="quantity" 
-                    [showButtons]="true" 
-                    [min]="0"
-                    styleClass="w-full"
-                    inputStyleClass="w-full"
-                ></p-inputNumber>
-                <label for="quantity">Initial Inventory Level</label>
-            </p-floatlabel>
+                <div class="flex flex-col gap-2">
+                    <p-floatlabel variant="on">
+                        <p-inputNumber 
+                            id="quantity" 
+                            formControlName="quantity" 
+                            [showButtons]="true" 
+                            [min]="0"
+                            styleClass="w-full"
+                            inputStyleClass="w-full"
+                            [inputStyle]="{'padding': 'var(--space-4)'}"
+                        ></p-inputNumber>
+                        <label for="quantity">Stock Quantity</label>
+                    </p-floatlabel>
+                </div>
+            </div>
           </div>
 
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div class="flex justify-between items-center" style="padding-top: var(--space-8); border-top: 1px solid var(--slate-100);">
+            <p-button label="Cancel" severity="secondary" [text]="true" routerLink="/"></p-button>
             <p-button 
-                label="Cancel" 
-                severity="secondary" 
-                [text]="true" 
-                routerLink="/"
-                [disabled]="loading"
-            ></p-button>
-            <p-button 
-                [label]="loading ? 'Processing...' : (isEditMode ? 'Save Changes' : 'Create Product')" 
-                [icon]="loading ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+                [label]="loading ? 'Saving...' : (isEditMode ? 'Update Product' : 'Create Product')" 
+                [icon]="loading ? 'pi pi-spin pi-spinner' : 'pi pi-check-circle'"
                 type="submit" 
                 [disabled]="productForm.invalid || loading"
                 severity="primary"
+                [style]="{'padding': 'var(--space-4) var(--space-10)', 'font-weight': '700'}"
             ></p-button>
           </div>
         </form>
-      </p-card>
-
-      <div class="mt-8 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-        <div class="flex gap-3">
-          <i class="pi pi-info-circle text-indigo-600 mt-1"></i>
-          <div>
-            <h4 class="text-indigo-900 font-semibold text-sm">Real-time Synchronization</h4>
-            <p class="text-indigo-700 text-xs mt-1">
-              Changes made here are persisted directly to the PostgreSQL database in the <strong>Go Inventory Service</strong>. 
-              These changes will immediately appear in the React Customer App.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   `
@@ -143,29 +148,17 @@ export class ProductFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.productForm.invalid) return;
-
     this.loading = true;
     const productData = this.productForm.value;
-
     if (this.isEditMode) {
       this.inventoryService.updateProduct(productData.productID, productData).subscribe({
-        next: () => {
-          this.router.navigate(['/']);
-        },
-        error: (err) => {
-          alert('Error updating product: ' + err.message);
-          this.loading = false;
-        }
+        next: () => this.router.navigate(['/']),
+        error: (err) => { alert('Error updating product: ' + err.message); this.loading = false; }
       });
     } else {
       this.inventoryService.createProduct(productData).subscribe({
-        next: () => {
-          this.router.navigate(['/']);
-        },
-        error: (err) => {
-          alert('Error creating product: ' + err.message);
-          this.loading = false;
-        }
+        next: () => this.router.navigate(['/']),
+        error: (err) => { alert('Error creating product: ' + err.message); this.loading = false; }
       });
     }
   }
