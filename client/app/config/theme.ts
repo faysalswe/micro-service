@@ -3,7 +3,7 @@
  * Maps design tokens to Mantine's theme structure
  */
 
-import { createTheme, MantineThemeOverride } from '@mantine/core';
+import { createTheme } from '@mantine/core';
 import { DESIGN_TOKENS } from './tokens';
 
 /**

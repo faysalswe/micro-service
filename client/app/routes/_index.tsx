@@ -3,8 +3,8 @@
  */
 
 import type { MetaFunction } from 'react-router';
-import { Container, Title, Text, Button, Card, Group, Stack } from '@mantine/core';
-import { useTranslation, useTheme } from '~/hooks';
+import { Container, Title, Text, Button, Card, Stack } from '@mantine/core';
+import { useTranslation } from '~/hooks';
 
 /**
  * Meta tags for home page

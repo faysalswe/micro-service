@@ -37,17 +37,6 @@ interface ThemeProviderProps {
 const THEME_STORAGE_KEY = 'app_theme';
 
 /**
- * Get system theme preference
- * @returns Preferred theme based on system settings
- */
-function getSystemTheme(): Theme {
-  if (typeof window === 'undefined') return 'light';
-
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  return mediaQuery.matches ? 'dark' : 'light';
-}
-
-/**
  * Get stored theme from localStorage
  * @returns Stored theme or null
  */

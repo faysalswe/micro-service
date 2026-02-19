@@ -15,7 +15,7 @@ import {
 } from 'react-router';
 import { ColorSchemeScript } from '@mantine/core';
 import { ThemeProvider, I18nProvider } from '~/components/providers';
-import { getThemeFromRequest, getLanguageFromRequest, getCSSVariables } from '~/utils/theme.server';
+import { getThemeFromRequest, getLanguageFromRequest } from '~/utils/theme.server';
 import { logRequest } from '~/utils/request-logger.server';
 import { loadTranslations } from '~/i18n/config';
 import type { Theme } from '~/types';

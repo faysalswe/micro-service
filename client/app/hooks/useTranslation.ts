@@ -57,7 +57,7 @@ export function useTranslation(
   const setLanguage = useSetLanguage();
 
   // Use react-i18next's useTranslation hook
-  const { t, ready, i18n } = useI18nextTranslation(ns, {
+  const { t, ready } = useI18nextTranslation(ns, {
     ...options,
     useSuspense: false, // Disable suspense for SSR
   });

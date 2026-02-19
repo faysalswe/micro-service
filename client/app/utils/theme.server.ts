@@ -3,7 +3,6 @@
  * Server-side utilities for handling theme and language
  */
 
-import { DESIGN_TOKENS } from '~/config/tokens';
 import type { Theme } from '~/types';
 import type { SupportedLanguage } from '~/i18n/config';
 
