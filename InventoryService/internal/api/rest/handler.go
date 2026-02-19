@@ -15,14 +15,24 @@ func NewInventoryHandler(svc service.InventoryService) *InventoryHandler {
 
 func (h *InventoryHandler) SetupRoutes(r *gin.Engine) {
 	r.GET("/health", h.Health)
+	
+	// Public/User routes
 	r.GET("/api/inventory", h.ListProducts)
 	r.GET("/api/inventory/:id", h.GetStock)
-	r.POST("/api/inventory/reserve", h.Reserve)
+	
+	// Protected Reservation (Called by OrderService - needs Auth but not necessarily Admin)
+	// In production, you'd use a specific Service-to-Service token here
+	r.POST("/api/inventory/reserve", AuthMiddleware(), h.Reserve)
 
-	// Admin routes
-	r.POST("/api/inventory", h.CreateProduct)
-	r.PUT("/api/inventory/:id", h.UpdateProduct)
-	r.DELETE("/api/inventory/:id", h.DeleteProduct)
+	// Admin-only destructive routes
+	admin := r.Group("/api/inventory")
+	admin.Use(AuthMiddleware())
+	admin.Use(AdminOnly())
+	{
+		admin.POST("", h.CreateProduct)
+		admin.PUT("/:id", h.UpdateProduct)
+		admin.DELETE("/:id", h.DeleteProduct)
+	}
 }
 
 func (h *InventoryHandler) Health(c *gin.Context) {

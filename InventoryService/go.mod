@@ -13,6 +13,7 @@ require (
 	github.com/swaggo/files v1.0.1
 	github.com/pact-foundation/pact-go/v2 v2.0.8
 	github.com/stretchr/testify v1.9.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	go.opentelemetry.io/otel v1.31.0
 	go.opentelemetry.io/otel/trace v1.31.0
 	go.opentelemetry.io/otel/sdk v1.31.0
