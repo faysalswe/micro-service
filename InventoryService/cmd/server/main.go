@@ -11,6 +11,7 @@ import (
 	"github.com/faysal/micro-service/inventory-service/internal/database"
 	"github.com/faysal/micro-service/inventory-service/internal/repository"
 	"github.com/faysal/micro-service/inventory-service/internal/service"
+	"github.com/faysal/micro-service/inventory-service/internal/api/rest"
 	"github.com/faysal/micro-service/inventory-service/proto"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -68,29 +69,8 @@ func (s *server) ListProducts(ctx context.Context, req *proto.ListProductsReques
 
 func startRESTServer(svc service.InventoryService, port string) {
 	r := gin.Default()
-
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "UP"})
-	})
-
-	r.GET("/api/inventory", func(c *gin.Context) {
-		products, err := svc.ListProducts(c.Request.Context())
-		if err != nil {
-			c.JSON(500, gin.H{"error": "Failed to fetch products"})
-			return
-		}
-		c.JSON(200, products)
-	})
-
-	r.GET("/api/inventory/:id", func(c *gin.Context) {
-		id := c.Param("id")
-		stock, err := svc.GetStock(c.Request.Context(), id)
-		if err != nil {
-			c.JSON(404, gin.H{"error": "Product not found"})
-			return
-		}
-		c.JSON(200, gin.H{"product_id": id, "quantity": stock})
-	})
+	handler := rest.NewInventoryHandler(svc)
+	handler.SetupRoutes(r)
 
 	log.Printf("Inventory REST server listening on port %s", port)
 	if err := r.Run(fmt.Sprintf(":%s", port)); err != nil {
