@@ -67,6 +67,30 @@ func (s *server) ListProducts(ctx context.Context, req *proto.ListProductsReques
 	return &proto.ListProductsResponse{Products: protoProducts}, nil
 }
 
+func (s *server) CreateProduct(ctx context.Context, req *proto.CreateProductRequest) (*proto.CreateProductResponse, error) {
+	success, msg, err := s.service.CreateProduct(ctx, req.ProductId, req.Name, req.Price, req.Quantity)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.CreateProductResponse{Success: success, Message: msg}, nil
+}
+
+func (s *server) UpdateProduct(ctx context.Context, req *proto.UpdateProductRequest) (*proto.UpdateProductResponse, error) {
+	success, msg, err := s.service.UpdateProduct(ctx, req.ProductId, req.Name, req.Price, req.Quantity)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.UpdateProductResponse{Success: success, Message: msg}, nil
+}
+
+func (s *server) DeleteProduct(ctx context.Context, req *proto.DeleteProductRequest) (*proto.DeleteProductResponse, error) {
+	success, msg, err := s.service.DeleteProduct(ctx, req.ProductId)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.DeleteProductResponse{Success: success, Message: msg}, nil
+}
+
 func startRESTServer(svc service.InventoryService, port string) {
 	r := gin.Default()
 	handler := rest.NewInventoryHandler(svc)

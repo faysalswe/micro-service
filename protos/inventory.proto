@@ -16,6 +16,11 @@ service InventoryService {
 
   // Lists all available products
   rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+
+  // Admin operations
+  rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse);
+  rpc UpdateProduct(UpdateProductRequest) returns (UpdateProductResponse);
+  rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse);
 }
 
 message ReserveRequest {
@@ -60,4 +65,37 @@ message ProductInfo {
 
 message ListProductsResponse {
   repeated ProductInfo products = 1;
+}
+
+message CreateProductRequest {
+  string product_id = 1;
+  string name = 2;
+  double price = 3;
+  int32 quantity = 4;
+}
+
+message CreateProductResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message UpdateProductRequest {
+  string product_id = 1;
+  string name = 2;
+  double price = 3;
+  int32 quantity = 4;
+}
+
+message UpdateProductResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DeleteProductRequest {
+  string product_id = 1;
+}
+
+message DeleteProductResponse {
+  bool success = 1;
+  string message = 2;
 }

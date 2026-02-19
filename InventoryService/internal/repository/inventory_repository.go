@@ -14,6 +14,9 @@ type InventoryRepository interface {
 	ReleaseStock(ctx context.Context, orderID string, productID string, quantity int32) error
 	GetStock(ctx context.Context, productID string) (int32, error)
 	ListProducts(ctx context.Context) ([]models.ProductStock, error)
+	CreateProduct(ctx context.Context, product models.ProductStock) error
+	UpdateProduct(ctx context.Context, product models.ProductStock) error
+	DeleteProduct(ctx context.Context, productID string) error
 }
 
 type postgresRepository struct {
@@ -35,6 +38,27 @@ func (r *postgresRepository) ListProducts(ctx context.Context) ([]models.Product
 	var products []models.ProductStock
 	err := r.db.WithContext(ctx).Find(&products).Error
 	return products, err
+}
+
+func (r *postgresRepository) CreateProduct(ctx context.Context, product models.ProductStock) error {
+	ctx, span := r.tracer.Start(ctx, "CreateProduct")
+	defer span.End()
+
+	return r.db.WithContext(ctx).Create(&product).Error
+}
+
+func (r *postgresRepository) UpdateProduct(ctx context.Context, product models.ProductStock) error {
+	ctx, span := r.tracer.Start(ctx, "UpdateProduct")
+	defer span.End()
+
+	return r.db.WithContext(ctx).Save(&product).Error
+}
+
+func (r *postgresRepository) DeleteProduct(ctx context.Context, productID string) error {
+	ctx, span := r.tracer.Start(ctx, "DeleteProduct")
+	defer span.End()
+
+	return r.db.WithContext(ctx).Delete(&models.ProductStock{}, "product_id = ?", productID).Error
 }
 
 func (r *postgresRepository) ReserveStock(ctx context.Context, orderID string, productID string, quantity int32) error {

@@ -18,6 +18,11 @@ func (h *InventoryHandler) SetupRoutes(r *gin.Engine) {
 	r.GET("/api/inventory", h.ListProducts)
 	r.GET("/api/inventory/:id", h.GetStock)
 	r.POST("/api/inventory/reserve", h.Reserve)
+
+	// Admin routes
+	r.POST("/api/inventory", h.CreateProduct)
+	r.PUT("/api/inventory/:id", h.UpdateProduct)
+	r.DELETE("/api/inventory/:id", h.DeleteProduct)
 }
 
 func (h *InventoryHandler) Health(c *gin.Context) {
@@ -41,6 +46,56 @@ func (h *InventoryHandler) GetStock(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"productID": id, "quantity": stock})
+}
+
+func (h *InventoryHandler) CreateProduct(c *gin.Context) {
+	var req struct {
+		ProductID string  `json:"productID"`
+		Name      string  `json:"name"`
+		Price     float64 `json:"price"`
+		Quantity  int32   `json:"quantity"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	success, msg, err := h.svc.CreateProduct(c.Request.Context(), req.ProductID, req.Name, req.Price, req.Quantity)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(201, gin.H{"success": success, "message": msg})
+}
+
+func (h *InventoryHandler) UpdateProduct(c *gin.Context) {
+	id := c.Param("id")
+	var req struct {
+		Name     string  `json:"name"`
+		Price    float64 `json:"price"`
+		Quantity int32   `json:"quantity"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	success, msg, err := h.svc.UpdateProduct(c.Request.Context(), id, req.Name, req.Price, req.Quantity)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"success": success, "message": msg})
+}
+
+func (h *InventoryHandler) DeleteProduct(c *gin.Context) {
+	id := c.Param("id")
+	success, msg, err := h.svc.DeleteProduct(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"success": success, "message": msg})
 }
 
 func (h *InventoryHandler) Reserve(c *gin.Context) {
