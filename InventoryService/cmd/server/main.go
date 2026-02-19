@@ -7,11 +7,13 @@ import (
 	"net"
 	"os"
 
+	"github.com/faysal/micro-service/inventory-service/internal/config"
 	"github.com/faysal/micro-service/inventory-service/internal/database"
 	"github.com/faysal/micro-service/inventory-service/internal/repository"
 	"github.com/faysal/micro-service/inventory-service/internal/service"
 	"github.com/faysal/micro-service/inventory-service/proto"
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -76,7 +78,18 @@ func getEnv(key, fallback string) string {
 }
 
 func main() {
-	// 1. Load Config
+	// 1. Initialize Tracer
+	tp, err := config.InitTracer()
+	if err != nil {
+		log.Fatalf("failed to initialize tracer: %v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
+	// 2. Load Config
 	dbHost := getEnv("DB_HOST", "localhost")
 	dbUser := getEnv("DB_USER", "postgres")
 	dbPassword := getEnv("DB_PASSWORD", "password123")
@@ -85,23 +98,25 @@ func main() {
 	grpcPort := getEnv("GRPC_PORT", "50052")
 	restPort := getEnv("REST_PORT", "8081")
 
-	// 2. Init DB
+	// 3. Init DB
 	db := database.InitDB(dbHost, dbUser, dbPassword, dbName, dbPort)
 
-	// 3. Setup Layers
+	// 4. Setup Layers
 	repo := repository.NewPostgresRepository(db)
 	svc := service.NewInventoryService(repo)
 
-	// 4. Start REST Server (in goroutine)
+	// 5. Start REST Server (in goroutine)
 	go startRESTServer(svc, restPort)
 
-	// 5. Start gRPC Server
+	// 6. Start gRPC Server with OTel Interceptor
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", grpcPort))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	proto.RegisterInventoryServiceServer(s, &server{service: svc})
 	
 	// Enable reflection for easy testing with grpcurl

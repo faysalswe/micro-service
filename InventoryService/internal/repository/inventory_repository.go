@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/faysal/micro-service/inventory-service/internal/models"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 )
 
@@ -14,14 +16,21 @@ type InventoryRepository interface {
 }
 
 type postgresRepository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	tracer trace.Tracer
 }
 
 func NewPostgresRepository(db *gorm.DB) InventoryRepository {
-	return &postgresRepository{db: db}
+	return &postgresRepository{
+		db:     db,
+		tracer: otel.Tracer("InventoryRepository"),
+	}
 }
 
 func (r *postgresRepository) ReserveStock(ctx context.Context, orderID string, productID string, quantity int32) error {
+	ctx, span := r.tracer.Start(ctx, "ReserveStock")
+	defer span.End()
+
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. Check Idempotency
 		var record models.IdempotencyRecord
@@ -55,6 +64,9 @@ func (r *postgresRepository) ReserveStock(ctx context.Context, orderID string, p
 }
 
 func (r *postgresRepository) ReleaseStock(ctx context.Context, orderID string, productID string, quantity int32) error {
+	ctx, span := r.tracer.Start(ctx, "ReleaseStock")
+	defer span.End()
+
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. Check if we actually have a reservation (Idempotency check for release)
 		var record models.IdempotencyRecord
@@ -82,6 +94,9 @@ func (r *postgresRepository) ReleaseStock(ctx context.Context, orderID string, p
 }
 
 func (r *postgresRepository) GetStock(ctx context.Context, productID string) (int32, error) {
+	ctx, span := r.tracer.Start(ctx, "GetStock")
+	defer span.End()
+
 	var stock models.ProductStock
 	err := r.db.WithContext(ctx).Where("product_id = ?", productID).First(&stock).Error
 	return stock.Quantity, err
