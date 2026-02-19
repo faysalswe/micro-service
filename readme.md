@@ -46,11 +46,14 @@ Or use VS Code task: `start-observability`
 
 1. Open the Run and Debug panel (`Ctrl+Shift+D`)
 2. Select a configuration from dropdown:
-   - `All Services` - Launches all three services
+   - `All Services` - Launches all services
    - `.NET Services Only` - OrderService + IdentityService
    - `OrderService (.NET)` - Single service
    - `IdentityService (.NET)` - Single service
    - `PaymentService (Node.js)` - Single service
+   - `InventoryService (Go)` - Single service
+   - `Storefront (React)` - Customer UI
+   - `Admin Tool (Angular)` - Admin UI
 3. Press `F5` to start debugging
 
 **Using VS Code Tasks:**
@@ -59,6 +62,9 @@ Or use VS Code task: `start-observability`
 - `run-order-service`
 - `run-identity-service`
 - `run-payment-service`
+- `run-inventory-service`
+- `run-storefront`
+- `run-admin-tool`
 
 **Using Terminal:**
 
@@ -71,21 +77,37 @@ dotnet run --project IdentityService/
 
 # PaymentService
 cd PaymentService && npm install && npm start
+
+# InventoryService
+cd InventoryService && go run cmd/server/main.go
+
+# Storefront
+cd storefront && npm install && npm run dev
+
+# Admin Tool
+cd admin-tool && npm install && npm start
 ```
 
 ## Service Ports
 
-| Service | Port | Protocol |
-|---------|------|----------|
-| OrderService | 8080 | gRPC |
-| PaymentService | 50051 | gRPC |
-| IdentityService | 5050 | HTTP |
-| Kong Gateway | 8000 | HTTP |
-| PostgreSQL | 5432 | TCP |
-| MongoDB | 27017 | TCP |
-| Grafana | 3301 | HTTP |
-| Jaeger | 16686 | HTTP |
-| Prometheus | 9090 | HTTP |
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| OrderService | 8080 | gRPC | Order Orchestrator |
+| PaymentService | 50051 | gRPC | Payment Processor |
+| InventoryService | 50052 | gRPC | Inventory & Catalog |
+| InventoryService | 8081 | HTTP | REST Management API |
+| Storefront | 3000 | HTTP | Customer React App |
+| Admin Tool | 4200 | HTTP | Admin Angular App |
+| IdentityService | 5050 | HTTP | Auth Service |
+| Kong Gateway | 8000 | HTTP | Public REST Entry |
+| Kong Gateway | 9080 | gRPC | Public gRPC Entry |
+| PostgreSQL | 5432 | TCP | Order DB |
+| MongoDB | 27017 | TCP | Payment DB |
+| PostgreSQL | 5433 | TCP | Inventory DB |
+| Grafana | 3301 | HTTP | Observability |
+| Jaeger | 16686 | HTTP | Tracing |
+| Prometheus | 9090 | HTTP | Metrics |
+| Loki | 3100 | HTTP | Logging |
 
 ## Environment Variables
 
@@ -141,10 +163,13 @@ LOG_LEVEL=debug
 | `docker-up` | Start docker-compose |
 | `docker-down` | Stop docker-compose |
 | `docker-logs` | View docker logs |
-| `start-databases` | Start only PostgreSQL & MongoDB |
+| `start-databases` | Start PostgreSQL & MongoDB & Inventory Postgres |
 | `start-observability` | Start tracing/metrics stack |
 | `restore-dotnet` | Restore .NET packages |
-| `install-payment-deps` | Install npm dependencies |
+| `install-payment-deps` | Install PaymentService deps |
+| `install-inventory-deps` | Install InventoryService deps |
+| `install-storefront-deps` | Install Storefront deps |
+| `install-admin-deps` | Install Admin Tool deps |
 
 ## Debugging
 
@@ -283,10 +308,10 @@ dotnet restore
 dotnet build
 ```
 
-### Node.js Errors
+### Node.js / React / Angular Errors
 
 ```bash
-cd PaymentService
+cd <service-folder>
 rm -rf node_modules
 npm install
 ```

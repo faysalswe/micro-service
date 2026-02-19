@@ -56,7 +56,7 @@
         "setup-identity",
         "setup-order",
         "setup-payment",
-        "setup-client"
+        "setup-storefront"
       ],
       "problemMatcher": []
     },
@@ -82,12 +82,12 @@
       }
     },
     {
-      "label": "setup-client",
+      "label": "setup-storefront",
       "command": "npm",
       "type": "process",
       "args": ["install"],
       "options": {
-        "cwd": "${workspaceFolder}/client"
+        "cwd": "${workspaceFolder}/storefront"
       }
     }
   ]

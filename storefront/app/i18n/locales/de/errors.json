@@ -1,0 +1,38 @@
+{
+  "404_title": "Seite Nicht Gefunden",
+  "404_description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+  "404_action": "Zur Startseite",
+
+  "500_title": "Serverfehler",
+  "500_description": "Auf unserer Seite ist etwas schief gelaufen. Wir arbeiten daran, es zu beheben.",
+  "500_action": "Erneut versuchen",
+
+  "401_title": "Nicht Autorisiert",
+  "401_description": "Sie müssen angemeldet sein, um auf diese Seite zuzugreifen.",
+  "401_action": "Anmelden",
+
+  "403_title": "Verboten",
+  "403_description": "Sie haben keine Berechtigung, auf diese Ressource zuzugreifen.",
+  "403_action": "Zurück",
+
+  "400_title": "Fehlerhafte Anfrage",
+  "400_description": "Die Anfrage konnte vom Server nicht verstanden werden.",
+
+  "network_error": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
+  "timeout_error": "Zeitüberschreitung der Anfrage. Bitte versuchen Sie es erneut.",
+  "unknown_error": "Ein unbekannter Fehler ist aufgetreten.",
+
+  "validation_error": "Bitte überprüfen Sie Ihre Eingabe und versuchen Sie es erneut.",
+  "authentication_error": "Authentifizierung fehlgeschlagen. Bitte melden Sie sich erneut an.",
+  "authorization_error": "Sie sind nicht berechtigt, diese Aktion auszuführen.",
+
+  "generic_title": "Hoppla!",
+  "generic_description": "Etwas ist schief gelaufen. Bitte versuchen Sie es später erneut.",
+  "generic_action": "Wiederholen",
+
+  "offline_title": "Sie sind Offline",
+  "offline_description": "Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+
+  "maintenance_title": "Wartungsarbeiten",
+  "maintenance_description": "Wir führen derzeit Wartungsarbeiten durch. Bitte schauen Sie bald wieder vorbei."
+}

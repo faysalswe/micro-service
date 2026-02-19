@@ -1,0 +1,42 @@
+{
+  "main_menu": "প্রধান মেনু",
+  "user_menu": "ব্যবহারকারী মেনু",
+
+  "menu_home": "হোম",
+  "menu_dashboard": "ড্যাশবোর্ড",
+  "menu_profile": "প্রোফাইল",
+  "menu_settings": "সেটিংস",
+  "menu_help": "সাহায্য",
+  "menu_about": "সম্পর্কে",
+
+  "settings": "সেটিংস",
+  "settings_account": "অ্যাকাউন্ট সেটিংস",
+  "settings_privacy": "গোপনীয়তা সেটিংস",
+  "settings_security": "নিরাপত্তা",
+  "settings_notifications": "বিজ্ঞপ্তি",
+  "settings_preferences": "পছন্দসমূহ",
+  "settings_appearance": "চেহারা",
+  "settings_language": "ভাষা",
+
+  "profile": "আমার প্রোফাইল",
+  "profile_edit": "প্রোফাইল সম্পাদনা করুন",
+  "profile_view": "প্রোফাইল দেখুন",
+
+  "logout": "লগ আউট",
+  "login": "লগ ইন",
+  "signup": "সাইন আপ",
+
+  "breadcrumb_home": "হোম",
+  "breadcrumb_separator": "/",
+
+  "footer_privacy": "গোপনীয়তা নীতি",
+  "footer_terms": "সেবার শর্তাবলী",
+  "footer_contact": "আমাদের সাথে যোগাযোগ করুন",
+  "footer_copyright": "© {{year}} {{appName}}। সর্বস্বত্ব সংরক্ষিত।",
+
+  "mobile_menu_open": "মেনু খুলুন",
+  "mobile_menu_close": "মেনু বন্ধ করুন",
+
+  "skip_to_content": "প্রধান বিষয়বস্তুতে যান",
+  "back_to_top": "উপরে ফিরে যান"
+}

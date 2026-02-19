@@ -1,0 +1,38 @@
+{
+  "404_title": "Page Not Found",
+  "404_description": "The page you're looking for doesn't exist or has been moved.",
+  "404_action": "Go back home",
+
+  "500_title": "Server Error",
+  "500_description": "Something went wrong on our end. We're working to fix it.",
+  "500_action": "Try again",
+
+  "401_title": "Unauthorized",
+  "401_description": "You need to be logged in to access this page.",
+  "401_action": "Sign in",
+
+  "403_title": "Forbidden",
+  "403_description": "You don't have permission to access this resource.",
+  "403_action": "Go back",
+
+  "400_title": "Bad Request",
+  "400_description": "The request could not be understood by the server.",
+
+  "network_error": "Network error. Please check your connection.",
+  "timeout_error": "Request timeout. Please try again.",
+  "unknown_error": "An unknown error occurred.",
+
+  "validation_error": "Please check your input and try again.",
+  "authentication_error": "Authentication failed. Please sign in again.",
+  "authorization_error": "You are not authorized to perform this action.",
+
+  "generic_title": "Oops!",
+  "generic_description": "Something went wrong. Please try again later.",
+  "generic_action": "Retry",
+
+  "offline_title": "You're Offline",
+  "offline_description": "Please check your internet connection and try again.",
+
+  "maintenance_title": "Under Maintenance",
+  "maintenance_description": "We're currently performing maintenance. Please check back soon."
+}

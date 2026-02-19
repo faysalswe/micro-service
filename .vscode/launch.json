@@ -46,13 +46,13 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "Client (WebApp)",
+      "name": "Storefront (React)",
       "type": "pwa-node",
       "request": "launch",
-      "cwd": "${workspaceFolder}/client",
+      "cwd": "${workspaceFolder}/storefront",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "envFile": "${workspaceFolder}/client/.env",
+      "envFile": "${workspaceFolder}/storefront/.env",
       "console": "integratedTerminal"
     }
   ],
@@ -63,7 +63,7 @@
         "IdentityService",
         "OrderService",
         "PaymentService",
-        "Client (WebApp)"
+        "Storefront (React)"
       ]
     }
   ]
