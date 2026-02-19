@@ -17,3 +17,6 @@ export type { Order } from './useOrders';
 
 export { usePayments, usePayment, useRefundPayment } from './usePayments';
 export type { Payment } from './usePayments';
+
+export { useInventory } from './useInventory';
+export type { ProductInfo } from './useInventory';

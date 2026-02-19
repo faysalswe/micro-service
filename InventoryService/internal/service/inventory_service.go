@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/faysal/micro-service/inventory-service/internal/models"
 	"github.com/faysal/micro-service/inventory-service/internal/repository"
 )
 
@@ -9,6 +10,7 @@ type InventoryService interface {
 	Reserve(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error)
 	Release(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error)
 	GetStock(ctx context.Context, productID string) (int32, error)
+	ListProducts(ctx context.Context) ([]models.ProductStock, error)
 }
 
 type inventoryService struct {
@@ -17,6 +19,10 @@ type inventoryService struct {
 
 func NewInventoryService(repo repository.InventoryRepository) InventoryService {
 	return &inventoryService{repo: repo}
+}
+
+func (s *inventoryService) ListProducts(ctx context.Context) ([]models.ProductStock, error) {
+	return s.repo.ListProducts(ctx)
 }
 
 func (s *inventoryService) Reserve(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error) {

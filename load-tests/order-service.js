@@ -139,10 +139,14 @@ export function spikeTest(data) {
 
 // Helper: Create Order
 function createOrder(token, testType) {
+  const quantity = Math.floor(Math.random() * 5) + 1; // 1-5 items
+  const unitPrice = Math.floor(Math.random() * 100) + 50; // $50-$150
+  
   const orderPayload = JSON.stringify({
     userId: `user-${__VU}-${__ITER}`,
-    productId: `product-${Math.floor(Math.random() * 100)}`,
-    amount: Math.floor(Math.random() * 500) + 50,  // $50-$550
+    productId: Math.random() < 0.1 ? 'fail-me' : `PROD-00${Math.floor(Math.random() * 2) + 1}`,
+    amount: unitPrice * quantity,
+    quantity: quantity,
   });
 
   const params = {

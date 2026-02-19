@@ -27,8 +27,9 @@ func InitDB(host, user, password, dbname, port string) *gorm.DB {
 	var count int64
 	db.Model(&models.ProductStock{}).Count(&count)
 	if count == 0 {
-		db.Create(&models.ProductStock{ProductID: "PROD-001", Quantity: 100})
-		db.Create(&models.ProductStock{ProductID: "PROD-002", Quantity: 50})
+		db.Create(&models.ProductStock{ProductID: "PROD-001", Name: "Laptop", Price: 1200.00, Quantity: 100})
+		db.Create(&models.ProductStock{ProductID: "PROD-002", Name: "Smartphone", Price: 800.00, Quantity: 50})
+		db.Create(&models.ProductStock{ProductID: "fail-me", Name: "Corrupted Item (Force Failure)", Price: 100.00, Quantity: 999})
 	}
 
 	return db

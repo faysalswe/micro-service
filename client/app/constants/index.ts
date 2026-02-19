@@ -66,6 +66,10 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/api/payments/${id}`,
     REFUND: (id: string) => `/api/payments/${id}/refund`,
   },
+  INVENTORY: {
+    LIST: '/api/inventory',
+    DETAIL: (id: string) => `/api/inventory/${id}`,
+  },
 } as const;
 
 /**

@@ -100,3 +100,26 @@ export interface RouteMeta {
   requiresAuth?: boolean;
   roles?: UserRole[];
 }
+
+/**
+ * Order interface
+ */
+export interface Order {
+  id: string;
+  userId: string;
+  productId: string;
+  amount: number;
+  quantity: number;
+  status: string;
+  createdAt: string;
+  paymentId?: string;
+}
+
+/**
+ * Create Order Request
+ */
+export interface CreateOrderRequest {
+  productId: string;
+  amount: number;
+  quantity: number;
+}

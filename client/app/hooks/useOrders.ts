@@ -15,6 +15,7 @@ export interface Order {
   userId: string;
   productId: string;
   amount: number;
+  quantity: number;
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   createdAt: string;
   updatedAt: string;
@@ -61,7 +62,7 @@ export function useCreateOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (orderData: { userId: string; productId: string; amount: number }) => {
+    mutationFn: async (orderData: { userId: string; productId: string; amount: number; quantity: number }) => {
       const response = await apiClient.createOrder(orderData);
       if (!response.success) {
         throw new Error(response.message || 'Failed to create order');

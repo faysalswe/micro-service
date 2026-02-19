@@ -47,11 +47,39 @@ func (s *server) GetStock(ctx context.Context, req *proto.GetStockRequest) (*pro
 	return &proto.GetStockResponse{ProductId: req.ProductId, Quantity: quantity}, nil
 }
 
+func (s *server) ListProducts(ctx context.Context, req *proto.ListProductsRequest) (*proto.ListProductsResponse, error) {
+	products, err := s.service.ListProducts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var protoProducts []*proto.ProductInfo
+	for _, p := range products {
+		protoProducts = append(protoProducts, &proto.ProductInfo{
+			ProductId: p.ProductID,
+			Name:      p.Name,
+			Price:     p.Price,
+			Quantity:  p.Quantity,
+		})
+	}
+
+	return &proto.ListProductsResponse{Products: protoProducts}, nil
+}
+
 func startRESTServer(svc service.InventoryService, port string) {
 	r := gin.Default()
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "UP"})
+	})
+
+	r.GET("/api/inventory", func(c *gin.Context) {
+		products, err := svc.ListProducts(c.Request.Context())
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Failed to fetch products"})
+			return
+		}
+		c.JSON(200, products)
 	})
 
 	r.GET("/api/inventory/:id", func(c *gin.Context) {

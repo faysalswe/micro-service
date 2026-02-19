@@ -281,7 +281,7 @@ export class ApiClient {
     return this.get(API_ENDPOINTS.ORDERS.DETAIL(id));
   }
 
-  async createOrder(orderData: { userId: string; productId: string; amount: number }) {
+  async createOrder(orderData: { userId: string; productId: string; amount: number; quantity: number }) {
     return this.post(API_ENDPOINTS.ORDERS.CREATE, orderData);
   }
 
@@ -306,6 +306,12 @@ export class ApiClient {
 
   async getPayment(id: string) {
     return this.get(API_ENDPOINTS.PAYMENTS.DETAIL(id));
+  }
+
+  async getInventory() {
+    return this.get<Array<{ productID: string; name: string; price: number; quantity: number }>>(
+      API_ENDPOINTS.INVENTORY.LIST
+    );
   }
 
   async refundPayment(id: string, reason?: string) {
