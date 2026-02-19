@@ -58,12 +58,12 @@ services:
     ports:
       - "50052:50052"
 
-  # Angular Admin Tool
-  admin-tool:
+  # Angular Back Office
+  back-office:
     build:
       context: .
-      dockerfile: admin-tool/Dockerfile
-    container_name: admin-tool
+      dockerfile: back-office/Dockerfile
+    container_name: back-office
     ports:
       - "4200:80"
     depends_on:

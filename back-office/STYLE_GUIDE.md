@@ -1,6 +1,6 @@
-# admin-tool Style Guideline
+# back-office Style Guideline
 
-This document defines the standards for UI development in the `admin-tool` to ensure consistency across all modules.
+This document defines the standards for UI development in the `back-office` to ensure consistency across all modules.
 
 ## 1. Design Tokens (CSS Variables)
 Always use these variables instead of hardcoded hex codes or pixel values. Defined in `src/styles.css`.

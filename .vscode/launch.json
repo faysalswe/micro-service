@@ -68,7 +68,7 @@
       "name": "Admin Tool (Angular)",
       "type": "pwa-node",
       "request": "launch",
-      "cwd": "${workspaceFolder}/admin-tool",
+      "cwd": "${workspaceFolder}/back-office",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "start"],
       "console": "integratedTerminal"

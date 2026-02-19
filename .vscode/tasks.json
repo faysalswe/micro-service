@@ -58,7 +58,7 @@
         "setup-inventory",
         "setup-payment",
         "setup-storefront",
-        "setup-admin-tool"
+        "setup-back-office"
       ],
       "problemMatcher": []
     },
@@ -102,12 +102,12 @@
       }
     },
     {
-      "label": "setup-admin-tool",
+      "label": "setup-back-office",
       "command": "pnpm",
       "type": "process",
       "args": ["install"],
       "options": {
-        "cwd": "${workspaceFolder}/admin-tool"
+        "cwd": "${workspaceFolder}/back-office"
       }
     }
   ]

@@ -64,7 +64,7 @@ Or use VS Code task: `start-observability`
 - `run-payment-service`
 - `run-inventory-service`
 - `run-storefront`
-- `run-admin-tool`
+- `run-back-office`
 
 **Using Terminal:**
 
@@ -85,7 +85,7 @@ cd InventoryService && go run cmd/server/main.go
 cd storefront && npm install && npm run dev
 
 # Admin Tool
-cd admin-tool && npm install && npm start
+cd back-office && npm install && npm start
 ```
 
 ## Service Ports
