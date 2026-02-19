@@ -15,6 +15,9 @@ public class Order
     
     [Range(0.01, double.MaxValue)]
     public double Amount { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int Quantity { get; set; } = 1;
     
     [Required]
     public string Status { get; set; } = "PENDING";

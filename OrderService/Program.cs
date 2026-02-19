@@ -60,6 +60,14 @@ builder.Services.AddGrpcClient<PaymentService.PaymentServiceClient>(o =>
 .AddPolicyHandler(retryPolicy)
 .AddPolicyHandler(circuitBreakerPolicy);
 
+// Register gRPC Client for InventoryService with Resilience
+builder.Services.AddGrpcClient<Inventory.InventoryService.InventoryServiceClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["GrpcSettings:InventoryServiceUrl"] ?? "http://localhost:50052");
+})
+.AddPolicyHandler(retryPolicy)
+.AddPolicyHandler(circuitBreakerPolicy);
+
 // Add DbContext
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -69,6 +77,13 @@ builder.Services.AddGrpcHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "postgresql");
 
 var app = builder.Build();
+
+// Apply database migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+    db.Database.Migrate();
+}
 
 // Add middleware to enrich logs with trace context
 app.Use(async (context, next) =>
