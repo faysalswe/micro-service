@@ -35,11 +35,14 @@ COPY --from=build /app/publish .
 RUN chown -R appuser:appuser /app
 USER appuser
 
-# Expose gRPC port
-EXPOSE 8080
+# Set the application to listen on port 5011
+ENV ASPNETCORE_URLS=http://+:5011
+
+# Expose gRPC/HTTP port
+EXPOSE 5011
 
 # Health check using grpc_health_probe
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD ["/bin/grpc_health_probe", "-addr=:8080"]
+    CMD ["/bin/grpc_health_probe", "-addr=:5011"]
 
 ENTRYPOINT ["dotnet", "OrderService.dll"]

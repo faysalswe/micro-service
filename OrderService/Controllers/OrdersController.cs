@@ -127,6 +127,7 @@ public class OrdersController : ControllerBase
             UserId = request.UserId,
             ProductId = request.ProductId,
             Amount = request.Amount,
+            Quantity = request.Quantity,
             Status = "PENDING",
             CreatedAt = DateTime.UtcNow
         };
@@ -137,7 +138,7 @@ public class OrdersController : ControllerBase
         // Start saga and log first step
         await _sagaService.StartSagaAsync(order.Id, "CreateOrder", correlationId);
         await _sagaService.LogStepAsync(order.Id, "OrderCreated", "Completed",
-            new { order.Id, order.UserId, order.ProductId, order.Amount });
+            new { order.Id, order.UserId, order.ProductId, order.Amount, order.Quantity });
 
         _logger.LogInformation("Order persisted with ID: {OrderId}", order.Id);
 
@@ -324,6 +325,7 @@ public record CreateOrderDto
     public required string UserId { get; init; }
     public required string ProductId { get; init; }
     public required double Amount { get; init; }
+    public required int Quantity { get; init; }
 }
 
 public record OrderDto

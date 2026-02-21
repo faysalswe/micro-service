@@ -56,3 +56,37 @@ services:
       - Jwt__Key=ThisIsAVerySecretKeyForDevelopmentOnly123!
       - Jwt__Issuer=IdentityService
       - Jwt__Audience=MicroserviceApp
+
+  # Go Inventory Service
+  inventory-service:
+    build:
+      context: .
+      dockerfile: InventoryService/Dockerfile
+    container_name: inventory-service
+    environment:
+      - DB_HOST=inventory-db
+      - DB_USER=admin
+      - DB_PASSWORD=password123
+      - DB_NAME=inventory_db
+      - DB_PORT=5432
+      - GRPC_PORT=50052
+      - REST_PORT=8081
+      - SERVICE_NAME=InventoryService
+      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
+    depends_on:
+      - inventory-db
+      - otel-collector
+    ports:
+      - "50052:50052"
+      - "8081:8081"
+
+  # Angular Back Office
+  back-office:
+    build:
+      context: .
+      dockerfile: back-office/Dockerfile
+    container_name: back-office
+    ports:
+      - "4200:80"
+    depends_on:
+      - inventory-service
