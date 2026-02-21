@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"github.com/faysal/micro-service/inventory-service/internal/models"
-	"github.com/faysal/micro-service/inventory-service/internal/repository"
+	"inventory-service/internal/models"
+	"inventory-service/internal/repository"
 )
 
 type InventoryService interface {

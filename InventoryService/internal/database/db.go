@@ -2,7 +2,7 @@ package database
 
 import (
 	"fmt"
-	"github.com/faysal/micro-service/inventory-service/internal/models"
+	"inventory-service/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -21,15 +21,6 @@ func InitDB(host, user, password, dbname, port string) *gorm.DB {
 	err = db.AutoMigrate(&models.ProductStock{}, &models.IdempotencyRecord{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
-	}
-
-	// Seed initial data if empty
-	var count int64
-	db.Model(&models.ProductStock{}).Count(&count)
-	if count == 0 {
-		db.Create(&models.ProductStock{ProductID: "PROD-001", Name: "Laptop", Price: 1200.00, Quantity: 100})
-		db.Create(&models.ProductStock{ProductID: "PROD-002", Name: "Smartphone", Price: 800.00, Quantity: 50})
-		db.Create(&models.ProductStock{ProductID: "fail-me", Name: "Corrupted Item (Force Failure)", Price: 100.00, Quantity: 999})
 	}
 
 	return db

@@ -1,0 +1,21 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a Go microservice for managing product inventory.",
+        "title": "Inventory Service API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "Faysal Ahmmad",
+            "url": "http://github.com/faysal",
+            "email": "faysalswe@gmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8081",
+    "basePath": "/",
+    "paths": {}
+}

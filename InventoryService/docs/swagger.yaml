@@ -1,0 +1,16 @@
+basePath: /
+host: localhost:8081
+info:
+  contact:
+    email: faysalswe@gmail.com
+    name: Faysal Ahmmad
+    url: http://github.com/faysal
+  description: This is a Go microservice for managing product inventory.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Inventory Service API
+  version: "1.0"
+paths: {}
+swagger: "2.0"

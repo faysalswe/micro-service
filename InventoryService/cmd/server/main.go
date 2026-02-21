@@ -7,13 +7,14 @@ import (
 	"net"
 	"os"
 
-	"github.com/faysal/micro-service/inventory-service/internal/config"
-	"github.com/faysal/micro-service/inventory-service/internal/database"
-	"github.com/faysal/micro-service/inventory-service/internal/repository"
-	"github.com/faysal/micro-service/inventory-service/internal/service"
-	"github.com/faysal/micro-service/inventory-service/internal/api/rest"
-	"github.com/faysal/micro-service/inventory-service/proto"
+	"inventory-service/internal/config"
+	"inventory-service/internal/database"
+	"inventory-service/internal/repository"
+	"inventory-service/internal/service"
+	"inventory-service/internal/api/rest"
+	"inventory-service/proto"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -110,6 +111,11 @@ func getEnv(key, fallback string) string {
 }
 
 func main() {
+	// 0. Load .env file for local development
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, relying on system environment variables")
+	}
+
 	// 1. Initialize Tracer
 	tp, err := config.InitTracer()
 	if err != nil {

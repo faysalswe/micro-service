@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semantic-conventions/v1.17.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
 func InitTracer() (*sdktrace.TracerProvider, error) {
@@ -24,7 +23,7 @@ func InitTracer() (*sdktrace.TracerProvider, error) {
 	}
 
 	exporter, err := otlptracegrpc.New(ctx,
-		otlptracegrpc.Insecure(),
+		otlptracegrpc.WithInsecure(),
 		otlptracegrpc.WithEndpoint(endpoint),
 	)
 	if err != nil {

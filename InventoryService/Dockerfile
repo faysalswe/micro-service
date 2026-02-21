@@ -2,19 +2,13 @@
 FROM golang:1.23-alpine AS builder
 
 # Install protoc and plugins
-RUN apk add --no-cache protobuf protobuf-dev protoc-gen-go protoc-gen-go-grpc
+RUN apk add --no-cache protobuf protobuf-dev
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 
 WORKDIR /app
 
-# Copy go.mod first for better caching
-# Note: build context is the root directory
-COPY InventoryService/go.mod ./InventoryService/
-
-WORKDIR /app/InventoryService
-RUN go mod download || true
-
-# Copy the entire project
-WORKDIR /app
+# Copy the entire project first to have all source and protos
 COPY . .
 
 # Generate gRPC code from proto
@@ -24,6 +18,9 @@ RUN protoc --proto_path=/app/protos \
     --go_out=proto --go_opt=paths=source_relative \
     --go-grpc_out=proto --go-grpc_opt=paths=source_relative \
     /app/protos/inventory.proto
+
+# Now run go mod tidy to ensure go.sum is up to date
+RUN go mod tidy
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -o /inventory-service ./cmd/server/main.go

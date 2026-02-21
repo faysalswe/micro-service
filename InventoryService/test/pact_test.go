@@ -5,8 +5,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/faysal/micro-service/inventory-service/internal/api/rest"
-	"github.com/faysal/micro-service/inventory-service/internal/service"
+	"inventory-service/internal/api/rest"
+	"inventory-service/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/pact-foundation/pact-go/v2/models"
 	"github.com/pact-foundation/pact-go/v2/provider"
