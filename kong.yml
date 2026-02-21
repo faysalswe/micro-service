@@ -61,7 +61,7 @@ services:
 
   # Inventory Service (REST API) - PROTECTED
   - name: inventory-service
-    url: http://host.docker.internal:8081
+    url: http://host.docker.internal:5013
     routes:
       - name: inventory-api
         paths:
@@ -76,7 +76,7 @@ services:
 
   # Inventory Service (gRPC)
   - name: inventory-grpc
-    url: grpc://host.docker.internal:50052
+    url: grpc://host.docker.internal:50013
     routes:
       - name: inventory-grpc-route
         paths:
@@ -93,7 +93,7 @@ plugins:
   - name: cors
     config:
       origins:
-        - http://localhost:3000
+        - http://localhost:5014
       methods:
         - GET
         - POST

@@ -23,9 +23,9 @@ if (missingEnvVars.length > 0) {
   });
   console.error('\x1b[33m%s\x1b[0m', '\n💡 Please set these variables in your .env file or environment.');
   console.error('\x1b[33m%s\x1b[0m', '\nExample .env file:');
-  console.error('\x1b[36m%s\x1b[0m', '   REST_PORT=3001');
+  console.error('\x1b[36m%s\x1b[0m', '   REST_PORT=5012');
   console.error('\x1b[36m%s\x1b[0m', '   LOKI_URL=http://localhost:3100');
-  console.error('\x1b[36m%s\x1b[0m', '   PORT=50051 (optional, defaults to 50051)');
+  console.error('\x1b[36m%s\x1b[0m', '   PORT=50012 (optional, defaults to 50012)');
   console.error('\x1b[36m%s\x1b[0m', '   MONGO_URI=mongodb://admin:password123@localhost:27017 (optional)');
   process.exit(1);
 }
@@ -35,13 +35,13 @@ initializeTracing();
 
 logger.info('Starting PaymentService', {
   restPort: process.env.REST_PORT,
-  grpcPort: process.env.PORT || '50051',
+  grpcPort: process.env.PORT || '50012',
   mongoUri: process.env.MONGO_URI ? '***configured***' : 'using default',
   mongoDb: process.env.MONGO_DB_NAME || 'payments_db'
 });
 
 // Load the protobuf file
-const PROTO_PATH = path.resolve(__dirname, '../../protos/payments.proto');
+const PROTO_PATH = path.resolve(__dirname, '../protos/payments.proto');
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
@@ -272,7 +272,7 @@ async function main() {
   healthImpl.addToServer(server);
   logger.info('gRPC Health service registered');
 
-  const grpcPort = `0.0.0.0:${process.env.PORT || '50051'}`;
+  const grpcPort = `0.0.0.0:${process.env.PORT || '50012'}`;
   server.bindAsync(grpcPort, grpc.ServerCredentials.createInsecure(), (err, actualPort) => {
     if (err) {
       logger.error('Failed to bind gRPC server', { error: err.message });

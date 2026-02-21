@@ -5,11 +5,11 @@ WORKDIR /app
 # Install pnpm
 RUN npm install -g pnpm
 
-COPY package.json pnpm-lock.yaml ./
+COPY back-office/package.json back-office/pnpm-lock.yaml ./
 RUN pnpm install
 
-COPY . .
-RUN pnpm run build -- --configuration production
+COPY back-office/ .
+RUN pnpm run build --configuration production
 
 # Stage 2: Serve the application with Nginx
 FROM nginx:alpine

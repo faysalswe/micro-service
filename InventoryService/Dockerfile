@@ -1,5 +1,5 @@
 # --- Build Stage ---
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 # Install protoc and plugins
 RUN apk add --no-cache protobuf protobuf-dev
@@ -37,6 +37,6 @@ RUN apk add --no-cache curl \
     && curl -L https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.24/grpc_health_probe-linux-amd64 -o /bin/grpc_health_probe \
     && chmod +x /bin/grpc_health_probe
 
-EXPOSE 50052
+EXPOSE 5013 50013
 
 CMD ["/inventory-service"]

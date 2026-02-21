@@ -7,7 +7,7 @@ metadata:
     app: order-service
 data:
   ASPNETCORE_ENVIRONMENT: "Production"
-  ASPNETCORE_URLS: "http://+:8080"
-  GrpcSettings__PaymentServiceUrl: "http://payment-service:50051"
+  ASPNETCORE_URLS: "http://+:5011;http://+:50011"
+  GrpcSettings__PaymentServiceUrl: "http://payment-service:50012"
   OpenTelemetry__Endpoint: "http://otel-collector:4317"
   LOKI_URL: "http://loki:3100"

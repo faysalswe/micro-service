@@ -1,7 +1,7 @@
 # Debug Dockerfile for OrderService
 # Enables remote debugging via vsdbg
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy proto files first (dependency for gRPC code generation)
@@ -17,7 +17,7 @@ WORKDIR /src/OrderService
 RUN dotnet publish -c Debug -o /app/publish
 
 # Debug runtime image
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS runtime
 WORKDIR /app
 
 # Install vsdbg debugger
@@ -32,7 +32,7 @@ RUN apt-get update \
 COPY --from=build /app/publish .
 
 # Expose ports
-EXPOSE 8080 2222
+EXPOSE 5011 50011 2222
 
 # Set environment for debugging
 ENV ASPNETCORE_ENVIRONMENT=Development

@@ -18,7 +18,7 @@ spec:
         version: v1
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "50051"
+        prometheus.io/port: "50012"
     spec:
       terminationGracePeriodSeconds: 30
       containers:
@@ -26,7 +26,7 @@ spec:
           image: microservices/payment-service:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 50051
+            - containerPort: 50012
               name: grpc
               protocol: TCP
           envFrom:
@@ -43,14 +43,14 @@ spec:
               memory: "256Mi"
           livenessProbe:
             exec:
-              command: ["/bin/grpc_health_probe", "-addr=:50051"]
+              command: ["/bin/grpc_health_probe", "-addr=:50012"]
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
           readinessProbe:
             exec:
-              command: ["/bin/grpc_health_probe", "-addr=:50051"]
+              command: ["/bin/grpc_health_probe", "-addr=:50012"]
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 5

@@ -2,24 +2,30 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Copy package files and install all dependencies (including devDependencies for build)
-COPY PaymentService/package*.json ./
-RUN npm ci
+COPY PaymentService/package*.json PaymentService/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # Copy TypeScript source and config
 COPY PaymentService/tsconfig.json ./
 COPY PaymentService/src/ ./src/
 
 # Compile TypeScript to JavaScript
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: Production dependencies
 FROM node:20-alpine AS deps
 WORKDIR /app
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Copy package files and install only production dependencies
-COPY PaymentService/package*.json ./
-RUN npm ci --only=production
+COPY PaymentService/package*.json PaymentService/pnpm-lock.yaml ./
+RUN pnpm install --prod --frozen-lockfile
 
 # Stage 3: Runtime
 FROM node:20-alpine AS runtime
@@ -51,11 +57,11 @@ COPY protos/ ./protos/
 RUN chown -R appuser:appgroup /app
 USER appuser
 
-# Expose gRPC port
-EXPOSE 50051
+# Expose REST and gRPC ports
+EXPOSE 5012 50012
 
-# Health check using grpc_health_probe
+# Health check using grpc_health_probe on gRPC port
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD ["/bin/grpc_health_probe", "-addr=:50051"]
+    CMD ["/bin/grpc_health_probe", "-addr=:50012"]
 
 CMD ["node", "dist/server.js"]

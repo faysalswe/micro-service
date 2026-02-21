@@ -85,6 +85,15 @@
         "Storefront (React)",
         "Admin Tool (Angular)"
       ]
+    },
+    {
+      "name": "Docker: Attach All",
+      "configurations": [
+        "Docker: Identity (.NET)",
+        "Docker: Order (.NET)",
+        "Docker: Payment (Node)",
+        "Docker: Inventory (Go)"
+      ]
     }
   ]
 }

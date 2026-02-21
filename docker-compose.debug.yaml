@@ -9,14 +9,17 @@ services:
       dockerfile: OrderService/Dockerfile.debug
     container_name: order-service
     ports:
-      - "8080:8080"   # gRPC
-      - "2222:2222"   # Debug port
+      - "5011:5011"     # REST
+      - "50011:50011"   # gRPC
+      - "4011:2222"     # Debug port (host 4011 -> container 2222)
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_URLS=http://+:5011;http://+:50011
       - ConnectionStrings__DefaultConnection=Host=order-db;Database=orders_db;Username=admin;Password=password123
-      - GrpcSettings__PaymentServiceUrl=http://payment-service:50051
+      - GrpcSettings__PaymentServiceUrl=http://payment-service:50012
+      - GrpcSettings__InventoryServiceUrl=http://inventory-service:50013
       - OpenTelemetry__Endpoint=http://otel-collector:4317
+      - LOKI_URL=http://loki:3100
     depends_on:
       - order-db
       - otel-collector
@@ -28,15 +31,18 @@ services:
       dockerfile: PaymentService/Dockerfile.debug
     container_name: payment-service
     ports:
-      - "50051:50051"  # gRPC
-      - "9229:9229"    # Debug port (Node.js inspector)
+      - "5012:5012"    # REST
+      - "50012:50012"  # gRPC
+      - "4012:9229"    # Debug port (host 4012 -> container 9229)
     environment:
       - NODE_ENV=development
-      - PORT=50051
+      - PORT=50012
+      - REST_PORT=5012
       - MONGO_URI=mongodb://admin:password123@payment-db:27017
       - MONGO_DB_NAME=payments_db
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - SERVICE_NAME=PaymentService
+      - LOKI_URL=http://loki:3100
     depends_on:
       - payment-db
       - otel-collector
@@ -49,19 +55,21 @@ services:
     container_name: identity-service
     ports:
       - "5010:5010"   # HTTP
-      - "2223:2222"   # Debug port (different host port to avoid conflict)
+      - "4010:2222"   # Debug port (host 4010 -> container 2222)
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5010
       - Jwt__Key=ThisIsAVerySecretKeyForDevelopmentOnly123!
       - Jwt__Issuer=IdentityService
       - Jwt__Audience=MicroserviceApp
+      - OpenTelemetry__Endpoint=http://otel-collector:4317
+      - LOKI_URL=http://loki:3100
 
   # Go Inventory Service
   inventory-service:
     build:
       context: .
-      dockerfile: InventoryService/Dockerfile
+      dockerfile: InventoryService/Dockerfile.debug
     container_name: inventory-service
     environment:
       - DB_HOST=inventory-db
@@ -69,16 +77,18 @@ services:
       - DB_PASSWORD=password123
       - DB_NAME=inventory_db
       - DB_PORT=5432
-      - GRPC_PORT=50052
-      - REST_PORT=8081
+      - GRPC_PORT=50013
+      - REST_PORT=5013
       - SERVICE_NAME=InventoryService
-      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - LOKI_URL=http://loki:3100
     depends_on:
       - inventory-db
       - otel-collector
     ports:
-      - "50052:50052"
-      - "8081:8081"
+      - "5013:5013"
+      - "50013:50013"
+      - "4013:4013" # Debug port (Delve)
 
   # Angular Back Office
   back-office:
@@ -87,6 +97,6 @@ services:
       dockerfile: back-office/Dockerfile
     container_name: back-office
     ports:
-      - "4200:80"
+      - "5015:80"
     depends_on:
       - inventory-service

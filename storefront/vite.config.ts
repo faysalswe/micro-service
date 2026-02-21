@@ -8,7 +8,7 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   server: {
-    port: 3000,
+    port: 5014,
     strictPort: false,
   },
   // Optimize deps for faster dev server startup

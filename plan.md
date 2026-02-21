@@ -64,18 +64,16 @@ A robust microservices architecture using synchronous gRPC communication and an 
 
 ### Service Ports
 
-| Service | Port | Protocol | Description |
-|---------|------|----------|-------------|
-| **IdentityService** | 5010 | HTTP | JWT authentication |
-| **OrderService** | 5011 | HTTP | REST API (local), 8080 (Docker/K8s) |
-| **PaymentService** | 50051 | gRPC | Payment processing |
-| **PaymentService** | 5012 | HTTP | REST API / Swagger |
-| **InventoryService** | 50052 | gRPC | Inventory & Product Catalog |
-| **InventoryService** | 8081 | HTTP | Management REST API |
-| **Storefront** | 3000 | HTTP | Customer React App |
-| **Admin Tool** | 4200 | HTTP | Admin Angular App |
-| **Kong Gateway** | 8000 | HTTP | API Gateway proxy |
-| **Kong Gateway** | 9080 | gRPC | gRPC proxy |
+| Service | HTTP Port | gRPC Port | Debug Port (Host) | Description |
+|---------|-----------|-----------|-------------------|-------------|
+| **IdentityService** | 5010 | - | 4010 | JWT authentication |
+| **OrderService** | 5011 | 50011 | 4011 | REST & Saga Orchestrator |
+| **PaymentService** | 5012 | 50012 | 4012 | Payment processing |
+| **InventoryService** | 5013 | 50013 | 4013 | Inventory & Catalog |
+| **Storefront** | 5014 | - | - | Customer React App |
+| **Back Office** | 5015 | - | - | Admin Angular App |
+| **Kong Gateway** | 8000 | - | - | API Gateway proxy |
+| **Kong Gateway** | 9080 | 9080 | - | gRPC proxy |
 | **PostgreSQL** | 5432 | TCP | OrderService database |
 | **MongoDB** | 27017 | TCP | PaymentService database |
 | **PostgreSQL** | 5433 | TCP | InventoryService database |

@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy proto files first (dependency for gRPC code generation)
@@ -15,7 +15,7 @@ WORKDIR /src/OrderService
 RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 2: Runtime
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
 # Install grpc_health_probe for Kubernetes health checks
@@ -35,14 +35,14 @@ COPY --from=build /app/publish .
 RUN chown -R appuser:appuser /app
 USER appuser
 
-# Set the application to listen on port 5011
-ENV ASPNETCORE_URLS=http://+:5011
+# Set the application to listen on both REST and gRPC ports
+ENV ASPNETCORE_URLS=http://+:5011;http://+:50011
 
-# Expose gRPC/HTTP port
-EXPOSE 5011
+# Expose ports
+EXPOSE 5011 50011
 
-# Health check using grpc_health_probe
+# Health check using grpc_health_probe on the gRPC port
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD ["/bin/grpc_health_probe", "-addr=:5011"]
+    CMD ["/bin/grpc_health_probe", "-addr=:50011"]
 
 ENTRYPOINT ["dotnet", "OrderService.dll"]

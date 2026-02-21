@@ -133,8 +133,8 @@ func main() {
 	dbPassword := getEnv("DB_PASSWORD", "password123")
 	dbName := getEnv("DB_NAME", "inventory_db")
 	dbPort := getEnv("DB_PORT", "5432")
-	grpcPort := getEnv("GRPC_PORT", "50052")
-	restPort := getEnv("REST_PORT", "8081")
+	grpcPort := getEnv("GRPC_PORT", "50013")
+	restPort := getEnv("REST_PORT", "5013")
 
 	// 3. Init DB
 	db := database.InitDB(dbHost, dbUser, dbPassword, dbName, dbPort)

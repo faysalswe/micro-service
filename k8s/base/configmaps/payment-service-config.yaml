@@ -7,7 +7,7 @@ metadata:
     app: payment-service
 data:
   NODE_ENV: "production"
-  PORT: "50051"
+  PORT: "50012"
   MONGO_DB_NAME: "payments_db"
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
   LOKI_URL: "http://loki:3100"

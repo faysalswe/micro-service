@@ -1,0 +1,58 @@
+# Debug Dockerfile for InventoryService (Go)
+# Enables remote debugging via Delve (dlv)
+
+# --- Build Stage ---
+FROM golang:1.25-alpine AS builder
+
+# Install build dependencies and Delve
+RUN apk add --no-cache git protobuf protobuf-dev
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+
+WORKDIR /app
+
+# Copy the entire project first
+COPY . .
+
+# Generate gRPC code
+WORKDIR /app/InventoryService
+RUN mkdir -p proto
+RUN protoc --proto_path=/app/protos \
+    --go_out=proto --go_opt=paths=source_relative \
+    --go-grpc_out=proto --go-grpc_opt=paths=source_relative \
+    /app/protos/inventory.proto
+
+RUN go mod tidy
+
+# Build the application with optimizations DISABLED for debugging
+# -gcflags="all=-N -l" prevents the compiler from optimizing away variables
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /inventory-service ./cmd/server/main.go
+
+# --- Final Stage ---
+FROM alpine:latest
+
+WORKDIR /
+
+# Copy the binary and delve from the builder
+COPY --from=builder /inventory-service /inventory-service
+COPY --from=builder /go/bin/dlv /dlv
+
+# Install health check probe
+RUN apk add --no-cache curl \
+    && curl -L https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.24/grpc_health_probe-linux-amd64 -o /bin/grpc_health_probe \
+    && chmod +x /bin/grpc_health_probe
+# Expose REST, gRPC, and Delve port
+EXPOSE 5013 50013 4013
+
+# Set environment variables
+ENV DB_HOST=inventory-db
+ENV DB_PORT=5432
+
+# Start the application via Delve
+# --headless: run without a UI
+# --continue: continue execution on start
+# --accept-multiclient: allow multiple debugger connections
+# --listen=:4013: listen on the unified debug port
+# --api-version=2: use the latest Delve API
+CMD ["/dlv", "--listen=:4013", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/inventory-service"]

@@ -7,7 +7,7 @@ image:
 
 service:
   type: ClusterIP
-  port: 8080
+  port: 5010
 
 resources:
   limits:
@@ -43,7 +43,7 @@ healthCheck:
 
 podAnnotations:
   prometheus.io/scrape: "true"
-  prometheus.io/port: "8080"
+  prometheus.io/port: "5010"
 
 nodeSelector: {}
 

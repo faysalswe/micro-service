@@ -55,7 +55,7 @@ var circuitBreakerPolicy = HttpPolicyExtensions
 // Register gRPC Client for PaymentService with Resilience
 builder.Services.AddGrpcClient<PaymentService.PaymentServiceClient>(o =>
 {
-    o.Address = new Uri(builder.Configuration["GrpcSettings:PaymentServiceUrl"] ?? "http://localhost:50051");
+    o.Address = new Uri(builder.Configuration["GrpcSettings:PaymentServiceUrl"] ?? "http://localhost:50012");
 })
 .AddPolicyHandler(retryPolicy)
 .AddPolicyHandler(circuitBreakerPolicy);
@@ -63,7 +63,7 @@ builder.Services.AddGrpcClient<PaymentService.PaymentServiceClient>(o =>
 // Register gRPC Client for InventoryService with Resilience
 builder.Services.AddGrpcClient<Inventory.InventoryService.InventoryServiceClient>(o =>
 {
-    o.Address = new Uri(builder.Configuration["GrpcSettings:InventoryServiceUrl"] ?? "http://localhost:50052");
+    o.Address = new Uri(builder.Configuration["GrpcSettings:InventoryServiceUrl"] ?? "http://localhost:50013");
 })
 .AddPolicyHandler(retryPolicy)
 .AddPolicyHandler(circuitBreakerPolicy);

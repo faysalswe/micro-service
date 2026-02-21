@@ -1,7 +1,7 @@
 # Debug Dockerfile for IdentityService
 # Enables remote debugging via vsdbg
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY ["IdentityService/IdentityService.csproj", "IdentityService/"]
@@ -11,7 +11,7 @@ WORKDIR "/src/IdentityService"
 RUN dotnet publish "IdentityService.csproj" -c Debug -o /app/publish
 
 # Debug runtime image
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS runtime
 WORKDIR /app
 
 # Install vsdbg debugger

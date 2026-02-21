@@ -18,7 +18,7 @@ spec:
         version: v1
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
+        prometheus.io/port: "5010"
     spec:
       terminationGracePeriodSeconds: 30
       containers:
@@ -26,7 +26,7 @@ spec:
           image: microservices/identity-service:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8080
+            - containerPort: 5010
               name: http
               protocol: TCP
           envFrom:
@@ -44,7 +44,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health/live
-              port: 8080
+              port: 5010
             initialDelaySeconds: 10
             periodSeconds: 15
             timeoutSeconds: 5
@@ -52,7 +52,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 5010
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 5
