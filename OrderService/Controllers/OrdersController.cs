@@ -113,11 +113,20 @@ public class OrdersController : ControllerBase
             var idempotencyResult = await _idempotencyService.CheckAndSaveAsync(
                 idempotencyKey, "POST /api/orders", requestBody);
 
-            if (idempotencyResult.IsDuplicate && idempotencyResult.CachedResponse != null)
+            if (idempotencyResult.IsDuplicate)
             {
-                _logger.LogInformation("Returning cached response for idempotency key: {Key}", idempotencyKey);
-                var cachedResponse = JsonSerializer.Deserialize<OrderResponseDto>(idempotencyResult.CachedResponse);
-                return StatusCode(idempotencyResult.CachedStatusCode ?? 200, cachedResponse);
+                if (idempotencyResult.IsProcessing)
+                {
+                    _logger.LogInformation("Request for idempotency key {Key} is already in progress", idempotencyKey);
+                    return Conflict(new { message = "Request is already being processed. Please wait." });
+                }
+
+                if (idempotencyResult.CachedResponse != null)
+                {
+                    _logger.LogInformation("Returning cached response for idempotency key: {Key}", idempotencyKey);
+                    var cachedResponse = JsonSerializer.Deserialize<OrderResponseDto>(idempotencyResult.CachedResponse);
+                    return StatusCode(idempotencyResult.CachedStatusCode ?? 200, cachedResponse);
+                }
             }
         }
 

@@ -44,10 +44,18 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
             var idempotencyResult = await _idempotencyService.CheckAndSaveAsync(
                 idempotencyKey, "gRPC:CreateOrder", requestJson);
 
-            if (idempotencyResult.IsDuplicate && idempotencyResult.CachedResponse != null)
+            if (idempotencyResult.IsDuplicate)
             {
-                _logger.LogInformation("Returning cached response for idempotency key: {Key}", idempotencyKey);
-                return System.Text.Json.JsonSerializer.Deserialize<OrderResponse>(idempotencyResult.CachedResponse)!;
+                if (idempotencyResult.IsProcessing)
+                {
+                    throw new RpcException(new Status(StatusCode.AlreadyExists, "Request is already being processed."));
+                }
+
+                if (idempotencyResult.CachedResponse != null)
+                {
+                    _logger.LogInformation("Returning cached response for idempotency key: {Key}", idempotencyKey);
+                    return System.Text.Json.JsonSerializer.Deserialize<OrderResponse>(idempotencyResult.CachedResponse)!;
+                }
             }
         }
 

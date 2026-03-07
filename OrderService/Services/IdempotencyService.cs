@@ -19,6 +19,7 @@ public interface IIdempotencyService
 public class IdempotencyResult
 {
     public bool IsDuplicate { get; set; }
+    public bool IsProcessing { get; set; }
     public int? CachedStatusCode { get; set; }
     public string? CachedResponse { get; set; }
 }
@@ -38,7 +39,7 @@ public class IdempotencyService : IIdempotencyService
     {
         var requestHash = ComputeHash(requestBody);
 
-        // Check if this idempotency key already exists
+        // 1. Check if this idempotency key already exists
         var existing = await _dbContext.IdempotencyRecords
             .FirstOrDefaultAsync(i => i.IdempotencyKey == idempotencyKey);
 
@@ -55,30 +56,62 @@ public class IdempotencyService : IIdempotencyService
                     "Idempotency key was already used with a different request");
             }
 
+            // Check if it's still processing (ResponseStatusCode == 0)
+            // Allow retry if it's older than 5 minutes (stuck request)
+            if (existing.ResponseStatusCode == 0 && existing.CreatedAt > DateTime.UtcNow.AddMinutes(-5))
+            {
+                _logger.LogInformation("Request already in progress for key: {Key}", idempotencyKey);
+                return new IdempotencyResult { IsDuplicate = true, IsProcessing = true };
+            }
+
             _logger.LogInformation("Duplicate request detected: {Key}", idempotencyKey);
 
             return new IdempotencyResult
             {
                 IsDuplicate = true,
+                IsProcessing = false,
                 CachedStatusCode = existing.ResponseStatusCode,
                 CachedResponse = existing.ResponseBody
             };
         }
 
-        // Create new record (response will be saved later)
-        var record = new IdempotencyRecord
+        // 2. Try to insert a new "In-Progress" record
+        try
         {
-            IdempotencyKey = idempotencyKey,
-            RequestPath = requestPath,
-            RequestHash = requestHash,
-            ResponseStatusCode = 0,  // Will be updated when response is saved
-            ExpiresAt = DateTime.UtcNow.AddHours(24)
-        };
+            var record = new IdempotencyRecord
+            {
+                IdempotencyKey = idempotencyKey,
+                RequestPath = requestPath,
+                RequestHash = requestHash,
+                ResponseStatusCode = 0, // 0 means "In-Progress"
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddHours(24)
+            };
 
-        _dbContext.IdempotencyRecords.Add(record);
-        await _dbContext.SaveChangesAsync();
+            _dbContext.IdempotencyRecords.Add(record);
+            await _dbContext.SaveChangesAsync();
 
-        return new IdempotencyResult { IsDuplicate = false };
+            return new IdempotencyResult { IsDuplicate = false };
+        }
+        catch (DbUpdateException)
+        {
+            // Race condition: another thread inserted it between our check and save
+            _logger.LogWarning("Race condition hit for idempotency key: {Key}. Re-fetching.", idempotencyKey);
+            
+            var reFetched = await _dbContext.IdempotencyRecords
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.IdempotencyKey == idempotencyKey);
+            
+            if (reFetched == null) throw; 
+
+            return new IdempotencyResult
+            {
+                IsDuplicate = true,
+                IsProcessing = reFetched.ResponseStatusCode == 0,
+                CachedStatusCode = reFetched.ResponseStatusCode,
+                CachedResponse = reFetched.ResponseBody
+            };
+        }
     }
 
     public async Task SaveResponseAsync(string idempotencyKey, int statusCode, object responseBody)
