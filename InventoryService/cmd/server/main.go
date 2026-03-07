@@ -92,6 +92,14 @@ func (s *server) DeleteProduct(ctx context.Context, req *proto.DeleteProductRequ
 	return &proto.DeleteProductResponse{Success: success, Message: msg}, nil
 }
 
+func (s *server) RestockItems(ctx context.Context, req *proto.RestockRequest) (*proto.RestockResponse, error) {
+	success, msg, err := s.service.RestockItems(ctx, req.ProductId, req.Quantity)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.RestockResponse{Success: success, Message: msg}, nil
+}
+
 func startRESTServer(svc service.InventoryService, port string) {
 	r := gin.Default()
 	handler := rest.NewInventoryHandler(svc)

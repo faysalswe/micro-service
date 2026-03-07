@@ -15,6 +15,9 @@ public class OrderProcessingServiceTests
 {
     private readonly Mock<ILogger<OrderProcessingService>> _loggerMock;
     private readonly Mock<PaymentService.PaymentServiceClient> _paymentClientMock;
+    private readonly Mock<Inventory.InventoryService.InventoryServiceClient> _inventoryClientMock;
+    private readonly Mock<ISagaService> _sagaServiceMock;
+    private readonly Mock<IIdempotencyService> _idempotencyServiceMock;
     private readonly OrderDbContext _dbContext;
     private readonly OrderProcessingService _service;
 
@@ -22,13 +25,22 @@ public class OrderProcessingServiceTests
     {
         _loggerMock = new Mock<ILogger<OrderProcessingService>>();
         _paymentClientMock = new Mock<PaymentService.PaymentServiceClient>();
+        _inventoryClientMock = new Mock<Inventory.InventoryService.InventoryServiceClient>();
+        _sagaServiceMock = new Mock<ISagaService>();
+        _idempotencyServiceMock = new Mock<IIdempotencyService>();
 
         var options = new DbContextOptionsBuilder<OrderDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         _dbContext = new OrderDbContext(options);
 
-        _service = new OrderProcessingService(_loggerMock.Object, _paymentClientMock.Object, _dbContext);
+        _service = new OrderProcessingService(
+            _loggerMock.Object, 
+            _paymentClientMock.Object, 
+            _inventoryClientMock.Object,
+            _dbContext,
+            _sagaServiceMock.Object,
+            _idempotencyServiceMock.Object);
     }
 
     [Fact]

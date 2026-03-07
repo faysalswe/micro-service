@@ -21,6 +21,7 @@ service InventoryService {
   rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse);
   rpc UpdateProduct(UpdateProductRequest) returns (UpdateProductResponse);
   rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse);
+  rpc RestockItems(RestockRequest) returns (RestockResponse);
 }
 
 message ReserveRequest {
@@ -96,6 +97,16 @@ message DeleteProductRequest {
 }
 
 message DeleteProductResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message RestockRequest {
+  string product_id = 1;
+  int32 quantity = 2;
+}
+
+message RestockResponse {
   bool success = 1;
   string message = 2;
 }

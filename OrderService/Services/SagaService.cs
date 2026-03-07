@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using OrderService.Data;
 
 namespace OrderService.Services;
@@ -49,11 +50,23 @@ public class SagaService : ISagaService
 
     public async Task LogStepAsync(Guid sagaId, string step, string status, object? payload = null, string? errorMessage = null)
     {
+        // Try to find the SagaType from the first log entry for this SagaId
+        var sagaType = "Unknown";
+        var firstLog = await _dbContext.SagaLogs
+            .Where(s => s.SagaId == sagaId)
+            .OrderBy(s => s.CreatedAt)
+            .FirstOrDefaultAsync();
+        
+        if (firstLog != null)
+        {
+            sagaType = firstLog.SagaType;
+        }
+
         var logEntry = new SagaLog
         {
             Id = Guid.NewGuid(),
             SagaId = sagaId,
-            SagaType = "CreateOrder",
+            SagaType = sagaType,
             Step = step,
             Status = status,
             Payload = payload != null ? JsonSerializer.Serialize(payload) : null,
@@ -64,7 +77,7 @@ public class SagaService : ISagaService
         _dbContext.SagaLogs.Add(logEntry);
         await _dbContext.SaveChangesAsync();
 
-        _logger.LogInformation("Saga step logged: {SagaId}, Step: {Step}, Status: {Status}", sagaId, step, status);
+        _logger.LogInformation("Saga step logged: {SagaId}, Type: {SagaType}, Step: {Step}, Status: {Status}", sagaId, sagaType, step, status);
     }
 
     public async Task CompleteStepAsync(Guid sagaId, string step)

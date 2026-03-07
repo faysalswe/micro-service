@@ -17,6 +17,7 @@ type InventoryRepository interface {
 	CreateProduct(ctx context.Context, product models.ProductStock) error
 	UpdateProduct(ctx context.Context, product models.ProductStock) error
 	DeleteProduct(ctx context.Context, productID string) error
+	RestockItems(ctx context.Context, productID string, quantity int32) error
 }
 
 type postgresRepository struct {
@@ -124,6 +125,30 @@ func (r *postgresRepository) ReleaseStock(ctx context.Context, orderID string, p
 
 		// 3. Remove Idempotency record (so it can be re-reserved if needed, or mark as cancelled)
 		return tx.Delete(&record).Error
+	})
+}
+
+func (r *postgresRepository) RestockItems(ctx context.Context, productID string, quantity int32) error {
+	ctx, span := r.tracer.Start(ctx, "RestockItems")
+	defer span.End()
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Lock the product row
+		var stock models.ProductStock
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("product_id = ?", productID).First(&stock).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("product not found")
+			}
+			return err
+		}
+
+		// Update
+		stock.Quantity += quantity
+		if err := tx.Save(&stock).Error; err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
 

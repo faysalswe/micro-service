@@ -13,11 +13,7 @@ namespace OrderService.Tests
         {
             var config = new PactConfig
             {
-                PactDir = "../../../pacts/",
-                DefaultJsonSettings = new Newtonsoft.Json.JsonSerializerSettings
-                {
-                    ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
-                }
+                PactDir = "../../../pacts/"
             };
 
             var pact = Pact.V4("OrderService", "InventoryService", config);
@@ -70,6 +66,28 @@ namespace OrderService.Tests
                     {
                         success = true,
                         message = Match.Type("Stock reserved successfully")
+                    });
+
+            _pactBuilder.Verify(ctx => { });
+        }
+
+        [Fact]
+        public void RestockItems_WhenValidRequest_ReturnsSuccess()
+        {
+            _pactBuilder
+                .UponReceiving("A request to restock items")
+                    .WithRequest(HttpMethod.Post, "/api/inventory/restock")
+                    .WithJsonBody(new
+                    {
+                        productId = "PROD-001",
+                        quantity = 10
+                    })
+                .WillRespond()
+                    .WithStatus(System.Net.HttpStatusCode.OK)
+                    .WithJsonBody(new
+                    {
+                        success = true,
+                        message = Match.Type("Stock restocked successfully")
                     });
 
             _pactBuilder.Verify(ctx => { });

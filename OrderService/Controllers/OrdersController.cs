@@ -5,6 +5,7 @@ using OrderService.Services;
 using Microservice.Payments.Grpc;
 using Grpc.Core;
 using System.Text.Json;
+using Polly;
 
 namespace OrderService.Controllers;
 
@@ -15,6 +16,7 @@ public class OrdersController : ControllerBase
     private readonly ILogger<OrdersController> _logger;
     private readonly OrderDbContext _dbContext;
     private readonly PaymentService.PaymentServiceClient _paymentClient;
+    private readonly Inventory.InventoryService.InventoryServiceClient _inventoryClient;
     private readonly ISagaService _sagaService;
     private readonly IIdempotencyService _idempotencyService;
 
@@ -22,12 +24,14 @@ public class OrdersController : ControllerBase
         ILogger<OrdersController> logger,
         OrderDbContext dbContext,
         PaymentService.PaymentServiceClient paymentClient,
+        Inventory.InventoryService.InventoryServiceClient inventoryClient,
         ISagaService sagaService,
         IIdempotencyService idempotencyService)
     {
         _logger = logger;
         _dbContext = dbContext;
         _paymentClient = paymentClient;
+        _inventoryClient = inventoryClient;
         _sagaService = sagaService;
         _idempotencyService = idempotencyService;
     }
@@ -293,7 +297,7 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>
-    /// Cancel an order (if pending)
+    /// Cancel an order (if pending or completed)
     /// </summary>
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> CancelOrder(Guid id)
@@ -307,15 +311,114 @@ public class OrdersController : ControllerBase
             return NotFound(new { message = $"Order {id} not found" });
         }
 
-        if (order.Status != "PENDING")
+        // Only allow cancelling orders that are PENDING or COMPLETED
+        if (order.Status != "PENDING" && order.Status != "COMPLETED")
         {
             return BadRequest(new { message = $"Cannot cancel order with status: {order.Status}" });
         }
 
-        order.Status = "CANCELLED";
-        await _dbContext.SaveChangesAsync();
+        // Start Cancel Saga
+        var sagaId = Guid.NewGuid();
+        var correlationId = Guid.NewGuid().ToString();
+        await _sagaService.StartSagaAsync(sagaId, "CancelOrder", correlationId);
 
-        return Ok(new { message = "Order cancelled", orderId = id });
+        try 
+        {
+            // 1. Payment Refund (only if order was COMPLETED)
+            if (order.Status == "COMPLETED")
+            {
+                _logger.LogInformation("Saga: Refunding payment for order {OrderId}", id);
+                await _sagaService.LogStepAsync(sagaId, "RefundPayment", "Started");
+
+                if (string.IsNullOrEmpty(order.PaymentId))
+                {
+                    _logger.LogWarning("Saga: Order {OrderId} is COMPLETED but has no PaymentId", id);
+                    await _sagaService.LogStepAsync(sagaId, "RefundPayment", "Failed", null, "Missing PaymentId");
+                    return BadRequest(new { message = "Order has no payment information to refund" });
+                }
+
+                var refundRequest = new RefundRequest 
+                { 
+                    PaymentId = order.PaymentId,
+                    Reason = "User requested cancellation" 
+                };
+
+                try
+                {
+                    var refundResponse = await _paymentClient.RefundPaymentAsync(refundRequest);
+                    if (!refundResponse.Success)
+                    {
+                        await _sagaService.LogStepAsync(sagaId, "RefundPayment", "Failed", null, refundResponse.StatusMessage);
+                        order.Status = "CANCELLATION_FAILED";
+                        await _dbContext.SaveChangesAsync();
+                        return StatusCode(500, new { message = "Refund failed", details = refundResponse.StatusMessage });
+                    }
+                    await _sagaService.LogStepAsync(sagaId, "RefundPayment", "Completed");
+                }
+                catch (RpcException ex)
+                {
+                    await _sagaService.LogStepAsync(sagaId, "RefundPayment", "Failed", null, ex.Message);
+                    order.Status = "CANCELLATION_FAILED";
+                    await _dbContext.SaveChangesAsync();
+                    return StatusCode(500, new { message = "Refund service unavailable", details = ex.Message });
+                }
+            }
+
+            // 2. Inventory Restock
+            _logger.LogInformation("Saga: Restocking items for order {OrderId}", id);
+            await _sagaService.LogStepAsync(sagaId, "RestockItems", "Started");
+
+            var restockRequest = new Inventory.RestockRequest 
+            { 
+                ProductId = order.ProductId,
+                Quantity = order.Quantity 
+            };
+
+            // Define Polly retry policy for restock
+            var restockPolicy = Policy
+                .Handle<RpcException>()
+                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                (exception, timeSpan, retryCount, context) => {
+                    _logger.LogWarning("Saga: Retrying RestockItems for order {OrderId}, Attempt {RetryCount}", id, retryCount);
+                });
+
+            try
+            {
+                var restockResult = await restockPolicy.ExecuteAsync(async () => 
+                {
+                    return await _inventoryClient.RestockItemsAsync(restockRequest);
+                });
+
+                if (restockResult.Success)
+                {
+                    await _sagaService.LogStepAsync(sagaId, "RestockItems", "Completed");
+                    order.Status = "CANCELLED";
+                    await _dbContext.SaveChangesAsync();
+                    return Ok(new { message = "Order cancelled and restocked", orderId = id });
+                }
+                else
+                {
+                    await _sagaService.LogStepAsync(sagaId, "RestockItems", "Failed", null, restockResult.Message);
+                    order.Status = "CANCELLATION_PENDING";
+                    await _dbContext.SaveChangesAsync();
+                    return Accepted(new { message = "Order cancellation in progress, restock pending", orderId = id });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Saga: Inventory Restock failed after retries for order {OrderId}", id);
+                await _sagaService.LogStepAsync(sagaId, "RestockItems", "Failed", null, ex.Message);
+                
+                order.Status = "CANCELLATION_PENDING";
+                await _dbContext.SaveChangesAsync();
+                return Accepted(new { message = "Order cancellation in progress, restock failed after retries", orderId = id });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Saga: Critical failure during cancellation for order {OrderId}", id);
+            return StatusCode(500, new { message = "Critical failure during cancellation", error = ex.Message });
+        }
     }
 }
 

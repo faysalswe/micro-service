@@ -14,6 +14,7 @@ type InventoryService interface {
 	CreateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error)
 	UpdateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error)
 	DeleteProduct(ctx context.Context, productID string) (bool, string, error)
+	RestockItems(ctx context.Context, productID string, quantity int32) (bool, string, error)
 }
 
 type inventoryService struct {
@@ -62,6 +63,14 @@ func (s *inventoryService) DeleteProduct(ctx context.Context, productID string) 
 		return false, err.Error(), nil
 	}
 	return true, "Product deleted successfully", nil
+}
+
+func (s *inventoryService) RestockItems(ctx context.Context, productID string, quantity int32) (bool, string, error) {
+	err := s.repo.RestockItems(ctx, productID, quantity)
+	if err != nil {
+		return false, err.Error(), nil
+	}
+	return true, "Stock restocked successfully", nil
 }
 
 func (s *inventoryService) Reserve(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error) {
