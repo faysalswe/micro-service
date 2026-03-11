@@ -1,0 +1,35 @@
+postgresql:
+  image:
+    tag: latest
+    pullPolicy: IfNotPresent
+  auth:
+    database: micro_service_db
+    username: admin
+    password: password123
+  persistence:
+    enabled: true
+    size: 1Gi
+  primary:
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        memory: 256Mi
+
+mongodb:
+  image:
+    tag: latest
+    pullPolicy: IfNotPresent
+  auth:
+    rootPassword: password123
+    database: payment_db
+    usernames: ["admin"]
+    databases: ["payment_db"]
+  persistence:
+    enabled: true
+    size: 1Gi
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      memory: 256Mi

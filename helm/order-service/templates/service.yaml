@@ -13,3 +13,4 @@ spec:
       name: grpc
   selector:
     {{- include "order-service.selectorLabels" . | nindent 4 }}
+    version: stable

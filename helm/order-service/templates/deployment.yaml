@@ -11,6 +11,7 @@ spec:
   selector:
     matchLabels:
       {{- include "order-service.selectorLabels" . | nindent 6 }}
+      version: stable
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -19,6 +20,7 @@ spec:
       {{- end }}
       labels:
         {{- include "order-service.selectorLabels" . | nindent 8 }}
+        version: stable
     spec:
       terminationGracePeriodSeconds: 30
       containers:
@@ -29,11 +31,14 @@ spec:
             - name: grpc
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+            - name: http
+              containerPort: 5011
+              protocol: TCP
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.config.aspnetcoreEnvironment | quote }}
             - name: ASPNETCORE_URLS
-              value: "http://+:{{ .Values.service.port }}"
+              value: "http://+:5011;http://+:50011"
             - name: GrpcSettings__PaymentServiceUrl
               value: {{ .Values.config.paymentServiceUrl | quote }}
             - name: OpenTelemetry__Endpoint
@@ -46,15 +51,17 @@ spec:
                   name: {{ .Values.database.existingSecret }}
                   key: {{ .Values.database.connectionStringKey }}
           livenessProbe:
-            exec:
-              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.service.port }}"]
+            httpGet:
+              path: /health
+              port: 5011
             initialDelaySeconds: {{ .Values.healthCheck.liveness.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthCheck.liveness.periodSeconds }}
             timeoutSeconds: {{ .Values.healthCheck.liveness.timeoutSeconds }}
             failureThreshold: {{ .Values.healthCheck.liveness.failureThreshold }}
           readinessProbe:
-            exec:
-              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.service.port }}"]
+            httpGet:
+              path: /health
+              port: 5011
             initialDelaySeconds: {{ .Values.healthCheck.readiness.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthCheck.readiness.periodSeconds }}
             timeoutSeconds: {{ .Values.healthCheck.readiness.timeoutSeconds }}

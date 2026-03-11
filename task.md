@@ -42,7 +42,23 @@ This document contains three high-signal tasks designed to help you master gRPC,
   - Fix a "Trace Leak" where the `trace_id` is lost when the Go service calls a third-party mock API.
 - **The Enhancement:** Create a Grafana Dashboard that correlates "P99 Latency" with "Database Connection Wait Time."
 
+---
+
+## Task 4: The "Lightweight Professional" K8s Cluster (k3s)
+**Objective:** Deploy a production-ready, internet-facing Kubernetes cluster on a Linux VM (DigitalOcean) using **k3s**.
+
+- **The Core:** Install and bootstrap a certified Kubernetes cluster using **k3s**. This provides a fully compliant K8s API with a much smaller memory footprint than `kubeadm`.
+- **Infrastructure:**
+  - **Embedded DB:** Understand how k3s uses SQLite (or external DB like PostgreSQL) for the control plane.
+  - **Traefik/Kong:** Configure the default Traefik ingress or replace it with **Kong** for advanced API management.
+- **Networking & SSL:**
+  - Expose the cluster securely to the public internet.
+  - Automate SSL certificates using **Cert-Manager** and Let's Encrypt.
+- **The Challenge: "The Multi-Node Expansion":** 
+  - Join a second worker node to the cluster using the k3s node token.
+  - **Success Criteria:** A "Node Status: Ready" cluster that is accessible over the public internet with valid HTTPS, hosting all microservices.
+
 ## Tools to Master
 - **Development:** `protoc`, `Pact`, `Polly`, `GORM`, `Mongoose`.
-- **Infrastructure:** `kubectl`, `helm`, `Kind`, `Kong`.
+- **Infrastructure:** `kubectl`, `helm`, `Kind`, `Kong`, `k3s`, `Cert-Manager`.
 - **Observability:** `OpenTelemetry SDKs`, `PromQL`, `LogQL`, `Jaeger Query`.

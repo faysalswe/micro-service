@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: microservices/order-service
+  repository: order-service
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -35,15 +35,15 @@ database:
 
 healthCheck:
   liveness:
-    initialDelaySeconds: 15
+    initialDelaySeconds: 30
     periodSeconds: 20
-    timeoutSeconds: 5
-    failureThreshold: 3
+    timeoutSeconds: 10
+    failureThreshold: 5
   readiness:
-    initialDelaySeconds: 5
+    initialDelaySeconds: 15
     periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
+    timeoutSeconds: 10
+    failureThreshold: 5
 
 podAnnotations:
   prometheus.io/scrape: "true"
