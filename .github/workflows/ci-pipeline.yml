@@ -26,19 +26,19 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore Dependencies
-      run: dotnet restore OrderService/OrderService.csproj
+      run: dotnet restore services/OrderService/OrderService.csproj
       
     - name: Build OrderService
-      run: dotnet build OrderService/OrderService.csproj --configuration Release --no-restore
+      run: dotnet build services/OrderService/OrderService.csproj --configuration Release --no-restore
       
     - name: Run Unit Tests
-      run: dotnet test OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
+      run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
       
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: orderservice-build
-        path: OrderService/bin/Release/
+        path: services/OrderService/bin/Release/
         retention-days: 1
 
   # Job 2: Build and Test Node.js PaymentService
@@ -55,21 +55,21 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: PaymentService/package-lock.json
+        cache-dependency-path: services/PaymentService/package-lock.json
         
     - name: Install Dependencies
-      working-directory: PaymentService
+      working-directory: services/PaymentService
       run: npm ci
       
     - name: Run Tests
-      working-directory: PaymentService
+      working-directory: services/PaymentService
       run: npm test
       
     - name: Upload Test Coverage
       uses: actions/upload-artifact@v4
       with:
         name: paymentservice-coverage
-        path: PaymentService/coverage/
+        path: services/PaymentService/coverage/
         retention-days: 1
 
   # Job 3: Build and Test IdentityService
@@ -87,10 +87,10 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore Dependencies
-      run: dotnet restore IdentityService/IdentityService.csproj
+      run: dotnet restore services/IdentityService/IdentityService.csproj
       
     - name: Build IdentityService
-      run: dotnet build IdentityService/IdentityService.csproj --configuration Release --no-restore
+      run: dotnet build services/IdentityService/IdentityService.csproj --configuration Release --no-restore
 
   # Job 4: Contract Testing with Pact
   contract-tests:
@@ -108,23 +108,23 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore Test Dependencies
-      run: dotnet restore OrderService.Tests/OrderService.Tests.csproj
+      run: dotnet restore services/OrderService.Tests/OrderService.Tests.csproj
       
     - name: Run Contract Tests (Consumer)
-      run: dotnet test OrderService.Tests/OrderService.Tests.csproj --filter "FullyQualifiedName~ContractTests" --verbosity normal
+      run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --filter "FullyQualifiedName~ContractTests" --verbosity normal
       
     - name: Upload Pact Files
       uses: actions/upload-artifact@v4
       with:
         name: pact-contracts
-        path: pacts/
+        path: tests/pacts/
         retention-days: 30
         
     - name: Publish Pact Contracts (Optional)
       if: github.ref == 'refs/heads/main'
       run: |
         echo "🔍 Pact files generated:"
-        ls -la pacts/
+        ls -la tests/pacts/
         echo "ℹ️  In production, these would be published to a Pact Broker"
         echo "ℹ️  Example: pact-broker publish pacts/ --consumer-app-version=${{ github.sha }}"
 
@@ -188,7 +188,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: ./OrderService/Dockerfile
+        file: ./services/OrderService/Dockerfile
         push: true
         tags: |
           ghcr.io/${{ github.repository }}/order-service:${{ github.sha }}
@@ -201,7 +201,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: ./PaymentService/Dockerfile
+        file: ./services/PaymentService/Dockerfile
         push: true
         tags: |
           ghcr.io/${{ github.repository }}/payment-service:${{ github.sha }}
@@ -214,7 +214,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: ./IdentityService/Dockerfile
+        file: ./services/IdentityService/Dockerfile
         push: true
         tags: |
           ghcr.io/${{ github.repository }}/identity-service:${{ github.sha }}

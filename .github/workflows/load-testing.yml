@@ -37,7 +37,7 @@ jobs:
       
     - name: Start Docker Compose Services
       run: |
-        docker-compose up -d
+        docker-compose -f infrastructure/docker-compose.yaml up -d
         echo "Waiting for services to be ready..."
         sleep 30
         
@@ -63,7 +63,7 @@ jobs:
         k6 version
         
     - name: Start Services
-      run: docker-compose up -d
+      run: docker-compose -f infrastructure/docker-compose.yaml up -d
       
     - name: Wait for Services
       run: sleep 30
@@ -72,9 +72,9 @@ jobs:
       run: |
         TEST_TYPE="${{ github.event.inputs.test_type || 'smoke' }}"
         if [ "$TEST_TYPE" = "all" ]; then
-          k6 run --out json=orderservice-results.json load-tests/order-service.js
+          k6 run --out json=orderservice-results.json tests/load-tests/order-service.js
         else
-          k6 run --env SCENARIO=$TEST_TYPE --out json=orderservice-results.json load-tests/order-service.js
+          k6 run --env SCENARIO=$TEST_TYPE --out json=orderservice-results.json tests/load-tests/order-service.js
         fi
         
     - name: Upload Results
@@ -101,13 +101,13 @@ jobs:
         sudo mv k6 /usr/local/bin/
         
     - name: Start Services
-      run: docker-compose up -d
+      run: docker-compose -f infrastructure/docker-compose.yaml up -d
       
     - name: Wait for Services
       run: sleep 30
       
     - name: Run gRPC Load Test
-      run: k6 run --out json=paymentservice-results.json load-tests/payment-service.js
+      run: k6 run --out json=paymentservice-results.json tests/load-tests/payment-service.js
         
     - name: Upload Results
       uses: actions/upload-artifact@v4
