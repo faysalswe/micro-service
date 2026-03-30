@@ -26,7 +26,7 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore Dependencies
-      run: dotnet restore services/OrderService/OrderService.csproj
+      run: dotnet restore services/dotnet-backend.sln
       
     - name: Build OrderService
       run: dotnet build services/OrderService/OrderService.csproj --configuration Release --no-restore
@@ -87,7 +87,7 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore Dependencies
-      run: dotnet restore services/IdentityService/IdentityService.csproj
+      run: dotnet restore services/dotnet-backend.sln
       
     - name: Build IdentityService
       run: dotnet build services/IdentityService/IdentityService.csproj --configuration Release --no-restore
@@ -108,7 +108,7 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore Test Dependencies
-      run: dotnet restore services/OrderService.Tests/OrderService.Tests.csproj
+      run: dotnet restore services/dotnet-backend.sln
       
     - name: Run Contract Tests (Consumer)
       run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --filter "FullyQualifiedName~ContractTests" --verbosity normal
