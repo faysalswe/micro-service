@@ -1,0 +1,111 @@
+_format_version: "3.0"
+_transform: true
+
+# ============================================
+# Consumers (API clients that need JWT)
+# ============================================
+consumers:
+  - username: microservice-app
+
+# ============================================
+# JWT Credentials for the consumer
+# ============================================
+jwt_secrets:
+  - consumer: microservice-app
+    key: IdentityService
+    secret: ThisIsAVerySecretKeyForDevelopmentOnly123!
+    algorithm: HS256
+
+# ============================================
+# Services
+# ============================================
+services:
+  # Identity Service (HTTP REST) - PUBLIC (no JWT required)
+  - name: identity-service
+    url: http://host.docker.internal:5010
+    routes:
+      - name: auth-api
+        paths:
+          - /auth
+        strip_path: true
+
+  # Order Service (REST API) - PROTECTED
+  - name: order-service
+    url: http://host.docker.internal:5011
+    routes:
+      - name: orders-api
+        paths:
+          - /api/orders
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              secret_is_base64: false
+              run_on_preflight: true
+
+  # Payment Service (REST API) - PROTECTED
+  - name: payment-service
+    url: http://host.docker.internal:5012
+    routes:
+      - name: payments-api
+        paths:
+          - /api/payments
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              secret_is_base64: false
+              run_on_preflight: true
+
+  # Inventory Service (REST API) - PROTECTED
+  - name: inventory-service
+    url: http://host.docker.internal:5013
+    routes:
+      - name: inventory-api
+        paths:
+          - /api/inventory
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              secret_is_base64: false
+              run_on_preflight: true
+
+  # Inventory Service (gRPC)
+  - name: inventory-grpc
+    url: grpc://host.docker.internal:50013
+    routes:
+      - name: inventory-grpc-route
+        paths:
+          - /inventory.InventoryService
+        protocols:
+          - grpc
+          - grpcs
+
+# ============================================
+# Global Plugins
+# ============================================
+plugins:
+  # CORS - Allow browser requests
+  - name: cors
+    config:
+      origins:
+        - http://localhost:5014
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+        - X-Correlation-ID
+      exposed_headers:
+        - X-Correlation-ID
+      credentials: true
+      max_age: 3600

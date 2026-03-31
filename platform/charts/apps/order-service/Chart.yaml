@@ -1,0 +1,13 @@
+apiVersion: v2
+name: order-service
+description: Order Service - gRPC Orchestrator for Saga Pattern
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - microservices
+  - grpc
+  - saga
+  - orchestrator
+maintainers:
+  - name: DevOps Team

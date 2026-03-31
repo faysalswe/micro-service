@@ -1,0 +1,13 @@
+apiVersion: v2
+name: identity-service
+description: Identity Service - JWT Security Token Service
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - microservices
+  - jwt
+  - authentication
+  - sts
+maintainers:
+  - name: DevOps Team

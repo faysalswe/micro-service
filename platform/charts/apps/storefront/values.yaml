@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: storefront
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+config:
+  apiUrl: "http://localhost:8000" # This is for local browser access via Kong
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false

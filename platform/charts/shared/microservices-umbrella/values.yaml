@@ -1,0 +1,21 @@
+# Global values shared across all sub-charts
+global:
+  namespace: microservices
+
+# Order Service configuration
+order-service:
+  replicaCount: 2
+  config:
+    aspnetcoreEnvironment: "Production"
+
+# Payment Service configuration
+payment-service:
+  replicaCount: 2
+  config:
+    nodeEnv: "production"
+
+# Identity Service configuration
+identity-service:
+  replicaCount: 2
+  config:
+    aspnetcoreEnvironment: "Production"

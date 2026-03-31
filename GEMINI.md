@@ -14,10 +14,13 @@ The project has been overhauled into a structured monorepo:
   - `OrderService`: .NET 10 - Saga Orchestrator.
   - `PaymentService`: Node.js 20 (TS) - Payments (MongoDB).
   - `InventoryService`: Go 1.25 - Stock (PostgreSQL).
-- **`infrastructure/`**: Platform and deployment.
-  - `helm/`: Kubernetes charts for all components.
-  - `k8s/`: Raw manifests and overlays.
-  - `observability/`: OTel, Jaeger, Loki, Prometheus, Grafana.
+- **`platform/`**: Deployment and infrastructure.
+  - `charts/`:
+    - `apps/`: Microservices and frontend applications.
+    - `shared/`: Umbrella and shared infrastructure charts.
+    - `observability/`: Monitoring and tracing charts.
+  - `cluster/`: Cluster definitions (Kind, Docker Compose).
+  - `config/`: Gateway configuration (Kong).
 - **`protos/`**: Shared gRPC definitions.
 
 ## Key Milestones & Fixes
