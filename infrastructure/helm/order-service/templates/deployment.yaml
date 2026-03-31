@@ -41,7 +41,11 @@ spec:
               value: "http://+:5011;http://+:50011"
             - name: GrpcSettings__PaymentServiceUrl
               value: {{ .Values.config.paymentServiceUrl | quote }}
+            - name: GrpcSettings__InventoryServiceUrl
+              value: {{ .Values.config.inventoryServiceUrl | quote }}
             - name: OpenTelemetry__Endpoint
+              value: {{ .Values.config.otelEndpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.config.otelEndpoint | quote }}
             - name: LOKI_URL
               value: {{ .Values.config.lokiUrl | quote }}

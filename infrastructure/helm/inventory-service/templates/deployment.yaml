@@ -57,15 +57,17 @@ spec:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.config.otelEndpoint | quote }}
           livenessProbe:
-            exec:
-              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.service.port }}"]
+            httpGet:
+              path: /health
+              port: {{ .Values.service.restPort }}
             initialDelaySeconds: {{ .Values.healthCheck.liveness.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthCheck.liveness.periodSeconds }}
             timeoutSeconds: {{ .Values.healthCheck.liveness.timeoutSeconds }}
             failureThreshold: {{ .Values.healthCheck.liveness.failureThreshold }}
           readinessProbe:
-            exec:
-              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.service.port }}"]
+            httpGet:
+              path: /health
+              port: {{ .Values.service.restPort }}
             initialDelaySeconds: {{ .Values.healthCheck.readiness.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthCheck.readiness.periodSeconds }}
             timeoutSeconds: {{ .Values.healthCheck.readiness.timeoutSeconds }}

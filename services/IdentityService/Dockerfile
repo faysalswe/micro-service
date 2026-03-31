@@ -4,10 +4,10 @@ EXPOSE 5010
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY ["IdentityService/IdentityService.csproj", "IdentityService/"]
-RUN dotnet restore "IdentityService/IdentityService.csproj"
+COPY ["services/IdentityService/IdentityService.csproj", "services/IdentityService/"]
+RUN dotnet restore "services/IdentityService/IdentityService.csproj"
 COPY . .
-WORKDIR "/src/IdentityService"
+WORKDIR "/src/services/IdentityService"
 RUN dotnet build "IdentityService.csproj" -c Release -o /app/build
 
 FROM build AS publish
@@ -15,5 +15,11 @@ RUN dotnet publish "IdentityService.csproj" -c Release -o /app/publish /p:UseApp
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+# Create non-root user
+RUN useradd --create-home --uid 1001 appuser && \
+    chown -R appuser:appuser /app
+
+COPY --from=publish --chown=appuser:appuser /app/publish .
+USER 1001
 ENTRYPOINT ["dotnet", "IdentityService.dll"]

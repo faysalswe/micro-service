@@ -26,6 +26,7 @@ autoscaling:
 config:
   aspnetcoreEnvironment: "Production"
   paymentServiceUrl: "http://payment-service:50012"
+  inventoryServiceUrl: "http://inventory-service:50013"
   otelEndpoint: "http://otel-collector:4317"
   lokiUrl: "http://loki:3100"
 

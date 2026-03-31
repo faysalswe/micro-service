@@ -3,13 +3,13 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy project files and restore dependencies
-COPY ["OrderService/OrderService.csproj", "OrderService/"]
+COPY ["services/OrderService/OrderService.csproj", "services/OrderService/"]
 COPY ["protos/", "protos/"]
-RUN dotnet restore "OrderService/OrderService.csproj"
+RUN dotnet restore "services/OrderService/OrderService.csproj"
 
 # Copy remaining source code and publish
 COPY . .
-RUN dotnet publish "OrderService/OrderService.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "services/OrderService/OrderService.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime Stage (Standard Debian-based .NET ASP.NET 10.0)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime

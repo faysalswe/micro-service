@@ -27,7 +27,7 @@ autoscaling:
 config:
   otelEndpoint: "otel-collector:4317"
   serviceName: "InventoryService"
-  dbHost: "postgres-inventory"
+  dbHost: "infrastructure-postgresql"
   dbPort: "5432"
   dbName: "inventory_db"
 

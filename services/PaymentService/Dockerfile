@@ -6,12 +6,12 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy package files and install all dependencies (including devDependencies for build)
-COPY PaymentService/package*.json PaymentService/pnpm-lock.yaml ./
+COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # Copy TypeScript source and config
-COPY PaymentService/tsconfig.json ./
-COPY PaymentService/src/ ./src/
+COPY services/PaymentService/tsconfig.json ./
+COPY services/PaymentService/src/ ./src/
 
 # Compile TypeScript to JavaScript
 RUN pnpm run build
@@ -24,7 +24,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy package files and install only production dependencies
-COPY PaymentService/package*.json PaymentService/pnpm-lock.yaml ./
+COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 
 # Stage 3: Runtime
@@ -38,8 +38,8 @@ RUN apk add --no-cache wget \
     && chmod +x /bin/grpc_health_probe \
     && apk del wget
 
-# Create non-root user for security
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# Create non-root user for security (using numeric UID 1001)
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup -u 1001
 
 # Copy production dependencies
 COPY --from=deps /app/node_modules ./node_modules
@@ -55,7 +55,7 @@ COPY protos/ ./protos/
 
 # Change ownership and switch to non-root user
 RUN chown -R appuser:appgroup /app
-USER appuser
+USER 1001
 
 # Expose REST and gRPC ports
 EXPOSE 5012 50012
