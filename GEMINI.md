@@ -1,48 +1,29 @@
-# Gemini Context: Polyglot Microservices Prototype
+# Gemini Context: Microservices SRE & Observability Mastery
 
-This project is a polyglot microservices architecture demonstrating a **Synchronous Orchestration Saga** using gRPC, REST, and a full observability stack.
+This project is a polyglot microservices architecture used as a testing ground for **High Availability**, **k3s Platform Engineering**, and **Advanced Observability**.
+
+## Mastery Roadmap (The 3 Pillars)
+
+1.  **Pillar 1: HA Platform Deployment**: Multi-node Kind cluster, Anti-affinity, Kong Gateway, and Persistent Databases.
+2.  **Pillar 2: Lightweight Professional Cluster**: Bootstrapping k3s on Linux VMs with SSL automation.
+3.  **Pillar 3: Observability & Ghost Diagnostics**: Distributed tracing (Jaeger), Metrics (Prometheus), and Log Aggregation (Loki).
 
 ## Architecture & Monorepo Structure
 
-The project has been overhauled into a structured monorepo:
+- **`apps/`**: Frontend applications (React Storefront, Angular Back-Office).
+- **`services/`**: Backend microservices (.NET, Go, Node.js).
+- **`platform/`**: The "Platform Engineering" hub.
+  - `charts/`: Helm blueprints for apps and infrastructure.
+  - `cluster/`: Definition for Kind and Docker Compose.
+  - `config/`: Gateway and monitoring configuration.
+- **`protos/`**: gRPC definitions.
 
-- **`apps/`**: Frontend applications.
-  - `storefront`: React (React Router v7) customer UI.
-  - `back-office`: Angular 19 admin dashboard.
-- **`services/`**: Backend microservices.
-  - `IdentityService`: .NET 10 - JWT / STS.
-  - `OrderService`: .NET 10 - Saga Orchestrator.
-  - `PaymentService`: Node.js 20 (TS) - Payments (MongoDB).
-  - `InventoryService`: Go 1.25 - Stock (PostgreSQL).
-- **`platform/`**: Deployment and infrastructure.
-  - `charts/`:
-    - `apps/`: Microservices and frontend applications.
-    - `shared/`: Umbrella and shared infrastructure charts.
-    - `observability/`: Monitoring and tracing charts.
-  - `cluster/`: Cluster definitions (Kind, Docker Compose).
-  - `config/`: Gateway configuration (Kong).
-- **`protos/`**: Shared gRPC definitions.
+## Key Learning Milestones
 
-## Key Milestones & Fixes
+- ✅ **Security**: All containers run as non-root (UID 1001).
+- ✅ **Connectivity**: Services discovery via K8s DNS fixed.
+- ✅ **Monorepo**: Standardized folder structure for CI/CD readiness.
+- 🚧 **Ghost Latency**: Investigation in progress using Jaeger and Prometheus.
 
-### 1. Security & Production Grade
-- All containers run as **non-root (UID 1001)**.
-- Helm charts enforce `runAsNonRoot: true`.
-- Resource limits and probes are configured for all services.
-
-### 2. Connectivity & Discovery
-- **OrderService Fix**: Corrected `InventoryServiceUrl` from `localhost` to `http://inventory-service:50013` via environment variables.
-- **Tracing Fix**: Standardized OTel environment variables (`OTEL_EXPORTER_OTLP_ENDPOINT`) to link spans across services.
-
-### 3. Ghost Latency Investigation
-- Identified 3-second delay in `POST /orders`.
-- **Primary Suspects**: Database row-level locking in Go (Inventory) and 3s Circuit Breaker timeouts in Node.js (Payment).
-
-## Testing
-
-- **Load Tests**: k6 scripts in `tests/load-tests/`.
-- **Manual Testing**: Access frontend via Kong Gateway (Port 8000).
-
-## Hybrid Development (VS Code)
-- Use `.vscode/launch.json` to debug local services against cluster-hosted databases.
-- Ensure `kubectl port-forward` is active for `postgresql` and `mongodb` when running locally.
+## Tools to Master
+`kubectl`, `helm`, `Kind`, `k3s`, `Kong`, `OpenTelemetry`, `PromQL`, `LogQL`, `Jaeger`, `Cert-Manager`.

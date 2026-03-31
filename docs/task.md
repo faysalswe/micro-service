@@ -1,64 +1,54 @@
-# Learning Roadmap: Microservices Mastery
+# Mastery Roadmap: SRE & Observability
 
-This document contains three high-signal tasks designed to help you master gRPC, Sagas, Kubernetes, and Observability.
-
-## Task 1: Distributed "Order Cancellation & Refund" Saga
-**Objective:** Implement a full cancellation flow that reverses the initial "Create Order" Saga. 
-
-- **gRPC Updates:** 
-  - Add `RefundPayment(RefundRequest)` to `payments.proto`.
-  - Add `RestockItems(RestockRequest)` to `inventory.proto`.
-- **Order Service (C#):** 
-  - Implement `DELETE /orders/{id}`.
-  - Orchestrate the "Undo" Saga: Call Payment Refund -> if success -> Call Inventory Restock.
-  - **Complexity:** If Inventory restock fails, the Order must transition to `CANCELLATION_PENDING` with a background retry using **Polly**.
-- **Payment Service (Node.js):** Implement the `RefundPayment` handler and update MongoDB.
-- **Inventory Service (Go):** Implement `RestockItems` using a PostgreSQL transaction.
+This roadmap is designed to help you master Kubernetes, High-Availability, and Observability using a polyglot microservices system as the "Patient."
 
 ---
 
-## Task 2: High-Availability (HA) Production Deployment
-**Objective:** Move from Docker Compose to a Production-grade Kubernetes environment on your Mac.
+## Pillar 1: High-Availability (HA) Platform Deployment
+**Objective:** Move from Docker Compose to a Production-grade Kubernetes environment.
 
-- **Local Setup:** Use **Kind** or **Docker Desktop K8s**.
-- **Infrastructure:** Deploy PostgreSQL and MongoDB using Helm charts with Persistent Volume Claims (PVC).
-- **Gateway:** Configure **Kong** as an Ingress Controller with SSL termination.
-- **The Challenge:** Perform a **Canary Deployment** of `OrderService` V2.
-  - Route 10% of traffic to V2 using Kong traffic-splitting.
-  - Run a Kubernetes `Job` for database migrations before the V2 pods start.
-  - **Success Criteria:** Zero failed requests during the migration while running `k6` load tests.
-
----
-
-## Task 3: The "Ghost Latency" & Observability Debugging
-**Objective:** Use the observability stack to find a "hidden" bottleneck that doesn't appear in standard logs.
-
-- **The Problem:** `POST /orders` intermittently takes > 3s. `OrderService` claims it is fast.
-- **Diagnostic Steps:**
-  - **Jaeger:** Find a trace with a large "gap" (white space) between service spans. This indicates a "hidden" delay (e.g., event loop blocking in Node.js or connection pool exhaustion in Go).
-  - **Prometheus:** Analyze the `go_sql_stats_connections_open` and `nodejs_eventloop_lag_seconds` metrics.
-- **The Fix:** 
-  - Identify a missing MongoDB index in the `PaymentService` that causes slow lookups under load.
-  - Fix a "Trace Leak" where the `trace_id` is lost when the Go service calls a third-party mock API.
-- **The Enhancement:** Create a Grafana Dashboard that correlates "P99 Latency" with "Database Connection Wait Time."
+- **Kind Cluster Configuration:** 
+  - Create a 4-node cluster (1 Control Plane + 3 Workers).
+  - Use `podAntiAffinity` to ensure `OrderService` replicas never live on the same node.
+- **Gateway & Ingress:** 
+  - Configure **Kong** as the Ingress Controller.
+  - Route traffic to 6 different services using a single Gateway.
+- **Persistence:** 
+  - Deploy PostgreSQL and MongoDB using Helm with Persistent Volumes.
+  - **The Challenge:** Kill a database pod and verify that K8s restarts it with all data intact.
 
 ---
 
-## Task 4: The "Lightweight Professional" K8s Cluster (k3s)
-**Objective:** Deploy a production-ready, internet-facing Kubernetes cluster on a Linux VM (DigitalOcean) using **k3s**.
+## Pillar 2: The "Lightweight Professional" Cluster (k3s)
+**Objective:** Deploy a production-ready, internet-facing cluster on a Linux VM.
 
-- **The Core:** Install and bootstrap a certified Kubernetes cluster using **k3s**. This provides a fully compliant K8s API with a much smaller memory footprint than `kubeadm`.
-- **Infrastructure:**
-  - **Embedded DB:** Understand how k3s uses SQLite (or external DB like PostgreSQL) for the control plane.
-  - **Traefik/Kong:** Configure the default Traefik ingress or replace it with **Kong** for advanced API management.
-- **Networking & SSL:**
+- **k3s Bootstrapping:** 
+  - Install a certified K8s cluster (k3s) on a single Ubuntu VM.
+  - Understand the SQLite-based control plane.
+- **Networking & SSL:** 
   - Expose the cluster securely to the public internet.
   - Automate SSL certificates using **Cert-Manager** and Let's Encrypt.
 - **The Challenge: "The Multi-Node Expansion":** 
   - Join a second worker node to the cluster using the k3s node token.
-  - **Success Criteria:** A "Node Status: Ready" cluster that is accessible over the public internet with valid HTTPS, hosting all microservices.
+
+---
+
+## Pillar 3: Observability & "Ghost" Diagnostics
+**Objective:** Master the "Three Pillars" to find bottlenecks that logs cannot see.
+
+- **Jaeger (Tracing):** 
+  - Find a trace with a 3s "gap" (white space).
+  - Identify exactly which service or database call is causing the "wait."
+- **Prometheus (Metrics):** 
+  - Analyze `go_sql_stats_connections_wait` and `nodejs_eventloop_lag`.
+  - Correlate high P99 latency with low database connection pool availability.
+- **Loki (Logs):** 
+  - Use `TraceID` to instantly pull logs from 5 different services into one screen.
+- **The Challenge:** Fix the 3s "Ghost Latency" using data from Jaeger and Prometheus.
+
+---
 
 ## Tools to Master
-- **Development:** `protoc`, `Pact`, `Polly`, `GORM`, `Mongoose`.
-- **Infrastructure:** `kubectl`, `helm`, `Kind`, `Kong`, `k3s`, `Cert-Manager`.
-- **Observability:** `OpenTelemetry SDKs`, `PromQL`, `LogQL`, `Jaeger Query`.
+- **Infrastructure:** `kubectl`, `helm`, `Kind`, `k3s`, `Kong`.
+- **Observability:** `OpenTelemetry`, `PromQL`, `LogQL`, `Jaeger`.
+- **Security:** `Cert-Manager`, `Non-Root Users`, `Secrets`.
