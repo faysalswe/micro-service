@@ -6,9 +6,9 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build-identity",
-      "program": "${workspaceFolder}/IdentityService/bin/Debug/net10.0/IdentityService.dll",
+      "program": "${workspaceFolder}/services/IdentityService/bin/Debug/net10.0/IdentityService.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/IdentityService",
+      "cwd": "${workspaceFolder}/services/IdentityService",
       "stopAtEntry": false,
       "serverReadyAction": {
         "action": "openExternally",
@@ -23,9 +23,9 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build-order",
-      "program": "${workspaceFolder}/OrderService/bin/Debug/net10.0/OrderService.dll",
+      "program": "${workspaceFolder}/services/OrderService/bin/Debug/net10.0/OrderService.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/OrderService",
+      "cwd": "${workspaceFolder}/services/OrderService",
       "stopAtEntry": false,
       "serverReadyAction": {
         "action": "openExternally",
@@ -40,35 +40,35 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/InventoryService/cmd/server/main.go",
-      "cwd": "${workspaceFolder}/InventoryService",
-      "envFile": "${workspaceFolder}/InventoryService/.env"
+      "program": "${workspaceFolder}/services/InventoryService/cmd/server/main.go",
+      "cwd": "${workspaceFolder}/services/InventoryService",
+      "envFile": "${workspaceFolder}/services/InventoryService/.env"
     },
     {
       "name": "PaymentService",
       "type": "pwa-node",
       "request": "launch",
-      "cwd": "${workspaceFolder}/PaymentService",
+      "cwd": "${workspaceFolder}/services/PaymentService",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "start"],
-      "envFile": "${workspaceFolder}/PaymentService/.env",
+      "envFile": "${workspaceFolder}/services/PaymentService/.env",
       "console": "integratedTerminal"
     },
     {
       "name": "Storefront (React)",
       "type": "pwa-node",
       "request": "launch",
-      "cwd": "${workspaceFolder}/storefront",
+      "cwd": "${workspaceFolder}/apps/storefront",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "dev"],
-      "envFile": "${workspaceFolder}/storefront/.env",
+      "envFile": "${workspaceFolder}/apps/storefront/.env",
       "console": "integratedTerminal"
     },
     {
-      "name": "Admin Tool (Angular)",
+      "name": "Back Office (Angular)",
       "type": "pwa-node",
       "request": "launch",
-      "cwd": "${workspaceFolder}/back-office",
+      "cwd": "${workspaceFolder}/apps/back-office",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "start"],
       "console": "integratedTerminal"
@@ -83,16 +83,7 @@
         "InventoryService",
         "PaymentService",
         "Storefront (React)",
-        "Admin Tool (Angular)"
-      ]
-    },
-    {
-      "name": "Docker: Attach All",
-      "configurations": [
-        "Docker: Identity (.NET)",
-        "Docker: Order (.NET)",
-        "Docker: Payment (Node)",
-        "Docker: Inventory (Go)"
+        "Back Office (Angular)"
       ]
     }
   ]

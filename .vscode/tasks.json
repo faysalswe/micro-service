@@ -7,7 +7,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/IdentityService/IdentityService.csproj",
+        "${workspaceFolder}/services/IdentityService/IdentityService.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
@@ -19,7 +19,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/OrderService/OrderService.csproj",
+        "${workspaceFolder}/services/OrderService/OrderService.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
@@ -33,7 +33,7 @@
         "watch",
         "run",
         "--project",
-        "${workspaceFolder}/IdentityService/IdentityService.csproj"
+        "${workspaceFolder}/services/IdentityService/IdentityService.csproj"
       ],
       "problemMatcher": "$msCompile"
     },
@@ -45,7 +45,7 @@
         "watch",
         "run",
         "--project",
-        "${workspaceFolder}/OrderService/OrderService.csproj"
+        "${workspaceFolder}/services/OrderService/OrderService.csproj"
       ],
       "problemMatcher": "$msCompile"
     },
@@ -66,13 +66,13 @@
       "label": "setup-identity",
       "command": "dotnet",
       "type": "process",
-      "args": ["restore", "${workspaceFolder}/IdentityService/IdentityService.csproj"]
+      "args": ["restore", "${workspaceFolder}/services/IdentityService/IdentityService.csproj"]
     },
     {
       "label": "setup-order",
       "command": "dotnet",
       "type": "process",
-      "args": ["restore", "${workspaceFolder}/OrderService/OrderService.csproj"]
+      "args": ["restore", "${workspaceFolder}/services/OrderService/OrderService.csproj"]
     },
     {
       "label": "setup-inventory",
@@ -80,7 +80,7 @@
       "type": "process",
       "args": ["mod", "download"],
       "options": {
-        "cwd": "${workspaceFolder}/InventoryService"
+        "cwd": "${workspaceFolder}/services/InventoryService"
       }
     },
     {
@@ -89,7 +89,7 @@
       "type": "process",
       "args": ["install"],
       "options": {
-        "cwd": "${workspaceFolder}/PaymentService"
+        "cwd": "${workspaceFolder}/services/PaymentService"
       }
     },
     {
@@ -98,7 +98,7 @@
       "type": "process",
       "args": ["install"],
       "options": {
-        "cwd": "${workspaceFolder}/storefront"
+        "cwd": "${workspaceFolder}/apps/storefront"
       }
     },
     {
@@ -107,7 +107,7 @@
       "type": "process",
       "args": ["install"],
       "options": {
-        "cwd": "${workspaceFolder}/back-office"
+        "cwd": "${workspaceFolder}/apps/back-office"
       }
     }
   ]
