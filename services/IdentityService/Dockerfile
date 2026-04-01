@@ -22,4 +22,9 @@ RUN useradd --create-home --uid 1001 appuser && \
 
 COPY --from=publish --chown=appuser:appuser /app/publish .
 USER 1001
+
+# Set Kestrel endpoint configuration
+ENV Kestrel__Endpoints__Http__Url=http://+:5010
+ENV Kestrel__Endpoints__Http__Protocols=Http1
+
 ENTRYPOINT ["dotnet", "IdentityService.dll"]

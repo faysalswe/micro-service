@@ -3,14 +3,51 @@ using System.Security.Claims;
 using System.Text;
 using IdentityService.Data;
 using IdentityService.Models;
+using IdentityService.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+// Build initial configuration for logging
+var initialConfig = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: true)
+    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
+    .AddEnvironmentVariables()
+    .Build();
 
-// Add services to the container.
-builder.Services.AddOpenApi();
+// Configure Serilog FIRST
+LoggingConfiguration.ConfigureLogging(initialConfig);
+
+try
+{
+    Log.Information("Starting IdentityService");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Dynamically log all configured Kestrel endpoints and API Documentation
+    var kestrelEndpoints = builder.Configuration.GetSection("Kestrel:Endpoints").GetChildren();
+    foreach (var endpoint in kestrelEndpoints)
+    {
+        var name = endpoint.Key;
+        var url = endpoint["Url"] ?? "unknown";
+        var protocols = endpoint["Protocols"] ?? "default";
+        
+        Log.Information("Configured Endpoint: {Name} -> {Url} ({Protocols})", name, url, protocols);
+
+        // If this is an HTTP endpoint, log the Doc paths
+        if (protocols.Contains("Http1", StringComparison.OrdinalIgnoreCase) || name.Contains("Http", StringComparison.OrdinalIgnoreCase))
+        {
+            var cleanUrl = url.Replace("0.0.0.0", "localhost").Replace("+", "localhost").Replace("*", "localhost");
+            Log.Information("API Documentation (Scalar): {DocUrl}/scalar/v1", cleanUrl);
+        }
+    }
+
+    // Use Serilog for logging
+    builder.Host.UseSerilog();
+
+    // Add services to the container.
+    builder.Services.AddOpenApi();
 
 // Add SQLite database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -168,6 +205,15 @@ app.MapDelete("/users/{id:int}", async (int id, IdentityDbContext db) =>
 });
 
 app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "IdentityService terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 public record LoginRequest(string Username, string Password);
 public record RegisterRequest(string Username, string Password, string? Role);
