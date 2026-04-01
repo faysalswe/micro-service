@@ -101,11 +101,15 @@ func (s *server) RestockItems(ctx context.Context, req *proto.RestockRequest) (*
 }
 
 func startRESTServer(svc service.InventoryService, port string) {
-	r := gin.Default()
+	// Set Gin to ReleaseMode to hide the debug output
+	gin.SetMode(gin.ReleaseMode)
+	
+	r := gin.New() // Use gin.New() + Recovery to keep logs clean
+	r.Use(gin.Recovery())
+	
 	handler := rest.NewInventoryHandler(svc)
 	handler.SetupRoutes(r)
 
-	log.Printf("Inventory REST server listening on port %s", port)
 	if err := r.Run(fmt.Sprintf(":%s", port)); err != nil {
 		log.Fatalf("failed to run REST server: %v", err)
 	}
@@ -153,6 +157,11 @@ func main() {
 
 	// 5. Start REST Server (in goroutine)
 	go startRESTServer(svc, restPort)
+
+	// Log Configured Endpoints (Go style)
+	log.Printf("Configured Endpoint: HttpApi -> http://0.0.0.0:%s (Http1)", restPort)
+	log.Printf("API Documentation (Scalar): http://localhost:%s/docs", restPort)
+	log.Printf("Configured Endpoint: GrpcApi -> http://0.0.0.0:%s (Http2)", grpcPort)
 
 	// 6. Start gRPC Server with OTel Interceptor
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", grpcPort))
