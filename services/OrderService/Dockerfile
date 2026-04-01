@@ -32,8 +32,11 @@ COPY --from=build --chown=appuser:appuser /app/publish .
 # Switch to non-root user (using numeric ID for K8s compliance)
 USER 1001
 
-# Set the application to listen on both REST and gRPC ports
-ENV ASPNETCORE_URLS=http://+:5011;http://+:50011
+# Set Kestrel endpoints for both REST and gRPC with explicit protocols
+ENV Kestrel__Endpoints__Http__Url=http://+:5011
+ENV Kestrel__Endpoints__Http__Protocols=Http1
+ENV Kestrel__Endpoints__Grpc__Url=http://+:50011
+ENV Kestrel__Endpoints__Grpc__Protocols=Http2
 
 # Expose ports
 EXPOSE 5011 50011

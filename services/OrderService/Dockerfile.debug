@@ -38,4 +38,10 @@ EXPOSE 5011 50011 2222
 ENV ASPNETCORE_ENVIRONMENT=Development
 ENV DOTNET_USE_POLLING_FILE_WATCHER=true
 
+# Set Kestrel endpoints for both REST and gRPC with explicit protocols
+ENV Kestrel__Endpoints__Http__Url=http://+:5011
+ENV Kestrel__Endpoints__Http__Protocols=Http1
+ENV Kestrel__Endpoints__Grpc__Url=http://+:50011
+ENV Kestrel__Endpoints__Grpc__Protocols=Http2
+
 ENTRYPOINT ["dotnet", "OrderService.dll"]

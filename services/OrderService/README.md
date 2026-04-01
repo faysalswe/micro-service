@@ -10,10 +10,7 @@ The service is configured to use the following ports for both local development 
 | :--- | :--- | :--- |
 | **HTTP** | `5011` | REST API (HTTP/1.1) |
 | **HTTPS** | `7108` | Secure REST API (Local only) |
-| **gRPC** | `5011` | gRPC Service (HTTP/2) |
-
-### Protocol Multiplexing
-The service uses Kestrel's `Http1AndHttp2` protocol setting on port `5011`, allowing it to serve both REST and gRPC requests on the same port.
+| **gRPC** | `50011` | gRPC Service (HTTP/2) |
 
 ## API Endpoints
 
@@ -24,7 +21,7 @@ The service uses Kestrel's `Http1AndHttp2` protocol setting on port `5011`, allo
 ### Health Checks
 - **HTTP Liveness:** `http://localhost:5011/health/live`
 - **HTTP Readiness:** `http://localhost:5011/health/ready`
-- **gRPC Health:** Compatible with `grpc_health_probe` on port `5011`.
+- **gRPC Health:** Compatible with `grpc_health_probe` on port `50011`.
 
 ## Docker Usage
 

@@ -8,6 +8,7 @@ image:
 service:
   type: ClusterIP
   port: 50011
+  httpPort: 5011
 
 resources:
   limits:

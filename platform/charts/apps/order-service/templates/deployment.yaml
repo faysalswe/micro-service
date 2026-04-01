@@ -32,13 +32,19 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
             - name: http
-              containerPort: 5011
+              containerPort: {{ .Values.service.httpPort }}
               protocol: TCP
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.config.aspnetcoreEnvironment | quote }}
-            - name: ASPNETCORE_URLS
-              value: "http://+:5011;http://+:50011"
+            - name: Kestrel__Endpoints__Http__Url
+              value: "http://+:{{ .Values.service.httpPort }}"
+            - name: Kestrel__Endpoints__Http__Protocols
+              value: "Http1"
+            - name: Kestrel__Endpoints__Grpc__Url
+              value: "http://+:{{ .Values.service.port }}"
+            - name: Kestrel__Endpoints__Grpc__Protocols
+              value: "Http2"
             - name: GrpcSettings__PaymentServiceUrl
               value: {{ .Values.config.paymentServiceUrl | quote }}
             - name: GrpcSettings__InventoryServiceUrl
@@ -57,7 +63,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 5011
+              port: {{ .Values.service.httpPort }}
             initialDelaySeconds: {{ .Values.healthCheck.liveness.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthCheck.liveness.periodSeconds }}
             timeoutSeconds: {{ .Values.healthCheck.liveness.timeoutSeconds }}
@@ -65,7 +71,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /health
-              port: 5011
+              port: {{ .Values.service.httpPort }}
             initialDelaySeconds: {{ .Values.healthCheck.readiness.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthCheck.readiness.periodSeconds }}
             timeoutSeconds: {{ .Values.healthCheck.readiness.timeoutSeconds }}
