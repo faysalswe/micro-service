@@ -25,6 +25,16 @@ scrape_configs:
       - targets: ['otel-collector:8889']
     metrics_path: '/metrics'
 
+  # Host-level metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Container-level metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
 # Alerting rules for detecting issues
 rule_files:
   - '/etc/prometheus/rules/*.yml'

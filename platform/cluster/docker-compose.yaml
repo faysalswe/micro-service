@@ -1,8 +1,14 @@
+networks:
+  infra-network:
+    name: microservice-infra
+    driver: bridge
+
 services:
   # Database for .NET Order Service (Relational)
   order-db:
     image: postgres:16-alpine
     container_name: order-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
@@ -11,11 +17,19 @@ services:
       - "5432:5432"
     volumes:
       - order_data:/var/lib/postgresql/data
+    networks:
+      - infra-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d orders_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Database for Node.js Payment Service (Document-based)
   payment-db:
     image: mongo:7.0
     container_name: payment-db
+    restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password123
@@ -23,24 +37,55 @@ services:
       - "27017:27017"
     volumes:
       - payment_data:/data/db
+    networks:
+      - infra-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Database for Go Inventory Service (Relational)
   inventory-db:
     image: postgres:16-alpine
     container_name: inventory-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
       POSTGRES_DB: inventory_db
     ports:
-      - "5433:5432" # Host 5433 to avoid conflict with order-db
+      - "5433:5432"
     volumes:
       - inventory_data:/var/lib/postgresql/data
+    networks:
+      - infra-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d inventory_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Caching and Message Broker
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - infra-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # API Gateway (Kong)
   kong:
     image: kong:3.4
     container_name: kong
+    restart: unless-stopped
     environment:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
@@ -52,81 +97,122 @@ services:
       - "8001:8001"     # Admin API
       - "9080:9080"     # gRPC Proxy
     volumes:
-      - ./kong.yml:/usr/local/kong/declarative/kong.yml
+      - ../config/gateway/kong.yml:/usr/local/kong/declarative/kong.yml:ro
+    networks:
+      - infra-network
 
   # OpenTelemetry Collector
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.112.0
     container_name: otel-collector
+    restart: unless-stopped
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ./observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ../charts/observability/config/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
     ports:
       - "4317:4317"     # OTLP gRPC receiver
       - "4318:4318"     # OTLP HTTP receiver
       - "8888:8888"     # Telemetry metrics
       - "8889:8889"     # Prometheus exporter
-      - "13133:13133"   # Health check
+    networks:
+      - infra-network
 
   # Jaeger (Distributed Tracing UI)
   jaeger:
     image: jaegertracing/all-in-one:1.62.0
     container_name: jaeger
+    restart: unless-stopped
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
       - "16686:16686"   # Jaeger UI
       - "14250:14250"   # gRPC collector
+    networks:
+      - infra-network
 
-  # Loki (Log Aggregation - replaces ELK stack)
+  # Loki (Log Aggregation)
   loki:
     image: grafana/loki:2.9.0
     container_name: loki
+    restart: unless-stopped
     command: -config.file=/etc/loki/loki-config.yaml
     volumes:
-      - ./observability/loki-config.yaml:/etc/loki/loki-config.yaml
+      - ../charts/observability/config/loki-config.yaml:/etc/loki/loki-config.yaml:ro
       - loki_data:/loki
     ports:
       - "3100:3100"     # HTTP API (push/query logs)
+    networks:
+      - infra-network
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Prometheus (Metrics Storage & Time Series DB)
+  # Prometheus (Metrics Storage)
   prometheus:
     image: prom/prometheus:v2.54.0
     container_name: prometheus
+    restart: unless-stopped
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
-      - "--web.console.templates=/usr/share/prometheus/consoles"
     volumes:
-      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../charts/observability/config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     ports:
       - "9090:9090"     # Prometheus UI
-    environment:
-      - TZ=UTC
+    networks:
+      - infra-network
+    depends_on:
+      - otel-collector
 
-  # Grafana (Metrics Visualization & Dashboards)
+  # Grafana (Visualization)
   grafana:
     image: grafana/grafana:11.0.0
     container_name: grafana
+    restart: unless-stopped
     ports:
       - "3301:3000"     # Grafana UI
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+      - ../charts/observability/config/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - infra-network
     depends_on:
       - prometheus
+      - loki
+
+  # Node Exporter (Host Metrics)
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    networks:
+      - infra-network
+
+  # cAdvisor (Container Metrics)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - infra-network
 
 volumes:
   order_data:
