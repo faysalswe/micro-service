@@ -24,6 +24,9 @@ This project is a polyglot microservices architecture used as a testing ground f
 - ✅ **Connectivity**: Services discovery via K8s DNS fixed.
 - ✅ **Monorepo**: Standardized folder structure for CI/CD readiness.
 - 🚧 **Ghost Latency**: Investigation in progress using Jaeger and Prometheus.
+- 🚧 **Architecture Expansion (Planned)**:
+  - **Redis Integration**: Services will be updated to use Redis for distributed caching and state management.
+  - **Infrastructure Monitoring**: cAdvisor and Node Exporter are now live in Docker Compose and scraped by Prometheus.
 
 ## Tools to Master
 `kubectl`, `helm`, `Kind`, `k3s`, `Kong`, `OpenTelemetry`, `PromQL`, `LogQL`, `Jaeger`, `Cert-Manager`.
