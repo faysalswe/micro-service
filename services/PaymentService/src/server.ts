@@ -272,7 +272,7 @@ async function main() {
       logger.error('Failed to bind gRPC server', { error: err.message });
       return;
     }
-    logger.info(`PaymentService gRPC API listening on port ${actualPort}`);
+    logger.info(`Configured Endpoint: Grpc -> http://${grpcAddr} (Http2)`);
   });
 
   // Start REST API server
@@ -281,7 +281,7 @@ async function main() {
   const host = 'localhost';
 
   restApp.listen(restPort, '0.0.0.0', () => {
-    logger.info(`PaymentService REST API listening on port ${restPort}`);
+    logger.info(`Configured Endpoint: Http -> http://0.0.0.0:${restPort} (Http1)`);
     logger.info(`API Documentation (Scalar): http://${host}:${restPort}/api-docs`);
   }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
