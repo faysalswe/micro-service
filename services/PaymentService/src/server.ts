@@ -33,15 +33,8 @@ if (missingEnvVars.length > 0) {
 // Initialize OpenTelemetry tracing FIRST
 initializeTracing();
 
-logger.info('Starting PaymentService', {
-  restPort: process.env.REST_PORT,
-  grpcPort: process.env.PORT || '50012',
-  mongoUri: process.env.MONGO_URI ? '***configured***' : 'using default',
-  mongoDb: process.env.MONGO_DB_NAME || 'payments_db'
-});
-
 // Load the protobuf file
-const PROTO_PATH = path.resolve(__dirname, '../protos/payments.proto');
+const PROTO_PATH = path.resolve(__dirname, '../../../protos/payments.proto');
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
@@ -272,25 +265,24 @@ async function main() {
   healthImpl.addToServer(server);
   logger.info('gRPC Health service registered');
 
-  const grpcPort = `0.0.0.0:${process.env.PORT || '50012'}`;
-  server.bindAsync(grpcPort, grpc.ServerCredentials.createInsecure(), (err, actualPort) => {
+  const grpcPort = process.env.PORT || '50012';
+  const grpcAddr = `0.0.0.0:${grpcPort}`;
+  server.bindAsync(grpcAddr, grpc.ServerCredentials.createInsecure(), (err, actualPort) => {
     if (err) {
       logger.error('Failed to bind gRPC server', { error: err.message });
       return;
     }
-    logger.info('gRPC server started', { address: grpcPort, actualPort });
+    logger.info(`PaymentService gRPC API listening on port ${actualPort}`);
   });
 
   // Start REST API server
   const restApp = createRestApi(db);
   const restPort = parseInt(process.env.REST_PORT!, 10);
+  const host = 'localhost';
 
-  restApp.listen(restPort, () => {
-    logger.info('REST API server started', {
-      port: restPort,
-      docsUrl: `http://localhost:${restPort}/api-docs`,
-      openapiUrl: `http://localhost:${restPort}/openapi.json`
-    });
+  restApp.listen(restPort, '0.0.0.0', () => {
+    logger.info(`PaymentService REST API listening on port ${restPort}`);
+    logger.info(`API Documentation (Scalar): http://${host}:${restPort}/api-docs`);
   }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
       logger.error(`Port ${restPort} is already in use. Please choose a different REST_PORT.`, { error: err.message });
