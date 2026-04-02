@@ -8,12 +8,12 @@ WORKDIR /src
 COPY protos/ /src/protos/
 
 # Copy csproj and restore dependencies
-COPY OrderService/OrderService.csproj OrderService/
-RUN dotnet restore OrderService/OrderService.csproj
+COPY services/OrderService/OrderService.csproj services/OrderService/
+RUN dotnet restore services/OrderService/OrderService.csproj
 
 # Copy source code and build in Debug mode
-COPY OrderService/ OrderService/
-WORKDIR /src/OrderService
+COPY services/OrderService/ services/OrderService/
+WORKDIR /src/services/OrderService
 RUN dotnet publish -c Debug -o /app/publish
 
 # Debug runtime image

@@ -12,11 +12,12 @@ RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 
 WORKDIR /app
 
-# Copy the entire project first
-COPY . .
+# Copy protos and inventory service source
+COPY protos/ protos/
+COPY services/InventoryService/ services/InventoryService/
 
 # Generate gRPC code
-WORKDIR /app/InventoryService
+WORKDIR /app/services/InventoryService
 RUN mkdir -p proto
 RUN protoc --proto_path=/app/protos \
     --go_out=proto --go_opt=paths=source_relative \
