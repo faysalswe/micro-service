@@ -85,6 +85,17 @@ services:
           - grpc
           - grpcs
 
+  # Payment Service (gRPC)
+  - name: payment-grpc
+    url: grpc://host.docker.internal:50012
+    routes:
+      - name: payment-grpc-route
+        paths:
+          - /payments.PaymentService
+        protocols:
+          - grpc
+          - grpcs
+
 # ============================================
 # Global Plugins
 # ============================================
@@ -94,6 +105,7 @@ plugins:
     config:
       origins:
         - http://localhost:5014
+        - http://localhost:5015
       methods:
         - GET
         - POST

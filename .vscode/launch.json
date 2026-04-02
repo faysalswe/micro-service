@@ -10,10 +10,6 @@
       "args": [],
       "cwd": "${workspaceFolder}/services/IdentityService",
       "stopAtEntry": false,
-      "serverReadyAction": {
-        "action": "openExternally",
-        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-      },
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -27,10 +23,6 @@
       "args": [],
       "cwd": "${workspaceFolder}/services/OrderService",
       "stopAtEntry": false,
-      "serverReadyAction": {
-        "action": "openExternally",
-        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-      },
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -46,7 +38,7 @@
     },
     {
       "name": "PaymentService",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}/services/PaymentService",
       "runtimeExecutable": "pnpm",
@@ -56,7 +48,7 @@
     },
     {
       "name": "Storefront (React)",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}/apps/storefront",
       "runtimeExecutable": "pnpm",
@@ -66,7 +58,7 @@
     },
     {
       "name": "Back Office (Angular)",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}/apps/back-office",
       "runtimeExecutable": "pnpm",
