@@ -10,6 +10,7 @@
       "args": [],
       "cwd": "${workspaceFolder}/services/IdentityService",
       "stopAtEntry": false,
+      "envFile": "${workspaceFolder}/.env",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -23,6 +24,7 @@
       "args": [],
       "cwd": "${workspaceFolder}/services/OrderService",
       "stopAtEntry": false,
+      "envFile": "${workspaceFolder}/.env",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -34,7 +36,7 @@
       "mode": "auto",
       "program": "${workspaceFolder}/services/InventoryService/cmd/server/main.go",
       "cwd": "${workspaceFolder}/services/InventoryService",
-      "envFile": "${workspaceFolder}/services/InventoryService/.env"
+      "envFile": "${workspaceFolder}/.env"
     },
     {
       "name": "PaymentService",
@@ -43,7 +45,7 @@
       "cwd": "${workspaceFolder}/services/PaymentService",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "start"],
-      "envFile": "${workspaceFolder}/services/PaymentService/.env",
+      "envFile": "${workspaceFolder}/.env",
       "console": "integratedTerminal"
     },
     {
@@ -64,6 +66,54 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "start"],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Docker: Attach OrderService",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "OrderService",
+      "pipeTransport": {
+        "pipeCwd": "${workspaceFolder}",
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "order-service"],
+        "debuggerPath": "/vsdbg/vsdbg"
+      },
+      "sourceFileMap": {
+        "/src/services/OrderService": "${workspaceFolder}/services/OrderService"
+      }
+    },
+    {
+      "name": "Docker: Attach IdentityService",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "IdentityService",
+      "pipeTransport": {
+        "pipeCwd": "${workspaceFolder}",
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "identity-service"],
+        "debuggerPath": "/vsdbg/vsdbg"
+      },
+      "sourceFileMap": {
+        "/src/services/IdentityService": "${workspaceFolder}/services/IdentityService"
+      }
+    },
+    {
+      "name": "Docker: Attach InventoryService",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "port": 4013,
+      "host": "127.0.0.1"
+    },
+    {
+      "name": "Docker: Attach PaymentService",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/services/PaymentService/src",
+      "remoteRoot": "/app/src",
+      "sourceMaps": true
     }
   ],
   "compounds": [
