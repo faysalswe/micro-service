@@ -1,3 +1,5 @@
+name: micro-service-infra
+
 networks:
   infra-network:
     name: microservice-infra
@@ -10,17 +12,17 @@ services:
     container_name: order-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
       POSTGRES_DB: orders_db
     ports:
-      - "5432:5432"
+      - "${PORT_POSTGRES_ORDER:-5432}:5432"
     volumes:
       - order_data:/var/lib/postgresql/data
     networks:
       - infra-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d orders_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d orders_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,10 +33,10 @@ services:
     container_name: payment-db
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD:-password123}
     ports:
-      - "27017:27017"
+      - "${PORT_MONGODB_PAYMENT:-27017}:27017"
     volumes:
       - payment_data:/data/db
     networks:
@@ -51,17 +53,17 @@ services:
     container_name: inventory-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
       POSTGRES_DB: inventory_db
     ports:
-      - "5433:5432"
+      - "${PORT_POSTGRES_INVENTORY:-5433}:5432"
     volumes:
       - inventory_data:/var/lib/postgresql/data
     networks:
       - infra-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d inventory_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d inventory_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -72,7 +74,7 @@ services:
     container_name: redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${PORT_REDIS:-6379}:6379"
     networks:
       - infra-network
     healthcheck:
@@ -92,10 +94,10 @@ services:
       KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl, 0.0.0.0:9080 http2, 0.0.0.0:9091 ssl http2
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
     ports:
-      - "8000:8000"     # HTTP Proxy
-      - "8443:8443"     # HTTPS Proxy
-      - "8001:8001"     # Admin API
-      - "9080:9080"     # gRPC Proxy
+      - "127.0.0.1:8000:8000"     # Local HTTP Proxy
+      - "8443:8443"               # HTTPS Proxy (Open)
+      - "127.0.0.1:8001:8001"     # Local Admin API
+      - "127.0.0.1:9080:9080"     # Local gRPC Proxy
     volumes:
       - ../config/gateway/kong.yml:/usr/local/kong/declarative/kong.yml:ro
     networks:
