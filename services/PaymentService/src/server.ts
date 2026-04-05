@@ -13,7 +13,7 @@ import { HealthImplementation, ServingStatusMap } from 'grpc-health-check';
 import { createRestApi } from './rest-api';
 
 // Validate required environment variables
-const requiredEnvVars = ['REST_PORT', 'LOKI_URL'];
+const requiredEnvVars = ['REST_PORT', 'LOKI_URL', 'PROTO_PATH'];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
@@ -25,18 +25,43 @@ if (missingEnvVars.length > 0) {
   console.error('\x1b[33m%s\x1b[0m', '\nExample .env file:');
   console.error('\x1b[36m%s\x1b[0m', '   REST_PORT=5012');
   console.error('\x1b[36m%s\x1b[0m', '   LOKI_URL=http://localhost:3100');
+  console.error('\x1b[36m%s\x1b[0m', '   PROTO_PATH=../../protos');
   console.error('\x1b[36m%s\x1b[0m', '   PORT=50012 (optional, defaults to 50012)');
   console.error('\x1b[36m%s\x1b[0m', '   MONGO_URI=mongodb://admin:password123@localhost:27017 (optional)');
   process.exit(1);
 }
 
-// Initialize OpenTelemetry tracing FIRST
-initializeTracing();
+import * as fs from 'fs';
+import { ProtoGrpcType } from './generated/payments';
+import { PaymentServiceHandlers } from './generated/payments/PaymentService';
 
-// Load the protobuf file
-const PROTO_PATH = path.resolve(__dirname, '../../../protos/payments.proto');
+// Proto Configuration
+const PROTO_DIR = path.resolve(process.cwd(), process.env.PROTO_PATH!);
 
-const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
+// Professional Check: Ensure the proto directory exists
+if (!fs.existsSync(PROTO_DIR)) {
+  console.error('\x1b[31m%s\x1b[0m', `❌ Proto directory not found: ${PROTO_DIR}`);
+  console.error('\x1b[33m%s\x1b[0m', '💡 Check your PROTO_PATH in .env or your Docker volume mounts.');
+  process.exit(1);
+}
+
+let protoFiles: string[] = [];
+try {
+  protoFiles = fs.readdirSync(PROTO_DIR)
+    .filter(file => file.endsWith('.proto'))
+    .map(file => path.join(PROTO_DIR, file));
+
+  if (protoFiles.length === 0) {
+    throw new Error(`No .proto files found in ${PROTO_DIR}`);
+  }
+} catch (err: any) {
+  console.error('\x1b[31m%s\x1b[0m', `❌ Failed to scan proto directory: ${err.message}`);
+  process.exit(1);
+}
+
+logger.info(`Loading ${protoFiles.length} proto files from: ${PROTO_DIR}`);
+
+const packageDefinition = protoLoader.loadSync(protoFiles, {
   keepCase: true,
   longs: String,
   enums: String,
@@ -44,10 +69,11 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   oneofs: true,
 });
 
-const paymentProto = grpc.loadPackageDefinition(packageDefinition) as any;
+const paymentProto = grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType;
 const paymentPackage = paymentProto.payments;
 
-// MongoDB Setup
+// Initialize OpenTelemetry tracing after contract validation
+initializeTracing();
 const mongoUri = process.env.MONGO_URI || 'mongodb://admin:password123@localhost:27017';
 const dbName = process.env.MONGO_DB_NAME || 'payments_db';
 let db: Db;
@@ -255,11 +281,13 @@ async function main() {
 
   const server = new grpc.Server();
 
-  // Add Payment service
-  server.addService(paymentPackage.PaymentService.service, {
-    processPayment: processPayment,
-    refundPayment: refundPayment,
-  });
+  // Add Payment service with type safety
+  const paymentHandlers: PaymentServiceHandlers = {
+    ProcessPayment: processPayment,
+    RefundPayment: refundPayment,
+  };
+
+  server.addService(paymentPackage.PaymentService.service, paymentHandlers as any);
 
   // Add gRPC Health service for Kubernetes probes
   healthImpl.addToServer(server);

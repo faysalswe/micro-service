@@ -13,6 +13,9 @@ RUN pnpm install --frozen-lockfile
 COPY services/PaymentService/tsconfig.json ./
 COPY services/PaymentService/src/ ./src/
 
+# Generate TypeScript types from proto files
+RUN pnpm run proto:generate
+
 # Compile TypeScript to JavaScript
 RUN pnpm run build
 

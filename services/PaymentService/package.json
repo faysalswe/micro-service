@@ -4,6 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "proto:generate": "npm run -w ../.. proto:generate",
+    "postinstall": "npm run proto:generate",
+    "predev": "npm run proto:generate",
+    "prebuild": "npm run proto:generate",
     "start": "ts-node src/server.ts",
     "build": "tsc",
     "test": "jest"
@@ -42,6 +46,7 @@
     "@types/node": "^22.7.4",
     "@types/swagger-jsdoc": "^6.0.4",
     "jest": "^29.7.0",
+    "proto-loader-gen-types": "^0.6.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
