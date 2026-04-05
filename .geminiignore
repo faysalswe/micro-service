@@ -1,0 +1,44 @@
+# Dependency folders
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build and Output folders
+dist/
+build/
+bin/
+obj/
+out/
+.angular/
+.react-router/
+.next/
+.pnpm-store/
+
+# Generated gRPC code (can be very large)
+**/generated/
+**/proto/**/*.go
+**/*.pb.go
+**/*.pb.h
+**/*.pb.cc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Caches and Temp
+.cache/
+.tmp/
+temp/
