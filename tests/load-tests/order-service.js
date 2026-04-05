@@ -144,7 +144,7 @@ function createOrder(token, testType) {
   
   const orderPayload = JSON.stringify({
     userId: `user-${__VU}-${__ITER}`,
-    productId: Math.random() < 0.1 ? 'fail-me' : `PROD-00${Math.floor(Math.random() * 2) + 1}`,
+    productId: `PROD-00${Math.floor(Math.random() * 5) + 1}`,
     amount: unitPrice * quantity,
     quantity: quantity,
   });

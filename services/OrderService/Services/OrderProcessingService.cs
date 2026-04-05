@@ -188,54 +188,6 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
             order.PaymentId = paymentResponse.PaymentId;
             await _dbContext.SaveChangesAsync();
 
-            // SAGA STEP 3: FINALIZE
-            // Force failure if product is "fail-me" to test full compensation chain
-            if (productId == "fail-me")
-            {
-                _logger.LogWarning("SAGA STEP 3 FAILED: Mocked failure for testing compensation chain");
-
-                // COMPENSATION FOR STEP 2: REFUND
-                _logger.LogInformation("TRIGGERING COMPENSATION: Refunding payment {PaymentId}", paymentResponse.PaymentId);
-                await _sagaService.LogStepAsync(order.Id, "RefundRequested", "Pending",
-                    new { paymentResponse.PaymentId });
-
-                await _paymentClient.RefundPaymentAsync(new RefundPaymentRequest
-                {
-                    PaymentId = paymentResponse.PaymentId,
-                    Reason = "Saga finalization failed"
-                }, metadata);
-
-                await _sagaService.LogStepAsync(order.Id, "RefundCompleted", "Completed");
-
-                // COMPENSATION FOR STEP 1: RELEASE STOCK
-                _logger.LogInformation("TRIGGERING COMPENSATION: Releasing stock for Order {OrderId}", order.Id);
-                await _sagaService.LogStepAsync(order.Id, "StockReleaseRequested", "Pending");
-
-                await _inventoryClient.ReleaseStockAsync(new ReleaseStockRequest
-                {
-                    OrderId = order.Id.ToString(),
-                    ProductId = order.ProductId,
-                    Quantity = order.Quantity
-                }, metadata);
-
-                await _sagaService.LogStepAsync(order.Id, "StockReleaseCompleted", "Completed");
-                await _sagaService.LogStepAsync(order.Id, "SagaCompensated", "Completed");
-
-                order.Status = "FAILED_FULL_COMPENSATION_APPLIED";
-                await _dbContext.SaveChangesAsync();
-
-                var response = new CreateOrderResponse
-                {
-                    OrderId = order.Id.ToString(),
-                    Status = "FAILED"
-                };
-
-                if (!string.IsNullOrEmpty(idempotencyKey))
-                    await _idempotencyService.SaveResponseAsync(idempotencyKey, 200, response);
-
-                return response;
-            }
-
             // SUCCESS
             order.Status = "COMPLETED";
             await _dbContext.SaveChangesAsync();

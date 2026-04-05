@@ -180,41 +180,6 @@ public class OrdersController : ControllerBase
 
                 _logger.LogInformation("Payment successful for Order {OrderId}", order.Id);
 
-                // Check for simulated failure (demonstrates compensating transaction)
-                if (order.ProductId == "fail-me")
-                {
-                    _logger.LogWarning("Simulated failure for Order {OrderId}, triggering refund", order.Id);
-
-                    // SAGA COMPENSATING TRANSACTION: Refund payment
-                    await _sagaService.LogStepAsync(order.Id, "RefundRequested", "Pending",
-                        new { paymentResponse.PaymentId, Reason = "Simulated final step failure" });
-
-                    await _paymentClient.RefundPaymentAsync(new RefundPaymentRequest
-                    {
-                        PaymentId = paymentResponse.PaymentId,
-                        Reason = "Simulated final step failure"
-                    }, metadata);
-
-                    await _sagaService.LogStepAsync(order.Id, "RefundCompleted", "Completed",
-                        new { paymentResponse.PaymentId });
-                    await _sagaService.LogStepAsync(order.Id, "SagaCompensated", "Completed");
-
-                    order.Status = "CANCELLED_AFTER_FAILURE";
-                    await _dbContext.SaveChangesAsync();
-
-                    var failedResponse = new OrderResponseDto
-                    {
-                        OrderId = order.Id,
-                        Status = "FAILED",
-                        Message = "Order failed during processing. Payment refunded."
-                    };
-
-                    if (!string.IsNullOrEmpty(idempotencyKey))
-                        await _idempotencyService.SaveResponseAsync(idempotencyKey, 200, failedResponse);
-
-                    return Ok(failedResponse);
-                }
-
                 // SAGA STEP 3: Complete order
                 await _sagaService.LogStepAsync(order.Id, "OrderCompleted", "Completed",
                     new { order.Id, paymentResponse.PaymentId });
