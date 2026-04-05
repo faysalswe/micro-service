@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Data;
 using OrderService.Services;
-using Microservice.Payments.Grpc;
+using Payments.V1;
+using Inventory.V1;
 using Grpc.Core;
 using System.Text.Json;
 using Polly;
@@ -15,16 +16,16 @@ public class OrdersController : ControllerBase
 {
     private readonly ILogger<OrdersController> _logger;
     private readonly OrderDbContext _dbContext;
-    private readonly PaymentService.PaymentServiceClient _paymentClient;
-    private readonly Inventory.InventoryService.InventoryServiceClient _inventoryClient;
+    private readonly Payments.V1.PaymentService.PaymentServiceClient _paymentClient;
+    private readonly Inventory.V1.InventoryService.InventoryServiceClient _inventoryClient;
     private readonly ISagaService _sagaService;
     private readonly IIdempotencyService _idempotencyService;
 
     public OrdersController(
         ILogger<OrdersController> logger,
         OrderDbContext dbContext,
-        PaymentService.PaymentServiceClient paymentClient,
-        Inventory.InventoryService.InventoryServiceClient inventoryClient,
+        Payments.V1.PaymentService.PaymentServiceClient paymentClient,
+        Inventory.V1.InventoryService.InventoryServiceClient inventoryClient,
         ISagaService sagaService,
         IIdempotencyService idempotencyService)
     {
@@ -163,7 +164,7 @@ public class OrdersController : ControllerBase
         {
             var metadata = new Metadata { { "x-correlation-id", correlationId } };
 
-            var paymentResponse = await _paymentClient.ProcessPaymentAsync(new PaymentRequest
+            var paymentResponse = await _paymentClient.ProcessPaymentAsync(new ProcessPaymentRequest
             {
                 OrderId = order.Id.ToString(),
                 Amount = order.Amount,
@@ -186,7 +187,7 @@ public class OrdersController : ControllerBase
                     await _sagaService.LogStepAsync(order.Id, "RefundRequested", "Pending",
                         new { paymentResponse.PaymentId, Reason = "Simulated final step failure" });
 
-                    await _paymentClient.RefundPaymentAsync(new RefundRequest
+                    await _paymentClient.RefundPaymentAsync(new RefundPaymentRequest
                     {
                         PaymentId = paymentResponse.PaymentId,
                         Reason = "Simulated final step failure"
@@ -346,7 +347,7 @@ public class OrdersController : ControllerBase
                     return BadRequest(new { message = "Order has no payment information to refund" });
                 }
 
-                var refundRequest = new RefundRequest 
+                var refundRequest = new RefundPaymentRequest 
                 { 
                     PaymentId = order.PaymentId,
                     Reason = "User requested cancellation" 
@@ -377,7 +378,7 @@ public class OrdersController : ControllerBase
             _logger.LogInformation("Saga: Restocking items for order {OrderId}", id);
             await _sagaService.LogStepAsync(sagaId, "RestockItems", "Started");
 
-            var restockRequest = new Inventory.RestockRequest 
+            var restockRequest = new RestockItemsRequest 
             { 
                 ProductId = order.ProductId,
                 Quantity = order.Quantity 

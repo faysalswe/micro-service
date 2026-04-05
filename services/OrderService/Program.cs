@@ -2,7 +2,6 @@ using OrderService.Services;
 using OrderService.Data;
 using OrderService.Configuration;
 using Microsoft.EntityFrameworkCore;
-using Microservice.Payments.Grpc;
 using Polly;
 using Polly.Extensions.Http;
 using Serilog;

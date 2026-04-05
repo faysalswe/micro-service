@@ -64,19 +64,23 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
         // ... rest of implementation stays the same, just checking field names ...
         // We'll need to check the field names in the next step to be 100% sure.
 
-        // Ensure quantity is at least 1 if not provided (though proto default is 0)
-        int quantity = request.Quantity > 0 ? request.Quantity : 1;
+        // For now, we take the first item as the primary order data
+        // (Maintaining backward compatibility with the current DB schema)
+        var firstItem = request.Items.FirstOrDefault() ?? new OrderItem { ProductId = "unknown", Quantity = 1 };
+        string productId = firstItem.ProductId;
+        int quantity = firstItem.Quantity > 0 ? firstItem.Quantity : 1;
+        double amount = 0; // Amount is no longer in the gRPC request, we'll need to look it up or hardcode for now
 
         _logger.LogInformation(
-            "Creating order for user {UserId}, Product: {ProductId}, Qty: {Qty}, Amount: {Amount}",
-            request.UserId, request.ProductId, quantity, request.Amount);
+            "Creating order for user {UserId}, Product: {ProductId}, Qty: {Qty}",
+            request.UserId, productId, quantity);
 
         // 1. Persist Initial Order to Database
         var order = new Order
         {
             UserId = request.UserId,
-            ProductId = request.ProductId,
-            Amount = request.Amount,
+            ProductId = productId,
+            Amount = amount,
             Quantity = quantity,
             Status = "PENDING",
             CreatedAt = DateTime.UtcNow
