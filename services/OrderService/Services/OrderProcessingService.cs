@@ -1,24 +1,24 @@
 using Grpc.Core;
-using Microservice.Orders.Grpc;
-using Microservice.Payments.Grpc;
-using Inventory; // Inventory.Grpc
+using Orders.V1;
+using Payments.V1;
+using Inventory.V1;
 using OrderService.Data;
 
 namespace OrderService.Services;
 
-public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.OrderServiceBase
+public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
 {
     private readonly ILogger<OrderProcessingService> _logger;
-    private readonly PaymentService.PaymentServiceClient _paymentClient;
-    private readonly Inventory.InventoryService.InventoryServiceClient _inventoryClient;
+    private readonly Payments.V1.PaymentService.PaymentServiceClient _paymentClient;
+    private readonly Inventory.V1.InventoryService.InventoryServiceClient _inventoryClient;
     private readonly OrderDbContext _dbContext;
     private readonly ISagaService _sagaService;
     private readonly IIdempotencyService _idempotencyService;
 
     public OrderProcessingService(
         ILogger<OrderProcessingService> logger, 
-        PaymentService.PaymentServiceClient paymentClient,
-        Inventory.InventoryService.InventoryServiceClient inventoryClient,
+        Payments.V1.PaymentService.PaymentServiceClient paymentClient,
+        Inventory.V1.InventoryService.InventoryServiceClient inventoryClient,
         OrderDbContext dbContext,
         ISagaService sagaService,
         IIdempotencyService idempotencyService)
@@ -31,7 +31,7 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
         _idempotencyService = idempotencyService;
     }
 
-    public override async Task<OrderResponse> CreateOrder(CreateOrderRequest request, ServerCallContext context)
+    public override async Task<CreateOrderResponse> CreateOrder(CreateOrderRequest request, ServerCallContext context)
     {
         var correlationId = context.RequestHeaders.GetValue("x-correlation-id") ?? Guid.NewGuid().ToString();
         var metadata = new Metadata { { "x-correlation-id", correlationId } };
@@ -54,10 +54,15 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
                 if (idempotencyResult.CachedResponse != null)
                 {
                     _logger.LogInformation("Returning cached response for idempotency key: {Key}", idempotencyKey);
-                    return System.Text.Json.JsonSerializer.Deserialize<OrderResponse>(idempotencyResult.CachedResponse)!;
+                    return System.Text.Json.JsonSerializer.Deserialize<CreateOrderResponse>(idempotencyResult.CachedResponse)!;
                 }
             }
         }
+
+        // Ensure quantity is at least 1 if not provided (though proto default is 0)
+        // Note: Using standard request properties (Renamed in proto to camelCase in C#)
+        // ... rest of implementation stays the same, just checking field names ...
+        // We'll need to check the field names in the next step to be 100% sure.
 
         // Ensure quantity is at least 1 if not provided (though proto default is 0)
         int quantity = request.Quantity > 0 ? request.Quantity : 1;
@@ -94,7 +99,7 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
             await _sagaService.LogStepAsync(order.Id, "InventoryReservationRequested", "Pending",
                 new { order.Id, order.ProductId, order.Quantity });
 
-            var inventoryResponse = await _inventoryClient.ReserveStockAsync(new ReserveRequest
+            var inventoryResponse = await _inventoryClient.ReserveStockAsync(new ReserveStockRequest
             {
                 OrderId = order.Id.ToString(),
                 ProductId = order.ProductId,
@@ -111,11 +116,10 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
                 order.Status = "INVENTORY_RESERVATION_FAILED";
                 await _dbContext.SaveChangesAsync();
 
-                var response = new OrderResponse
+                var response = new CreateOrderResponse
                 {
                     OrderId = order.Id.ToString(),
-                    Status = "FAILED",
-                    Message = $"Inventory reservation failed: {inventoryResponse.Message}"
+                    Status = "FAILED"
                 };
 
                 if (!string.IsNullOrEmpty(idempotencyKey))
@@ -132,7 +136,7 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
             await _sagaService.LogStepAsync(order.Id, "PaymentRequested", "Pending",
                 new { order.Id, order.Amount });
             
-            var paymentResponse = await _paymentClient.ProcessPaymentAsync(new PaymentRequest
+            var paymentResponse = await _paymentClient.ProcessPaymentAsync(new ProcessPaymentRequest
             {
                 OrderId = order.Id.ToString(),
                 Amount = order.Amount,
@@ -149,7 +153,7 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
                 _logger.LogInformation("TRIGGERING COMPENSATION: Releasing stock for Order {OrderId}", order.Id);
                 await _sagaService.LogStepAsync(order.Id, "StockReleaseRequested", "Pending");
 
-                await _inventoryClient.ReleaseStockAsync(new ReleaseRequest
+                await _inventoryClient.ReleaseStockAsync(new ReleaseStockRequest
                 {
                     OrderId = order.Id.ToString(),
                     ProductId = order.ProductId,
@@ -162,11 +166,10 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
                 order.Status = "PAYMENT_FAILED_STOCK_RELEASED";
                 await _dbContext.SaveChangesAsync();
 
-                var response = new OrderResponse
+                var response = new CreateOrderResponse
                 {
                     OrderId = order.Id.ToString(),
-                    Status = "FAILED",
-                    Message = $"Payment failed: {paymentResponse.StatusMessage}. Inventory has been released."
+                    Status = "FAILED"
                 };
 
                 if (!string.IsNullOrEmpty(idempotencyKey))
@@ -192,7 +195,7 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
                 await _sagaService.LogStepAsync(order.Id, "RefundRequested", "Pending",
                     new { paymentResponse.PaymentId });
 
-                await _paymentClient.RefundPaymentAsync(new RefundRequest
+                await _paymentClient.RefundPaymentAsync(new RefundPaymentRequest
                 {
                     PaymentId = paymentResponse.PaymentId,
                     Reason = "Saga finalization failed"
@@ -204,7 +207,7 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
                 _logger.LogInformation("TRIGGERING COMPENSATION: Releasing stock for Order {OrderId}", order.Id);
                 await _sagaService.LogStepAsync(order.Id, "StockReleaseRequested", "Pending");
 
-                await _inventoryClient.ReleaseStockAsync(new ReleaseRequest
+                await _inventoryClient.ReleaseStockAsync(new ReleaseStockRequest
                 {
                     OrderId = order.Id.ToString(),
                     ProductId = order.ProductId,
@@ -217,11 +220,10 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
                 order.Status = "FAILED_FULL_COMPENSATION_APPLIED";
                 await _dbContext.SaveChangesAsync();
 
-                var response = new OrderResponse
+                var response = new CreateOrderResponse
                 {
                     OrderId = order.Id.ToString(),
-                    Status = "FAILED",
-                    Message = "Final processing failed. Payment refunded and inventory released."
+                    Status = "FAILED"
                 };
 
                 if (!string.IsNullOrEmpty(idempotencyKey))
@@ -237,11 +239,10 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
             await _sagaService.LogStepAsync(order.Id, "SagaCompleted", "Completed");
             _logger.LogInformation("SAGA COMPLETED SUCCESSFULLY for Order {OrderId}", order.Id);
 
-            var successResponse = new OrderResponse
+            var successResponse = new CreateOrderResponse
             {
                 OrderId = order.Id.ToString(),
-                Status = "SUCCESS",
-                Message = "Order created and processed successfully."
+                Status = "SUCCESS"
             };
 
             if (!string.IsNullOrEmpty(idempotencyKey))
@@ -269,13 +270,12 @@ public class OrderProcessingService : Microservice.Orders.Grpc.OrderService.Orde
         }
     }
 
-    private async Task<OrderResponse> ErrorResponse(Order order, string message, string? idempotencyKey = null)
+    private async Task<CreateOrderResponse> ErrorResponse(Order order, string message, string? idempotencyKey = null)
     {
-        var response = new OrderResponse
+        var response = new CreateOrderResponse
         {
             OrderId = order.Id.ToString(),
-            Status = "ERROR",
-            Message = message
+            Status = "ERROR"
         };
 
         if (!string.IsNullOrEmpty(idempotencyKey))

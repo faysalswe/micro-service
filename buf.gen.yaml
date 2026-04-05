@@ -1,4 +1,7 @@
 version: v2
+inputs:
+  - directory: protos
+
 managed:
   enabled: true
   override:
@@ -6,20 +9,20 @@ managed:
       value: inventory-service/proto
 
 plugins:
-  # 1. Go Generation for InventoryService
-  - local: protoc-gen-go
+  # 1. Go Generation (Remote)
+  - remote: buf.build/protocolbuffers/go:v1.36.5
     out: services/InventoryService/proto
     opt: paths=source_relative
 
-  - local: protoc-gen-go-grpc
+  - remote: buf.build/grpc/go:v1.5.1
     out: services/InventoryService/proto
     opt: paths=source_relative
 
-  # 2. Modern TypeScript/ES Generation for PaymentService
-  - local: protoc-gen-es
+  # 2. TypeScript Generation (Remote)
+  - remote: buf.build/bufbuild/es:v1.10.0
     out: services/PaymentService/src/generated
     opt: target=ts
 
-  - local: protoc-gen-connect-es
+  - remote: buf.build/connectrpc/es:v1.6.1
     out: services/PaymentService/src/generated
     opt: target=ts

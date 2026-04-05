@@ -32,8 +32,7 @@ if (missingEnvVars.length > 0) {
 }
 
 import * as fs from 'fs';
-import { ProtoGrpcType } from './generated/payments';
-import { PaymentServiceHandlers } from './generated/payments/PaymentService';
+import { ProcessPaymentRequest, RefundPaymentRequest } from './generated/payments/v1/payments_pb';
 
 // Proto Configuration
 const PROTO_DIR = path.resolve(process.cwd(), process.env.PROTO_PATH!);
@@ -45,11 +44,25 @@ if (!fs.existsSync(PROTO_DIR)) {
   process.exit(1);
 }
 
+// Find all .proto files recursively in the versioned structure
+const getProtoFiles = (dir: string): string[] => {
+  let results: string[] = [];
+  const list = fs.readdirSync(dir);
+  list.forEach(file => {
+    file = path.join(dir, file);
+    const stat = fs.statSync(file);
+    if (stat && stat.isDirectory()) {
+      results = results.concat(getProtoFiles(file));
+    } else if (file.endsWith('.proto')) {
+      results.push(file);
+    }
+  });
+  return results;
+};
+
 let protoFiles: string[] = [];
 try {
-  protoFiles = fs.readdirSync(PROTO_DIR)
-    .filter(file => file.endsWith('.proto'))
-    .map(file => path.join(PROTO_DIR, file));
+  protoFiles = getProtoFiles(PROTO_DIR);
 
   if (protoFiles.length === 0) {
     throw new Error(`No .proto files found in ${PROTO_DIR}`);
@@ -69,8 +82,8 @@ const packageDefinition = protoLoader.loadSync(protoFiles, {
   oneofs: true,
 });
 
-const paymentProto = grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType;
-const paymentPackage = paymentProto.payments;
+const paymentProto = grpc.loadPackageDefinition(packageDefinition) as any;
+const paymentPackage = paymentProto.payments.v1;
 
 // Initialize OpenTelemetry tracing after contract validation
 initializeTracing();
@@ -152,7 +165,7 @@ async function checkDatabaseHealth(): Promise<boolean> {
 /**
  * Implements the ProcessPayment RPC method.
  */
-const processPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: grpc.sendUnaryData<any>) => {
+const processPayment = async (call: grpc.ServerUnaryCall<ProcessPaymentRequest, any>, callback: grpc.sendUnaryData<any>) => {
   const metadata = call.metadata.getMap();
   const correlationId = metadata['x-correlation-id'] || 'no-correlation-id';
   
@@ -211,7 +224,7 @@ const processPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: gr
 /**
  * Implements the RefundPayment RPC method (Compensating Transaction).
  */
-const refundPayment = async (call: grpc.ServerUnaryCall<any, any>, callback: grpc.sendUnaryData<any>) => {
+const refundPayment = async (call: grpc.ServerUnaryCall<RefundPaymentRequest, any>, callback: grpc.sendUnaryData<any>) => {
   const { payment_id, reason } = call.request;
   
   logger.info('Processing refund', { payment_id, reason });
