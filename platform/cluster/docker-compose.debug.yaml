@@ -18,8 +18,10 @@ services:
       - "2223:2222"
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-    depends_on:
-      - redis
+      - LOKI_URL=${LOKI_URL:-http://loki:3100}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      - Jwt__Key=${DB_PASSWORD:-ThisIsAVerySecretKeyForDevelopmentOnly123!}
+      - Jwt__Issuer=IdentityService
 
   order-service:
     networks:
@@ -39,11 +41,7 @@ services:
       - GrpcSettings__PaymentServiceUrl=${URL_PAYMENT_SERVICE:-http://payment-service:50012}
       - GrpcSettings__InventoryServiceUrl=${URL_INVENTORY_SERVICE:-http://inventory-service:50013}
       - OpenTelemetry__Endpoint=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
-    depends_on:
-      order-db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - LOKI_URL=${LOKI_URL:-http://loki:3100}
 
   payment-service:
     networks:
@@ -58,13 +56,12 @@ services:
       - "9229:9229"
     environment:
       - NODE_ENV=${NODE_ENV:-development}
+      - REST_PORT=${PORT_PAYMENT_SERVICE:-5012}
+      - PORT=${INTERNAL_PORT_GRPC_PAYMENT:-50012}
       - MONGO_URI=mongodb://${DB_USER:-admin}:${DB_PASSWORD:-password123}@payment-db:27017
       - MONGO_DB_NAME=payments_db
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
       - LOKI_URL=${LOKI_URL:-http://loki:3100}
-    depends_on:
-      payment-db:
-        condition: service_healthy
 
   inventory-service:
     networks:
@@ -78,12 +75,12 @@ services:
       - "${INTERNAL_PORT_GRPC_INVENTORY:-50013}:50013"
       - "4013:4013"
     environment:
+      - SERVICE_NAME=InventoryService
       - DB_HOST=inventory-db
       - DB_PORT=5432
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password123}
       - DB_NAME=inventory_db
+      - REST_PORT=${PORT_INVENTORY_SERVICE:-5013}
+      - GRPC_PORT=${INTERNAL_PORT_GRPC_INVENTORY:-50013}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
-    depends_on:
-      inventory-db:
-        condition: service_healthy

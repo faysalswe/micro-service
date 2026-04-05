@@ -10,7 +10,6 @@
       "args": [],
       "cwd": "${workspaceFolder}/services/IdentityService",
       "stopAtEntry": false,
-      "envFile": "${workspaceFolder}/.env",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -24,7 +23,6 @@
       "args": [],
       "cwd": "${workspaceFolder}/services/OrderService",
       "stopAtEntry": false,
-      "envFile": "${workspaceFolder}/.env",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -36,7 +34,7 @@
       "mode": "auto",
       "program": "${workspaceFolder}/services/InventoryService/cmd/server/main.go",
       "cwd": "${workspaceFolder}/services/InventoryService",
-      "envFile": "${workspaceFolder}/.env"
+      "envFile": "${workspaceFolder}/services/InventoryService/.env"
     },
     {
       "name": "PaymentService",
@@ -45,7 +43,7 @@
       "cwd": "${workspaceFolder}/services/PaymentService",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "start"],
-      "envFile": "${workspaceFolder}/.env",
+      "envFile": "${workspaceFolder}/services/PaymentService/.env",
       "console": "integratedTerminal"
     },
     {
