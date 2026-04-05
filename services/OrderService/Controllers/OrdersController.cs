@@ -164,12 +164,14 @@ public class OrdersController : ControllerBase
         {
             var metadata = new Metadata { { "x-correlation-id", correlationId } };
 
-            var paymentResponse = await _paymentClient.ProcessPaymentAsync(new ProcessPaymentRequest
+            var grpcRequest = new ProcessPaymentRequest
             {
                 OrderId = order.Id.ToString(),
                 Amount = order.Amount,
                 UserId = order.UserId
-            }, metadata);
+            };
+
+            var paymentResponse = await _paymentClient.ProcessPaymentAsync(grpcRequest, metadata);
 
             if (paymentResponse.Success)
             {
@@ -179,7 +181,7 @@ public class OrdersController : ControllerBase
                 _logger.LogInformation("Payment successful for Order {OrderId}", order.Id);
 
                 // Check for simulated failure (demonstrates compensating transaction)
-                if (request.ProductId == "fail-me")
+                if (order.ProductId == "fail-me")
                 {
                     _logger.LogWarning("Simulated failure for Order {OrderId}, triggering refund", order.Id);
 

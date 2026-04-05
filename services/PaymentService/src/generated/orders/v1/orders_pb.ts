@@ -20,6 +20,11 @@ export class CreateOrderRequest extends Message<CreateOrderRequest> {
    */
   items: OrderItem[] = [];
 
+  /**
+   * @generated from field: double total_amount = 3;
+   */
+  totalAmount = 0;
+
   constructor(data?: PartialMessage<CreateOrderRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -30,6 +35,7 @@ export class CreateOrderRequest extends Message<CreateOrderRequest> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "items", kind: "message", T: OrderItem, repeated: true },
+    { no: 3, name: "total_amount", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateOrderRequest {

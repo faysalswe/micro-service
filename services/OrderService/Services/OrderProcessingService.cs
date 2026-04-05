@@ -69,11 +69,11 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
         var firstItem = request.Items.FirstOrDefault() ?? new OrderItem { ProductId = "unknown", Quantity = 1 };
         string productId = firstItem.ProductId;
         int quantity = firstItem.Quantity > 0 ? firstItem.Quantity : 1;
-        double amount = 0; // Amount is no longer in the gRPC request, we'll need to look it up or hardcode for now
+        double amount = request.TotalAmount; 
 
         _logger.LogInformation(
-            "Creating order for user {UserId}, Product: {ProductId}, Qty: {Qty}",
-            request.UserId, productId, quantity);
+            "Creating order for user {UserId}, Product: {ProductId}, Qty: {Qty}, Amount: {Amount}",
+            request.UserId, productId, quantity, amount);
 
         // 1. Persist Initial Order to Database
         var order = new Order
@@ -190,7 +190,7 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
 
             // SAGA STEP 3: FINALIZE
             // Force failure if product is "fail-me" to test full compensation chain
-            if (request.ProductId == "fail-me")
+            if (productId == "fail-me")
             {
                 _logger.LogWarning("SAGA STEP 3 FAILED: Mocked failure for testing compensation chain");
 
