@@ -1,5 +1,9 @@
 package main
 
+// Professional Automation: This directive uses 'buf' to update all contracts
+// for both Go and Node.js in one centralized step.
+//go:generate buf generate ../../..
+
 import (
 	"context"
 	"fmt"

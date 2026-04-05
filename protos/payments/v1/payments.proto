@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package payments.v1;
+
+option go_package = "inventory-service/proto/payments/v1";
+
+service PaymentService {
+  rpc ProcessPayment(ProcessPaymentRequest) returns (ProcessPaymentResponse);
+  rpc RefundPayment(RefundPaymentRequest) returns (RefundPaymentResponse);
+}
+
+message ProcessPaymentRequest {
+  string order_id = 1;
+  double amount = 2;
+  string user_id = 3;
+}
+
+message ProcessPaymentResponse {
+  string payment_id = 1;
+  bool success = 2;
+  string status_message = 3;
+}
+
+message RefundPaymentRequest {
+  string payment_id = 1;
+  string reason = 2;
+}
+
+message RefundPaymentResponse {
+  string payment_id = 1;
+  bool success = 2;
+  string status_message = 3;
+}
