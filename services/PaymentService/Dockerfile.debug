@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy package files and install all dependencies
 COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+RUN npm install -g pnpm && pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy TypeScript source and config
 COPY services/PaymentService/tsconfig.json ./
@@ -21,7 +21,7 @@ WORKDIR /app
 
 # Copy all dependencies (including dev for debugging)
 COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+RUN npm install -g pnpm && pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy compiled JavaScript with source maps
 COPY --from=build /app/dist ./dist

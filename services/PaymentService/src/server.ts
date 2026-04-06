@@ -169,45 +169,45 @@ const processPayment = async (call: grpc.ServerUnaryCall<ProcessPaymentRequest, 
   const metadata = call.metadata.getMap();
   const correlationId = metadata['x-correlation-id'] || 'no-correlation-id';
   
-  const { order_id, amount, user_id } = call.request;
-  
+  const { orderId, amount, userId } = call.request;
+
   logger.info('Processing payment', {
-    order_id,
+    orderId,
     amount,
-    user_id,
-    correlation_id: correlationId
+    userId,
+    correlationId: correlationId
   });
 
   try {
     const success = amount < 1000;
     const paymentRecord = {
-      order_id,
-      user_id,
+      orderId,
+      userId,
       amount,
       status: success ? 'COMPLETED' : 'DECLINED',
-      correlation_id: correlationId,
+      correlationId: correlationId,
       created_at: new Date()
     };
 
     // Use Circuit Breaker to perform the DB insertion
     const result = await dbBreaker.fire(paymentRecord);
-    
+
     logger.info('Payment processed successfully', {
-      payment_id: result.insertedId.toString(),
-      order_id,
+      paymentId: result.insertedId.toString(),
+      orderId,
       status: success ? 'COMPLETED' : 'DECLINED'
     });
-    
+
     callback(null, {
-      payment_id: result.insertedId.toString(),
+      paymentId: result.insertedId.toString(),
       success: success,
-      status_message: success ? 'Payment authorized successfully.' : 'Payment declined: Amount too high.',
+      statusMessage: success ? 'Payment authorized successfully.' : 'Payment declined: Amount too high.',
     });
   } catch (err: any) {
     logger.error('Error processing payment', {
       error: err.message,
       stack: err.stack,
-      order_id,
+      orderId,
       correlation_id: correlationId
     });
     
@@ -225,28 +225,28 @@ const processPayment = async (call: grpc.ServerUnaryCall<ProcessPaymentRequest, 
  * Implements the RefundPayment RPC method (Compensating Transaction).
  */
 const refundPayment = async (call: grpc.ServerUnaryCall<RefundPaymentRequest, any>, callback: grpc.sendUnaryData<any>) => {
-  const { payment_id, reason } = call.request;
-  
-  logger.info('Processing refund', { payment_id, reason });
+  const { paymentId, reason } = call.request;
+
+  logger.info('Processing refund', { paymentId, reason });
 
   try {
     await updateBreaker.fire({
-      id: payment_id,
+      id: paymentId,
       update: { status: 'REFUNDED', refund_reason: reason, refunded_at: new Date() }
     });
 
-    logger.info('Refund processed successfully', { payment_id });
+    logger.info('Refund processed successfully', { paymentId });
 
     callback(null, {
-      payment_id: payment_id,
+      paymentId: paymentId,
       success: true,
-      status_message: 'Refund processed successfully.',
+      statusMessage: 'Refund processed successfully.',
     });
   } catch (err: any) {
     logger.error('Refund processing failed', {
       error: err.message,
       stack: err.stack,
-      payment_id
+      paymentId
     });
     callback({
       code: grpc.status.INTERNAL,
@@ -295,7 +295,7 @@ async function main() {
   const server = new grpc.Server();
 
   // Add Payment service with type safety
-  const paymentHandlers: PaymentServiceHandlers = {
+  const paymentHandlers: any = {
     ProcessPayment: processPayment,
     RefundPayment: refundPayment,
   };

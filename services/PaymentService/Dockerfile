@@ -7,14 +7,11 @@ RUN npm install -g pnpm
 
 # Copy package files and install all dependencies (including devDependencies for build)
 COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy TypeScript source and config
 COPY services/PaymentService/tsconfig.json ./
 COPY services/PaymentService/src/ ./src/
-
-# Generate TypeScript types from proto files
-RUN pnpm run proto:generate
 
 # Compile TypeScript to JavaScript
 RUN pnpm run build
@@ -28,7 +25,7 @@ RUN npm install -g pnpm
 
 # Copy package files and install only production dependencies
 COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Stage 3: Runtime
 FROM node:20-alpine AS runtime
