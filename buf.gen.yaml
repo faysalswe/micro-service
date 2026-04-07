@@ -26,3 +26,10 @@ plugins:
   - remote: buf.build/connectrpc/es:v1.6.1
     out: services/PaymentService/src/generated
     opt: target=ts
+
+  # 3. C# Generation (Remote)
+  - remote: buf.build/protocolbuffers/csharp:v29.3
+    out: services/OrderService/Generated
+  
+  - remote: buf.build/grpc/csharp:v1.69.0
+    out: services/OrderService/Generated
