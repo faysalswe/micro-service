@@ -125,6 +125,13 @@
         "Storefront (React)",
         "Back Office (Angular)"
       ]
+    },
+    {
+      "name": "Run All Frontends",
+      "configurations": [
+        "Storefront (React)",
+        "Back Office (Angular)"
+      ]
     }
   ]
 }
