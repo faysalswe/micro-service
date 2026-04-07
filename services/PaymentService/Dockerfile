@@ -9,9 +9,8 @@ RUN npm install -g pnpm
 COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
-# Copy TypeScript source and config
-COPY services/PaymentService/tsconfig.json ./
-COPY services/PaymentService/src/ ./src/
+# Copy the entire service source including generated files
+COPY services/PaymentService/ ./
 
 # Compile TypeScript to JavaScript
 RUN pnpm run build
@@ -49,9 +48,6 @@ COPY --from=build /app/dist ./dist
 
 # Copy package.json (needed for Node.js)
 COPY --from=build /app/package.json ./
-
-# Copy proto files (required at runtime for dynamic loading)
-COPY protos/ ./protos/
 
 # Change ownership and switch to non-root user
 RUN chown -R appuser:appgroup /app
