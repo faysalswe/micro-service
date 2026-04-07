@@ -3,14 +3,10 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-# Copy the entire project first to have all source and protos
-COPY . .
+# Copy the service source including generated gRPC code in proto/
+COPY services/InventoryService/ ./
 
-# Use the pre-generated gRPC code (static build on cloud)
-# The files are already in services/InventoryService/proto/
-WORKDIR /app/services/InventoryService
-
-# Now run go mod tidy to ensure go.sum is up to date
+# Run go mod tidy to ensure go.sum is up to date
 RUN go mod tidy
 
 # Build the application

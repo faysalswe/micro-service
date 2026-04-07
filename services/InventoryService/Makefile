@@ -5,11 +5,8 @@ OUT_DIR=proto
 
 proto:
 	@mkdir -p $(OUT_DIR)
-	protoc --proto_path=$(PROTO_DIR) \
-		--go_out=$(OUT_DIR) --go_opt=paths=source_relative \
-		--go-grpc_out=$(OUT_DIR) --go-grpc_opt=paths=source_relative \
-		$(PROTO_DIR)/inventory.proto
-	@echo "Generated gRPC code in $(OUT_DIR)"
+	cd ../.. && npm run proto:generate
+	@echo "Generated gRPC code in $(OUT_DIR) using buf"
 
 tidy:
 	go mod tidy

@@ -10,12 +10,8 @@ RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 WORKDIR /app
 
-# Copy protos and inventory service source
-COPY protos/ protos/
-COPY services/InventoryService/ services/InventoryService/
-
-# Use the pre-generated gRPC code (static build on cloud)
-WORKDIR /app/services/InventoryService
+# Copy service source including generated gRPC code in proto/
+COPY services/InventoryService/ ./
 
 RUN go mod tidy
 
@@ -49,4 +45,4 @@ ENV DB_PORT=5432
 # --accept-multiclient: allow multiple debugger connections
 # --listen=:4013: listen on the unified debug port
 # --api-version=2: use the latest Delve API
-CMD ["/dlv", "--listen=:4013", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/inventory-service"]
+CMD ["/dlv", "--listen=:4013", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/inventory-service", "--continue"]
