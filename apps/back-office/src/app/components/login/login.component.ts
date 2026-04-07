@@ -23,54 +23,78 @@ import { MessageModule } from 'primeng/message';
     MessageModule
   ],
   template: `
-    <div class="flex items-center justify-center min-h-screen px-4 animate-in fade-in duration-700" style="background: #0f172a;">
-      <p-card styleClass="w-full max-w-md shadow-2xl border-none rounded-3xl overflow-hidden">
-        <div style="background: var(--primary-color); padding: 3rem 2rem; text-align: center;">
-          <div style="width: 64px; height: 64px; background: rgba(255,255,255,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; backdrop-filter: blur(8px);">
-            <i class="pi pi-shield" style="color: white; font-size: 2rem;"></i>
+    <div class="flex items-center justify-center min-h-screen px-4 animate-in" style="background: var(--slate-50);">
+      <div class="admin-card w-full max-w-md">
+        <div class="text-center" style="margin-bottom: var(--space-8);">
+          <div class="brand-icon-container">
+            <i class="pi pi-shield"></i>
           </div>
-          <h2 style="margin: 0; color: white; font-size: 1.75rem; font-weight: 800; letter-spacing: -0.025em;">Secure Access</h2>
-          <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.8); font-weight: 500;">InventoryCore Management</p>
+          <h1 class="page-title">Identity Manager</h1>
+          <p style="color: var(--slate-500); font-weight: 500;">Secure portal for InventoryCore administrators.</p>
         </div>
 
-        <div class="p-8">
-          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
-            <div class="flex flex-col gap-2">
-              <label for="username" class="text-sm font-bold text-gray-500 uppercase tracking-widest">Username</label>
-              <input pInputText id="username" formControlName="username" placeholder="Enter your username" class="w-full py-4 px-4 rounded-xl border-gray-200" />
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <label for="password" class="text-sm font-bold text-gray-500 uppercase tracking-widest">Password</label>
-              <p-password 
-                  id="password" 
-                  formControlName="password" 
-                  [feedback]="false" 
-                  [toggleMask]="true" 
-                  styleClass="w-full" 
-                  inputStyleClass="w-full py-4 px-4 rounded-xl border-gray-200"
-                  placeholder="••••••••"
-              ></p-password>
-            </div>
-
-            <p-message *ngIf="errorMessage" severity="error" [text]="errorMessage" styleClass="w-full mt-2"></p-message>
-
-            <p-button 
-              label="Authenticate" 
-              type="submit" 
-              [loading]="loading" 
-              styleClass="w-full py-5 text-lg font-black bg-indigo-600 border-none hover:bg-indigo-700 transition-all shadow-xl hover:translate-y-[-2px]"
-              [disabled]="loginForm.invalid"
-            ></p-button>
-          </form>
-
-          <div class="mt-10 pt-6 border-t border-gray-100 text-center">
-            <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black italic">InventoryCore OS v1.0.0</p>
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+          <div class="flex flex-col gap-2">
+            <label for="username" class="section-title" style="margin-bottom: 0;">Username</label>
+            <input pInputText id="username" formControlName="username" placeholder="admin" class="w-full" />
           </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="password" class="section-title" style="margin-bottom: 0;">Password</label>
+            <p-password 
+                id="password" 
+                formControlName="password" 
+                [feedback]="false" 
+                [toggleMask]="true" 
+                styleClass="w-full" 
+                inputStyleClass="w-full"
+                placeholder="••••••••"
+            ></p-password>
+          </div>
+
+          <p-message *ngIf="errorMessage" severity="error" [text]="errorMessage" styleClass="w-full"></p-message>
+
+          <p-button 
+            label="Sign In" 
+            type="submit" 
+            [loading]="loading" 
+            styleClass="w-full p-button-lg"
+            [disabled]="loginForm.invalid"
+            severity="primary"
+          ></p-button>
+        </form>
+
+        <div class="mt-10 pt-6 border-t border-gray-100 text-center">
+          <p style="font-size: var(--text-xs); color: var(--slate-400); font-weight: 600;">InventoryCore System v1.0.0</p>
         </div>
-      </p-card>
+      </div>
     </div>
-  `
+  `,
+  styles: [`
+    .brand-icon-container {
+      width: 48px;
+      height: 48px;
+      background: var(--brand-50);
+      color: var(--brand-500);
+      border-radius: var(--radius-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--space-4) auto;
+      font-size: 1.5rem;
+    }
+    
+    :host ::ng-deep .p-inputtext {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-main);
+    }
+
+    :host ::ng-deep .p-button {
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-main);
+      font-weight: 700;
+    }
+  `]
 })
 export class LoginComponent implements OnInit {
   loginForm: FormGroup;

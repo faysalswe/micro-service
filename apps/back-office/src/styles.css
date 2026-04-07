@@ -102,6 +102,34 @@
 .menu-item.is-disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* 
+ * PROJECT STANDARD CLASSES (From STYLE_GUIDE.md)
+ */
+.admin-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-main);
+  box-shadow: var(--shadow-main);
+  padding: var(--space-8);
+}
+
+.page-title {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  color: var(--slate-900);
+  margin-bottom: var(--space-1);
+  letter-spacing: -0.02em;
+}
+
+.section-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--brand-500);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-4);
+}
+
+/* 
  * SHARED MODULE CLASSES 
  */
 .card-base {
@@ -129,15 +157,59 @@
 .stat-value { margin: 0; font-size: var(--text-2xl); font-weight: 800; }
 
 /* 
- * FLEXBOX UTILITIES (Fixes stacking issues)
+ * FLEXBOX & LAYOUT UTILITIES (Fixes stacking issues)
  */
 .flex { display: flex !important; }
-.items-center { align-items: center !important; }
-.justify-between { justify-content: space-between !important; }
 .flex-col { flex-direction: column !important; }
+.items-center { align-items: center !important; }
+.justify-center { justify-content: center !important; }
+.justify-between { justify-between: space-between !important; }
+.min-h-screen { min-height: 100vh !important; }
+.w-full { width: 100% !important; }
+.max-w-md { max-width: 28rem !important; }
+.h-full { height: 100% !important; }
+
+/* Spacing Utilities */
+.p-8 { padding: var(--space-8) !important; }
+.px-4 { padding-left: var(--space-4) !important; padding-right: var(--space-4) !important; }
+.py-4 { padding-top: var(--space-4) !important; padding-bottom: var(--space-4) !important; }
+.py-5 { padding-top: 1.25rem !important; padding-bottom: 1.25rem !important; }
+.mt-2 { margin-top: var(--space-2) !important; }
+.mt-10 { margin-top: 2.5rem !important; }
+.pt-6 { padding-top: var(--space-6) !important; }
 .gap-2 { gap: var(--space-2) !important; }
 .gap-3 { gap: var(--space-3) !important; }
 .gap-4 { gap: var(--space-4) !important; }
+.gap-6 { gap: var(--space-6) !important; }
+
+/* Typography Utilities */
+.text-center { text-align: center !important; }
+.text-sm { font-size: var(--text-sm) !important; }
+.text-lg { font-size: var(--text-lg) !important; }
+.font-bold { font-weight: 700 !important; }
+.font-black { font-weight: 900 !important; }
+.uppercase { text-transform: uppercase !important; }
+.italic { font-style: italic !important; }
+.tracking-widest { letter-spacing: 0.1em !important; }
+.text-gray-400 { color: #94a3b8 !important; }
+.text-gray-500 { color: #64748b !important; }
+
+/* Border & Shadow Utilities */
+.border-none { border-style: none !important; }
+.border-t { border-top: 1px solid var(--border-color) !important; }
+.border-gray-100 { border-color: #f1f5f9 !important; }
+.border-gray-200 { border-color: #e2e8f0 !important; }
+.rounded-xl { border-radius: 0.75rem !important; }
+.rounded-3xl { border-radius: 1.5rem !important; }
+.overflow-hidden { overflow: hidden !important; }
+.shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important; }
+
+/* Animation Utilities (Basic) */
+.animate-in { animation: fadeIn 0.7s ease-out; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .u-mobile-only { display: none !important; }
 .u-desktop-only { display: flex !important; }
