@@ -31,4 +31,8 @@ EXPOSE 5010 2222
 # Set environment for debugging
 ENV ASPNETCORE_ENVIRONMENT=Development
 
+# Set Kestrel endpoints for REST with explicit protocols
+ENV Kestrel__Endpoints__Http__Url=http://+:5010
+ENV Kestrel__Endpoints__Http__Protocols=Http1
+
 ENTRYPOINT ["dotnet", "IdentityService.dll"]
