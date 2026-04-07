@@ -4,12 +4,12 @@ WORKDIR /src
 
 # Copy project files and restore dependencies
 COPY ["services/OrderService/OrderService.csproj", "services/OrderService/"]
-COPY ["protos/", "protos/"]
 RUN dotnet restore "services/OrderService/OrderService.csproj"
 
-# Copy remaining source code and publish
-COPY . .
-RUN dotnet publish "services/OrderService/OrderService.csproj" -c Release -o /app/publish /p:UseAppHost=false
+# Copy remaining source code (including Generated/ folder) and publish
+COPY services/OrderService/ services/OrderService/
+WORKDIR /src/services/OrderService
+RUN dotnet publish "OrderService.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime Stage (Standard Debian-based .NET ASP.NET 10.0)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime

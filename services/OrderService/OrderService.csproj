@@ -7,12 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Protobuf Include="..\..\protos\orders\v1\orders.proto" GrpcServices="Server" Link="Protos\orders.proto" />
-    <Protobuf Include="..\..\protos\payments\v1\payments.proto" GrpcServices="Client" Link="Protos\payments.proto" />
-    <Protobuf Include="..\..\protos\inventory\v1\inventory.proto" GrpcServices="Client" Link="Protos\inventory.proto" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.29.3" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.67.0" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.64.0" />
     <PackageReference Include="Grpc.AspNetCore.HealthChecks" Version="2.64.0" />
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />

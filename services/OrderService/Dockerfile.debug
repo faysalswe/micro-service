@@ -4,9 +4,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy proto files first (dependency for gRPC code generation)
-COPY protos/ /src/protos/
-
 # Copy csproj and restore dependencies
 COPY services/OrderService/OrderService.csproj services/OrderService/
 RUN dotnet restore services/OrderService/OrderService.csproj
