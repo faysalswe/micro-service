@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "proto:generate": "cd ../.. && buf generate || echo 'Skipping buf generate (using existing files)'",
+    "proto:generate": "cd ../../protos && npm run generate || echo 'Skipping buf generate (using existing files)'",
     "prebuild": "npm run clean && npm run proto:generate",
     "start": "ts-node src/server.ts",
     "build": "tsc",

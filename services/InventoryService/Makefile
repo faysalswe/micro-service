@@ -5,7 +5,7 @@ OUT_DIR=proto
 
 proto:
 	@mkdir -p $(OUT_DIR)
-	cd ../.. && npm run proto:generate
+	cd ../protos && npm run generate
 	@echo "Generated gRPC code in $(OUT_DIR) using buf"
 
 tidy:
