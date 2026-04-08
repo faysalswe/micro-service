@@ -21,6 +21,8 @@ on:
         options:
           - order-service
           - payment-service
+          - identity-service
+          - inventory-service
           - all
   schedule:
     # Run nightly at 2 AM UTC
@@ -29,7 +31,7 @@ on:
 jobs:
   load-test-setup:
     name: Setup Load Test Environment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
     - name: Checkout Repository
@@ -43,12 +45,12 @@ jobs:
         
     - name: Verify Services Health
       run: |
-        curl -f http://localhost:8000/auth/login || exit 1
+        curl -f http://localhost:8000/auth/health || exit 1
         echo "✅ Services are ready"
 
   orderservice-load-test:
     name: OrderService Load Test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: load-test-setup
     if: github.event.inputs.service == 'order-service' || github.event.inputs.service == 'all' || github.event_name == 'schedule'
     
@@ -87,7 +89,7 @@ jobs:
 
   paymentservice-load-test:
     name: PaymentService Load Test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: load-test-setup
     if: github.event.inputs.service == 'payment-service' || github.event.inputs.service == 'all' || github.event_name == 'schedule'
     
@@ -117,24 +119,80 @@ jobs:
         path: paymentservice-results.json
         retention-days: 30
 
+  identityservice-load-test:
+    name: IdentityService Load Test
+    runs-on: self-hosted
+    needs: load-test-setup
+    if: github.event.inputs.service == 'identity-service' || github.event.inputs.service == 'all' || github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup k6
+      run: |
+        curl https://github.com/grafana/k6/releases/download/v0.48.0/k6-v0.48.0-linux-amd64.tar.gz -L | tar xvz --strip-components 1
+        sudo mv k6 /usr/local/bin/
+        
+    - name: Start Services
+      run: docker-compose -f infrastructure/docker-compose.yaml up -d
+      
+    - name: Wait for Services
+      run: sleep 30
+      
+    - name: Run IdentityService Load Test
+      run: k6 run --out json=identityservice-results.json tests/load-tests/identity-service.js
+        
+    - name: Upload Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: identityservice-load-test-results
+        path: identityservice-results.json
+        retention-days: 30
+
+  inventoryservice-load-test:
+    name: InventoryService Load Test
+    runs-on: self-hosted
+    needs: load-test-setup
+    if: github.event.inputs.service == 'inventory-service' || github.event.inputs.service == 'all' || github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup k6
+      run: |
+        curl https://github.com/grafana/k6/releases/download/v0.48.0/k6-v0.48.0-linux-amd64.tar.gz -L | tar xvz --strip-components 1
+        sudo mv k6 /usr/local/bin/
+        
+    - name: Start Services
+      run: docker-compose -f infrastructure/docker-compose.yaml up -d
+      
+    - name: Wait for Services
+      run: sleep 30
+      
+    - name: Run InventoryService Load Test
+      run: k6 run --out json=inventoryservice-results.json tests/load-tests/inventory-service.js
+        
+    - name: Upload Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: inventoryservice-load-test-results
+        path: inventoryservice-results.json
+        retention-days: 30
+
   load-test-report:
     name: Generate Load Test Report
-    runs-on: ubuntu-latest
-    needs: [orderservice-load-test, paymentservice-load-test]
+    runs-on: self-hosted
+    needs: [orderservice-load-test, paymentservice-load-test, identityservice-load-test, inventoryservice-load-test]
     if: always()
     
     steps:
-    - name: Download OrderService Results
+    - name: Download Results
       uses: actions/download-artifact@v4
       with:
-        name: orderservice-load-test-results
-        path: results/
-      continue-on-error: true
-        
-    - name: Download PaymentService Results
-      uses: actions/download-artifact@v4
-      with:
-        name: paymentservice-load-test-results
         path: results/
       continue-on-error: true
         
@@ -146,12 +204,23 @@ jobs:
         echo "**Test Type**: ${{ github.event.inputs.test_type || 'nightly' }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        if [ -f results/orderservice-results.json ]; then
+        if [ -f results/orderservice-load-test-results/orderservice-results.json ]; then
           echo "## OrderService Results" >> $GITHUB_STEP_SUMMARY
           echo "✅ Load test completed" >> $GITHUB_STEP_SUMMARY
         fi
         
-        if [ -f results/paymentservice-results.json ]; then
+        if [ -f results/paymentservice-load-test-results/paymentservice-results.json ]; then
           echo "## PaymentService Results" >> $GITHUB_STEP_SUMMARY
           echo "✅ Load test completed" >> $GITHUB_STEP_SUMMARY
         fi
+
+        if [ -f results/identityservice-load-test-results/identityservice-results.json ]; then
+          echo "## IdentityService Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Load test completed" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        if [ -f results/inventoryservice-load-test-results/inventoryservice-results.json ]; then
+          echo "## InventoryService Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Load test completed" >> $GITHUB_STEP_SUMMARY
+        fi
+
