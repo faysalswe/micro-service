@@ -87,7 +87,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Health check endpoints for Kubernetes probes
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "IdentityService", timestamp = DateTime.UtcNow }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "IdentityService", version = "1.1.0", timestamp = DateTime.UtcNow }));
 
 app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
 
