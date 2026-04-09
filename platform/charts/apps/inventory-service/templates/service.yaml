@@ -7,13 +7,13 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: grpc
-      protocol: TCP
-      name: grpc
-    - port: {{ .Values.service.restPort }}
+    - port: 5013
       targetPort: http
       protocol: TCP
       name: http
+    - port: 50013
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
   selector:
     {{- include "inventory-service.selectorLabels" . | nindent 4 }}
