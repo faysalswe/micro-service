@@ -146,7 +146,13 @@ app.MapGrpcHealthChecksService();
 // HTTP health endpoints for compatibility with HTTP-based probes
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "OrderService", timestamp = DateTime.UtcNow }));
+var appVersion = builder.Configuration["APP_VERSION"] ?? "1.0.0-dev";
+app.MapGet("/health", () => Results.Ok(new { 
+    status = "healthy", 
+    service = "OrderService", 
+    version = appVersion, 
+    timestamp = DateTime.UtcNow 
+}));
 
 app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
 

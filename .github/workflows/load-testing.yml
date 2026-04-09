@@ -24,9 +24,9 @@ on:
           - identity-service
           - inventory-service
           - all
-  schedule:
-    # Run nightly at 2 AM UTC
-    - cron: '0 2 * * *'
+# schedule:
+#   # Run nightly at 2 AM UTC
+#   - cron: '0 2 * * *'
 
 jobs:
   load-test-setup:

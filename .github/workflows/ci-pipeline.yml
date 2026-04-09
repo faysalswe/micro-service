@@ -276,3 +276,65 @@ jobs:
       run: |
         echo "Docker images built and pushed to ghcr.io/${{ github.repository }}"
         echo "Tags: ${{ github.sha }}, ${{ steps.meta.outputs.sha_short }}, latest"
+
+  # Job 8: Local CD - Deploy to K3d Cluster
+  local-deploy-k3d:
+    name: Local CD - Deploy to K3d
+    runs-on: self-hosted
+    needs: [integration-check]
+    if: github.ref == 'refs/heads/develop'
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Ensure K3d Cluster Exists
+      run: |
+        if ! k3d cluster list | grep -q "micro-cluster"; then
+          echo "🚀 Creating K3d cluster from config file..."
+          k3d cluster create --config platform/cluster/k3d-cluster.yaml --wait
+        else
+          echo "✅ K3d cluster already exists"
+        fi
+
+    - name: Build and Push Local Images
+      run: |
+        # Generate a short SHA for the version
+        VERSION=$(echo ${{ github.sha }} | cut -c1-7)
+        echo "🚀 Deploying Version: $VERSION"
+
+        # Build all services with Version Injection
+        docker build -t localhost:5001/identity-service:latest --build-arg APP_VERSION=$VERSION -f services/IdentityService/Dockerfile .
+        docker build -t localhost:5001/order-service:latest --build-arg APP_VERSION=$VERSION -f services/OrderService/Dockerfile .
+        docker build -t localhost:5001/payment-service:latest --build-arg APP_VERSION=$VERSION -f services/PaymentService/Dockerfile .
+        docker build -t localhost:5001/inventory-service:latest --build-arg APP_VERSION=$VERSION -f services/InventoryService/Dockerfile .
+        
+        # Push all to Local Registry (Port 5001)
+        docker push localhost:5001/identity-service:latest
+        docker push localhost:5001/order-service:latest
+        docker push localhost:5001/payment-service:latest
+        docker push localhost:5001/inventory-service:latest
+
+    - name: Deploy to Kubernetes via Helm
+      run: |
+        VERSION=$(echo ${{ github.sha }} | cut -c1-7)
+        
+        # Deploy all services using Helm with injected VERSION
+        # Note: Internally, K3d uses port 5000 for its registry mirror
+        helm upgrade --install identity-service ./platform/charts/apps/identity-service --namespace default \
+          --set image.repository=k3d-micro-registry:5000/identity-service --set image.tag=latest --set env.APP_VERSION=$VERSION
+          
+        helm upgrade --install order-service ./platform/charts/apps/order-service --namespace default \
+          --set image.repository=k3d-micro-registry:5000/order-service --set image.tag=latest --set env.APP_VERSION=$VERSION
+          
+        helm upgrade --install payment-service ./platform/charts/apps/payment-service --namespace default \
+          --set image.repository=k3d-micro-registry:5000/payment-service --set image.tag=latest --set env.APP_VERSION=$VERSION
+          
+        helm upgrade --install inventory-service ./platform/charts/apps/inventory-service --namespace default \
+          --set image.repository=k3d-micro-registry:5000/inventory-service --set image.tag=latest --set env.APP_VERSION=$VERSION
+
+    - name: Verify Deployment
+      run: |
+        kubectl get pods -n default
+        kubectl get svc -n default
+
