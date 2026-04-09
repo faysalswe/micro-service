@@ -1,13 +1,6 @@
 apiVersion: v2
 name: inventory-service
-description: Inventory Service - Catalog and Stock Management for Saga Pattern
+description: Inventory Service - Go gRPC Stock Management
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
-keywords:
-  - microservices
-  - grpc
-  - go
-  - inventory
-maintainers:
-  - name: DevOps Team

@@ -46,5 +46,4 @@ Selector labels
 {{- define "inventory-service.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "inventory-service.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app: inventory-service
 {{- end }}
