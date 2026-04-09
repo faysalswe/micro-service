@@ -35,6 +35,8 @@ spec:
               containerPort: {{ .Values.service.httpPort }}
               protocol: TCP
           env:
+            - name: APP_VERSION
+              value: {{ .Values.env.APP_VERSION | default "1.0.0-dev" | quote }}
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.config.aspnetcoreEnvironment | quote }}
             - name: Kestrel__Endpoints__Http__Url
