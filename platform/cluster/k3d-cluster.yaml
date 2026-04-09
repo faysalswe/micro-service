@@ -1,0 +1,27 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: micro-cluster
+servers: 1
+agents: 0
+ports:
+  - port: 8000:80
+    nodeFilters:
+      - loadbalancer
+  - port: 8443:443
+    nodeFilters:
+      - loadbalancer
+registries:
+  create:
+    name: micro-registry
+    host: 0.0.0.0
+    hostPort: "5001"
+options:
+  k3s:
+    extraArgs:
+      - arg: --tls-san=127.0.0.1
+        nodeFilters:
+          - server:*
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchContext: true
