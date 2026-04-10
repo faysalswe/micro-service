@@ -55,3 +55,4 @@ __debug_bin*
 __debug_bin
 inventory-service
 inventory-service
+services/InventoryService/main
