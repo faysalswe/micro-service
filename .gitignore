@@ -60,3 +60,13 @@ __debug_bin*
 .terraform/
 terraform.tfstate*
 kubeconfig*
+
+# --- Test Outputs ---
+test_output.txt
+**/test_output.txt
+
+# --- Local Databases ---
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
