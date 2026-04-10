@@ -1,63 +1,95 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"testing"
 
 	"inventory-service/internal/api/rest"
-	"inventory-service/internal/service"
+	"inventory-service/internal/models"
 	"github.com/gin-gonic/gin"
-	"github.com/pact-foundation/pact-go/v2/models"
 	"github.com/pact-foundation/pact-go/v2/provider"
 	"github.com/stretchr/testify/mock"
 )
 
-// MockRepository is a mock of the InventoryRepository
-type MockRepository struct {
+// MockInventoryService is a mock of the InventoryService interface
+type MockInventoryService struct {
 	mock.Mock
 }
 
-// Implement the repository interface for the mock (simplified for test)
-func (m *MockRepository) ReserveStock(ctx any, orderID string, productID string, quantity int32) error {
-	return nil
+func (m *MockInventoryService) Reserve(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error) {
+	args := m.Called(ctx, orderID, productID, quantity)
+	return args.Bool(0), args.String(1), args.Error(2)
 }
-func (m *MockRepository) ReleaseStock(ctx any, orderID string, productID string, quantity int32) error {
-	return nil
+
+func (m *MockInventoryService) Release(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error) {
+	args := m.Called(ctx, orderID, productID, quantity)
+	return args.Bool(0), args.String(1), args.Error(2)
 }
-func (m *MockRepository) GetStock(ctx any, productID string) (int32, error) {
-	return 100, nil
+
+func (m *MockInventoryService) GetStock(ctx context.Context, productID string) (int32, error) {
+	args := m.Called(ctx, productID)
+	return int32(args.Int(0)), args.Error(1)
 }
-func (m *MockRepository) ListProducts(ctx any) (any, error) {
-	return nil, nil
+
+func (m *MockInventoryService) ListProducts(ctx context.Context) ([]models.ProductStock, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]models.ProductStock), args.Error(1)
+}
+
+func (m *MockInventoryService) CreateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error) {
+	args := m.Called(ctx, productID, name, price, quantity)
+	return args.Bool(0), args.String(1), args.Error(2)
+}
+
+func (m *MockInventoryService) UpdateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error) {
+	args := m.Called(ctx, productID, name, price, quantity)
+	return args.Bool(0), args.String(1), args.Error(2)
+}
+
+func (m *MockInventoryService) DeleteProduct(ctx context.Context, productID string) (bool, string, error) {
+	args := m.Called(ctx, productID)
+	return args.Bool(0), args.String(1), args.Error(2)
+}
+
+func (m *MockInventoryService) RestockItems(ctx context.Context, productID string, quantity int32) (bool, string, error) {
+	args := m.Called(ctx, productID, quantity)
+	return args.Bool(0), args.String(1), args.Error(2)
 }
 
 func TestInventoryPactProvider(t *testing.T) {
-	// 1. Start the real REST server with a mock/test service
-	// In a real scenario, we'd use a real service with a test DB or a very good mock
+	// 1. Setup Mock Service
+	mockSvc := new(MockInventoryService)
+	
+	// Mock behavior for the specific pact interactions
+	mockSvc.On("GetStock", mock.Anything, "PROD-001").Return(100, nil)
+	mockSvc.On("Reserve", mock.Anything, mock.Anything, "PROD-001", int32(5)).Return(true, "Stock reserved successfully", nil)
+	mockSvc.On("RestockItems", mock.Anything, "PROD-001", int32(10)).Return(true, "Stock restocked successfully", nil)
+
+	// 2. Start the REST server
 	gin.SetMode(gin.TestMode)
 	r := gin.Default()
 	
-	// For simplicity in this learning step, we'll assume the service layer 
-	// is behaving correctly and test the API contract
-	// In professional setups, you'd inject a mock repository here
+	handler := rest.NewInventoryHandler(mockSvc)
+	handler.SetupRoutes(r)
 	
 	// Start server on a random port
 	ln, _ := net.Listen("tcp", "127.0.0.1:0")
-	port := ln.Addr().(*net.TCPAddr).Port
+	addr := ln.Addr().String()
 	ln.Close()
 
-	go r.Run(fmt.Sprintf("127.0.0.1:%d", port))
+	go r.Run(addr)
 
-	// 2. Verify the Pact
+	// 3. Verify the Pact
 	verifier := provider.NewVerifier()
 	
 	err := verifier.VerifyProvider(t, provider.VerifyRequest{
 		Provider:           "InventoryService",
-		ProviderBaseURL:    fmt.Sprintf("http://127.0.0.1:%d", port),
+		ProviderBaseURL:    fmt.Sprintf("http://%s", addr),
 		PactFiles:          []string{"../../pacts/OrderService-InventoryService.json"},
 		ProviderBranch:     "main",
-		FailIfNoPactsFound: false, // Set to true once file is generated
+		FailIfNoPactsFound: true,
 	})
 
 	if err != nil {

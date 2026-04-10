@@ -44,6 +44,15 @@ type ReserveRequest struct {
 	Body ReserveInput
 }
 
+type RestockItemsInput struct {
+	ProductID string `json:"productId" example:"PROD-001"`
+	Quantity  int32  `json:"quantity"  example:"10"`
+}
+
+type RestockItemsRequest struct {
+	Body RestockItemsInput
+}
+
 // --- Responses ---
 
 type SuccessBody struct {
