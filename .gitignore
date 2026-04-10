@@ -54,3 +54,4 @@ go.work.sum
 __debug_bin*
 __debug_bin
 inventory-service
+inventory-service
