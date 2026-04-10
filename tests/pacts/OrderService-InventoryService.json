@@ -1,0 +1,179 @@
+{
+  "consumer": {
+    "name": "OrderService"
+  },
+  "interactions": [
+    {
+      "description": "A request for product stock",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "Product PROD-001 exists with 100 units"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/inventory/PROD-001"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "productID": "PROD-001",
+            "quantity": 100
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.quantity": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "A request to reserve stock",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "Product PROD-001 has 100 units"
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "orderId": "order-123",
+            "productId": "PROD-001",
+            "quantity": 5
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.orderId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/api/inventory/reserve"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "message": "Stock reserved successfully",
+            "success": true
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "A request to restock items",
+      "pending": false,
+      "request": {
+        "body": {
+          "content": {
+            "productId": "PROD-001",
+            "quantity": 10
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/api/inventory/restock"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "message": "Stock restocked successfully",
+            "success": true
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactRust": {
+      "ffi": "0.4.27",
+      "models": "1.2.8"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "InventoryService"
+  }
+}
