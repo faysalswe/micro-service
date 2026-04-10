@@ -16,10 +16,8 @@ public class IdentityServiceContractTests
     {
         var config = new PactConfig
         {
-            PactDir = "/Users/faysal/SourceCode/micro-service/pacts/",
-            LogLevel = PactLogLevel.Debug
+            PactDir = "../../../../../tests/pacts/"
         };
-
         var pact = Pact.V4("OrderService", "IdentityService", config);
         _pactBuilder = pact.WithHttpInteractions();
     }

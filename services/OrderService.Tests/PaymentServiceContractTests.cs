@@ -11,11 +11,11 @@ public class PaymentServiceContractTests
     {
         var config = new PactConfig
         {
-            PactDir = "/Users/faysal/SourceCode/micro-service/pacts/",
-            LogLevel = PactLogLevel.Debug
+            PactDir = "../../../../../tests/pacts/"
         };
 
         var pact = Pact.V4("OrderService", "PaymentService", config);
+
         _pactBuilder = pact.WithHttpInteractions();
     }
 

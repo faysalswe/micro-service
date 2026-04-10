@@ -14,7 +14,7 @@ namespace OrderService.Tests
         {
             var config = new PactConfig
             {
-                PactDir = "../../../pacts/"
+                PactDir = "../../../../../tests/pacts/"
             };
 
             var pact = Pact.V4("OrderService", "InventoryService", config);

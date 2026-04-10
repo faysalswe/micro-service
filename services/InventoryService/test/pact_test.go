@@ -87,7 +87,7 @@ func TestInventoryPactProvider(t *testing.T) {
 	err := verifier.VerifyProvider(t, provider.VerifyRequest{
 		Provider:           "InventoryService",
 		ProviderBaseURL:    fmt.Sprintf("http://%s", addr),
-		PactFiles:          []string{"../../pacts/OrderService-InventoryService.json"},
+		PactFiles:          []string{"../../../tests/pacts/OrderService-InventoryService.json"},
 		ProviderBranch:     "main",
 		FailIfNoPactsFound: true,
 	})
