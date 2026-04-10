@@ -1,8 +1,6 @@
 name: Microservices CI Pipeline
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -110,6 +108,16 @@ jobs:
         go-version: '1.24'
         cache: true
         cache-dependency-path: services/InventoryService/go.sum
+        
+    - name: Install Pact FFI
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh | bash
+        # Add pact to PATH
+        echo "$HOME/pact/bin" >> $GITHUB_PATH
+        # Install pact-go v2 dependencies (FFI)
+        # Note: In a self-hosted environment, this might need manual intervention if permissions are restricted
+        # We will attempt the installation via the pact-go binary
+        go run github.com/pact-foundation/pact-go/v2@latest install --libDir /usr/local/lib
         
     - name: Install Protoc & Plugins
       run: |
