@@ -1,9 +1,5 @@
 using PactNet;
-using PactNet.Matchers;
-using Xunit;
 using FluentAssertions;
-using Microservice.Payments.Grpc;
-using Grpc.Net.Client;
 
 namespace OrderService.Tests;
 

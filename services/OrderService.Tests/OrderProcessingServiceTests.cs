@@ -62,17 +62,27 @@ public class OrderProcessingServiceTests
             StatusMessage = "Success"
         };
 
-        var mockCall = TestCalls.AsyncUnaryCall(paymentResponse, Task.FromResult(new Metadata()), () => Status.DefaultSuccess, () => new Metadata(), () => { });
+        var inventoryResponse = new ReserveStockResponse
+        {
+            Success = true,
+            Message = "Success"
+        };
+
+        var mockPaymentCall = TestCalls.AsyncUnaryCall(paymentResponse, Task.FromResult(new Metadata()), () => Status.DefaultSuccess, () => new Metadata(), () => { });
+        var mockInventoryCall = TestCalls.AsyncUnaryCall(inventoryResponse, Task.FromResult(new Metadata()), () => Status.DefaultSuccess, () => new Metadata(), () => { });
+
+        _inventoryClientMock
+            .Setup(c => c.ReserveStockAsync(It.IsAny<ReserveStockRequest>(), It.IsAny<Metadata>(), null, default))
+            .Returns(mockInventoryCall);
 
         _paymentClientMock
             .Setup(c => c.ProcessPaymentAsync(It.IsAny<ProcessPaymentRequest>(), It.IsAny<Metadata>(), null, default))
-            .Returns(mockCall);
+            .Returns(mockPaymentCall);
 
-        var context = new Mock<ServerCallContext>();
-        context.Setup(c => c.RequestHeaders).Returns(new Metadata());
+        var context = new TestServerCallContext(new Metadata());
 
         // Act
-        var result = await _service.CreateOrder(request, context.Object);
+        var result = await _service.CreateOrder(request, context);
 
         // Assert
         result.Status.Should().Be("SUCCESS");

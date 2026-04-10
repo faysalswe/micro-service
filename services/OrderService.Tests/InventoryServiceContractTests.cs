@@ -1,7 +1,8 @@
 using PactNet;
 using PactNet.Matchers;
 using Xunit;
-using Inventory; // The gRPC namespace
+using System.Net.Http.Json;
+using Inventory.V1; // The gRPC namespace
 
 namespace OrderService.Tests
 {
@@ -30,7 +31,7 @@ namespace OrderService.Tests
                     .WithRequest(HttpMethod.Get, "/api/inventory/PROD-001")
                 .WillRespond()
                     .WithStatus(System.Net.HttpStatusCode.OK)
-                    .WithHeader("Content-Type", "application/json; charset=utf-8")
+                    .WithHeader("Content-Type", "application/json")
                     .WithJsonBody(new
                     {
                         productID = "PROD-001",
@@ -40,9 +41,8 @@ namespace OrderService.Tests
             // Act & Assert
             _pactBuilder.Verify(ctx =>
             {
-                // In a real gRPC Pact test, we'd use the gRPC plugin.
-                // For this learning step, we are validating the REST management API 
-                // which shares the same business logic as the gRPC service.
+                var client = new HttpClient { BaseAddress = ctx.MockServerUri };
+                client.GetAsync("/api/inventory/PROD-001").GetAwaiter().GetResult().EnsureSuccessStatusCode();
             });
         }
 
@@ -54,6 +54,7 @@ namespace OrderService.Tests
                 .UponReceiving("A request to reserve stock")
                     .Given("Product PROD-001 has 100 units")
                     .WithRequest(HttpMethod.Post, "/api/inventory/reserve")
+                    .WithHeader("Content-Type", "application/json")
                     .WithJsonBody(new
                     {
                         orderId = Match.Type("order-123"),
@@ -68,7 +69,12 @@ namespace OrderService.Tests
                         message = Match.Type("Stock reserved successfully")
                     });
 
-            _pactBuilder.Verify(ctx => { });
+            _pactBuilder.Verify(ctx =>
+            {
+                var client = new HttpClient { BaseAddress = ctx.MockServerUri };
+                var body = new { orderId = "order-123", productId = "PROD-001", quantity = 5 };
+                client.PostAsJsonAsync("/api/inventory/reserve", body).GetAwaiter().GetResult().EnsureSuccessStatusCode();
+            });
         }
 
         [Fact]
@@ -77,6 +83,7 @@ namespace OrderService.Tests
             _pactBuilder
                 .UponReceiving("A request to restock items")
                     .WithRequest(HttpMethod.Post, "/api/inventory/restock")
+                    .WithHeader("Content-Type", "application/json")
                     .WithJsonBody(new
                     {
                         productId = "PROD-001",
@@ -90,7 +97,12 @@ namespace OrderService.Tests
                         message = Match.Type("Stock restocked successfully")
                     });
 
-            _pactBuilder.Verify(ctx => { });
+            _pactBuilder.Verify(ctx =>
+            {
+                var client = new HttpClient { BaseAddress = ctx.MockServerUri };
+                var body = new { productId = "PROD-001", quantity = 10 };
+                client.PostAsJsonAsync("/api/inventory/restock", body).GetAwaiter().GetResult().EnsureSuccessStatusCode();
+            });
         }
     }
 }
