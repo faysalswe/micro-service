@@ -1,58 +1,66 @@
-node_modules/
+# --- General ---
+.DS_Store
+.env
+.env.*
+!.env.template
+*.log
+tmp/
+temp/
+
+# --- .NET ---
 bin/
 obj/
-.env
-.vs/
-.vscode/*
-!.vscode/launch.json
-!.vscode/tasks.json
+**/bin/
+**/obj/
 *.user
 *.suo
-*.userosscache
 *.sln.docstates
-out/
+TestResults/
+nupkg/
+
+# --- Node.js / Frontend ---
+node_modules/
+**/node_modules/
 dist/
+build/
+.pnpm-store/
+.npm/
+.yarn/
+.next/
+.svelte-kit/
+.turbo/
+.vercel/
+coverage/
+.angular/
+**/.angular/
 
-test_output.txt
-build_output.txt
-**/test_output.txt
-**/build_output.txt
-
-# SQLite databases
-*.db
-*.db-shm
-*.db-wal
-
-# Root package-lock (not a Node.js project root)
-/package-lock.json
-
-# Claude Code
-.claude/
-
-# Go
-# Binaries for programs and plugins
+# --- Go ---
+inventory-service
+main
+**/main
+vendor/
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Test binary, built with `go test -c`
 *.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
-go.work
-go.work.sum
-
-# Delve debug binary
 __debug_bin*
-__debug_bin
-inventory-service
-inventory-service
-services/InventoryService/main
+
+# --- IDE / Editors ---
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+
+# --- Kubernetes / DevOps ---
+.terraform/
+terraform.tfstate*
+kubeconfig*
+# --- Pact ---
+!tests/pacts/
+pacts/
+**/pacts/
