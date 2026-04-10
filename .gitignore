@@ -60,7 +60,3 @@ __debug_bin*
 .terraform/
 terraform.tfstate*
 kubeconfig*
-# --- Pact ---
-pacts/
-**/pacts/
-!tests/pacts/
