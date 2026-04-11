@@ -9,17 +9,16 @@ env:
   NODE_VERSION: '20.x'
 
 jobs:
-  # Job 1: Build and Test .NET OrderService
-  orderservice-build-test:
-    name: OrderService (.NET) - Build & Test
+  # Job 0: Centralized gRPC Code Generation
+  generate-protos:
+    name: Generate gRPC Protos (Centralized)
     runs-on: self-hosted
-    
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
-      
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
@@ -35,14 +34,34 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: orderservice-build
-        path: services/OrderService/bin/Release/
+        name: generated-protos
+        path: |
+          services/OrderService/Generated/
+          services/PaymentService/src/generated/
+          services/InventoryService/proto/
         retention-days: 1
 
+  # Job 1: Build and Test .NET OrderService
+  orderservice-build-test:
+    name: OrderService (.NET) - Build & Test
+    runs-on: self-hosted
+    needs: [generate-protos]
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Download Generated Protos
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: .
+...
   # Job 2: Build and Test Node.js PaymentService
   paymentservice-build-test:
     name: PaymentService (Node.js) - Build & Test
     runs-on: self-hosted
+    needs: [generate-protos]
     
     steps:
     - name: Checkout Repository
@@ -71,6 +90,12 @@ jobs:
         path: services/PaymentService/coverage/
         retention-days: 1
 
+    - name: Download Generated Protos
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: .
+...
   # Job 3: Build and Test IdentityService
   identityservice-build-test:
     name: IdentityService (.NET) - Build & Test
@@ -98,10 +123,17 @@ jobs:
   inventoryservice-build-test:
     name: InventoryService (Go) - Build & Test
     runs-on: self-hosted
+    needs: [generate-protos]
     
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+
+    - name: Download Generated Protos
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: .
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
