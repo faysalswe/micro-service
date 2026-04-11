@@ -5,10 +5,10 @@ metadata:
 servers: 1
 agents: 0
 ports:
-  - port: 8000:80
+  - port: 8100:80
     nodeFilters:
       - loadbalancer
-  - port: 8443:443
+  - port: 8543:443
     nodeFilters:
       - loadbalancer
 registries:
