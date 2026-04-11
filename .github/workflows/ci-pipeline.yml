@@ -110,10 +110,20 @@ jobs:
         
     - name: Install Protoc & Plugins
       run: |
-        sudo apt-get update && sudo apt-get install -y protobuf-compiler
+        if command -v apt-get >/dev/null; then
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+        elif command -v brew >/dev/null; then
+          brew install protobuf
+        else
+          echo "No supported package manager found (apt-get or brew)"
+          exit 1
+        fi
+        
         go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
         go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-        export PATH=$PATH:$(go env GOPATH)/bin
+        
+        # Persist Go bin to PATH for subsequent steps
+        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
         
     - name: Install Protos Dependencies
       working-directory: protos
@@ -131,10 +141,17 @@ jobs:
         curl -fsSL https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh | bash
         # Add pact to PATH
         echo "$HOME/pact/bin" >> $GITHUB_PATH
+        
         # Install pact-go v2 dependencies (FFI)
-        # Note: In a self-hosted environment, this might need manual intervention if permissions are restricted
-        # We will attempt the installation via the pact-go binary
-        go run github.com/pact-foundation/pact-go/v2@latest install --libDir /usr/local/lib
+        # Using a more robust installation method for self-hosted runners
+        if [ ! -d "/usr/local/lib" ]; then sudo mkdir -p /usr/local/lib; fi
+        go run github.com/pact-foundation/pact-go/v2@latest install --libDir /usr/local/lib || \
+        go run github.com/pact-foundation/pact-go/v2@latest install --libDir $HOME/.pact/lib
+        
+        if [ -d "$HOME/.pact/lib" ]; then
+          echo "LD_LIBRARY_PATH=$HOME/.pact/lib" >> $GITHUB_ENV
+          echo "DYLD_LIBRARY_PATH=$HOME/.pact/lib" >> $GITHUB_ENV
+        fi
         
     - name: Build InventoryService
       working-directory: services/InventoryService
@@ -162,7 +179,15 @@ jobs:
     - name: Install Pact FFI (Consumer side)
       run: |
         curl -fsSL https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh | bash
+        # Add pact to PATH
         echo "$HOME/pact/bin" >> $GITHUB_PATH
+        
+        # Install pact-go v2 dependencies (FFI) for provider verification if needed, 
+        # or just ensure shared libraries are available for .NET Pact
+        if [ ! -d "/usr/local/lib" ]; then sudo mkdir -p /usr/local/lib; fi
+        
+        # For .NET, Pact usually downloads its own binaries, but adding the standalone
+        # to the path ensures we can use pact-broker CLI etc.
         
     - name: Restore Test Dependencies
       run: dotnet restore services/dotnet-backend.sln

@@ -1,0 +1,52 @@
+# --- Build Artifacts ---
+bin/
+obj/
+**/bin/
+**/obj/
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+.pnpm-store/
+.npm/
+
+# --- IDEs / Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.user
+*.suo
+
+# --- Test Results / Coverage ---
+TestResults/
+coverage/
+**/coverage/
+
+# --- Git ---
+.git/
+.gitignore
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Environment Secrets ---
+.env
+.env.*
+!.env.template
+
+# --- Local DBs ---
+*.db
+*.db-journal
+
+# --- Go Artifacts ---
+inventory-service
+main
+**/main
+vendor/
+__debug_bin*
