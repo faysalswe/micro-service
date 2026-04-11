@@ -77,15 +77,14 @@ docker-compose up -d
 
 #### 2. Run OrderService Load Test
 ```bash
-# Full test suite (all scenarios)
+# Full test suite (all scenarios) against Local Dev (Kong port 8000)
 k6 run load-tests/order-service.js
+
+# Full test suite against k3d / CD Cluster (Kong port 8100)
+k6 run --env BASE_URL=http://localhost:8100 load-tests/order-service.js
 
 # Specific scenario only
 k6 run --env SCENARIO=smoke load-tests/order-service.js
-
-# Custom base URL
-k6 run --env BASE_URL=http://localhost:8000 load-tests/order-service.js
-```
 
 #### 3. Run PaymentService Load Test
 ```bash

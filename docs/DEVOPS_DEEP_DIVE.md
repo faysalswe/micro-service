@@ -69,6 +69,7 @@ As a DevOps Expert, `kubectl` is your primary tool for "Day 2 Operations." Here 
 *   **`kubectl exec -it [pod-name] -- sh`**: Opens a terminal **inside** the running container. Use this to verify environment variables or database connectivity.
 
 ### C. The "Traffic Bridge" (Port Forwarding)
+*   **`kubectl port-forward svc/identity-service 8002:80`**: Maps port 8002 on your Mac to the internal Kubernetes service. **Note**: We use 8002 because 8000 (Local Kong) and 8100 (k3d Kong) are already reserved. Essential for running `k6` load tests before the Gateway is fully ready.
 *   **`kubectl port-forward svc/identity-service 8000:80`**: Maps port 8000 on your Mac to the internal Kubernetes service. Essential for running `k6` load tests before the Gateway is fully ready.
 
 ### D. The "Orchestrator" (Management)
