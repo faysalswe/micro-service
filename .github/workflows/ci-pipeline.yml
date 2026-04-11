@@ -9,99 +9,90 @@ env:
   NODE_VERSION: '20.x'
 
 jobs:
-  # Job 1: Build and Test .NET OrderService
-  orderservice-build-test:
-    name: OrderService (.NET) - Build & Test
+  # Job 0: Centralized gRPC Code Generation
+  generate-protos:
+    name: Generate gRPC Protos (Centralized)
     runs-on: self-hosted
-    
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
-      
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-        
-    - name: Restore Dependencies
-      run: dotnet restore services/dotnet-backend.sln
-      
-    - name: Build OrderService
-      run: dotnet build services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-restore
-      
-    - name: Run Unit Tests
-      run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
-      
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: orderservice-build
-        path: services/OrderService/bin/Release/
-        retention-days: 1
 
-  # Job 2: Build and Test Node.js PaymentService
-  paymentservice-build-test:
-    name: PaymentService (Node.js) - Build & Test
-    runs-on: self-hosted
-    
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        
-    - name: Install pnpm
-      run: npm install -g pnpm
-        
-    - name: Install Dependencies
-      working-directory: services/PaymentService
-      run: pnpm install --frozen-lockfile
-      
-    - name: Run Tests
-      working-directory: services/PaymentService
-      run: pnpm test
-      
-    - name: Upload Test Coverage
+
+    - name: Install Buf & Generate
+      working-directory: protos
+      run: |
+        npm install
+        npx buf generate
+      env:
+        BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
+
+    - name: Upload Generated Code
       uses: actions/upload-artifact@v4
       with:
-        name: paymentservice-coverage
-        path: services/PaymentService/coverage/
+        name: generated-protos
+        path: |
+          services/OrderService/Generated/
+          services/PaymentService/src/generated/
+          services/InventoryService/proto/
         retention-days: 1
 
+  # Job 1: Build and Test .NET OrderService
+  orderservice-build-test:
+    name: OrderService (.NET) - Build & Test
+    runs-on: self-hosted
+    needs: [generate-protos]
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Download Generated Protos
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: .
+...
+  # Job 2: Build and Test Node.js PaymentService
+  paymentservice-build-test:
+    name: PaymentService (Node.js) - Build & Test
+    runs-on: self-hosted
+    needs: [generate-protos]
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Download Generated Protos
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: .
+...
   # Job 3: Build and Test IdentityService
   identityservice-build-test:
     name: IdentityService (.NET) - Build & Test
     runs-on: self-hosted
-    
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-      
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-        
-    - name: Restore Dependencies
-      run: dotnet restore services/dotnet-backend.sln
-      
-    - name: Build IdentityService
-      run: dotnet build services/IdentityService.Tests/IdentityService.Tests.csproj --configuration Release --no-restore
-      
-    - name: Run Unit Tests
-      run: dotnet test services/IdentityService.Tests/IdentityService.Tests.csproj --configuration Release --verbosity normal
-
+    needs: [generate-protos]
+...
   # Job 4: Build and Test Go InventoryService
   inventoryservice-build-test:
     name: InventoryService (Go) - Build & Test
     runs-on: self-hosted
+    needs: [generate-protos]
     
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+
+    - name: Download Generated Protos
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: .
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
