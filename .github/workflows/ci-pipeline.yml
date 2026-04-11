@@ -27,10 +27,10 @@ jobs:
       run: dotnet restore services/dotnet-backend.sln
       
     - name: Build OrderService
-      run: dotnet build services/OrderService/OrderService.csproj --configuration Release --no-restore
+      run: dotnet build services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-restore
       
     - name: Run Unit Tests
-      run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
+      run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
       
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
@@ -52,16 +52,17 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: services/PaymentService/package-lock.json
+        
+    - name: Install pnpm
+      run: npm install -g pnpm
         
     - name: Install Dependencies
       working-directory: services/PaymentService
-      run: npm ci
+      run: pnpm install --frozen-lockfile
       
     - name: Run Tests
       working-directory: services/PaymentService
-      run: npm test
+      run: pnpm test
       
     - name: Upload Test Coverage
       uses: actions/upload-artifact@v4
@@ -88,10 +89,10 @@ jobs:
       run: dotnet restore services/dotnet-backend.sln
       
     - name: Build IdentityService
-      run: dotnet build services/IdentityService/IdentityService.csproj --configuration Release --no-restore
+      run: dotnet build services/IdentityService.Tests/IdentityService.Tests.csproj --configuration Release --no-restore
       
     - name: Run Unit Tests
-      run: dotnet test services/IdentityService.Tests/IdentityService.Tests.csproj --configuration Release --no-build --verbosity normal
+      run: dotnet test services/IdentityService.Tests/IdentityService.Tests.csproj --configuration Release --verbosity normal
 
   # Job 4: Build and Test Go InventoryService
   inventoryservice-build-test:
@@ -102,10 +103,26 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
       
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: Install Protoc & Plugins
+      run: |
+        sudo apt-get update && sudo apt-get install -y protobuf-compiler
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+        export PATH=$PATH:$(go env GOPATH)/bin
+        
+    - name: Install Protos Dependencies
+      working-directory: protos
+      run: npm install
+
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.24'
+        go-version: '1.25'
         cache: true
         cache-dependency-path: services/InventoryService/go.sum
         
@@ -119,16 +136,9 @@ jobs:
         # We will attempt the installation via the pact-go binary
         go run github.com/pact-foundation/pact-go/v2@latest install --libDir /usr/local/lib
         
-    - name: Install Protoc & Plugins
-      run: |
-        sudo apt-get update && sudo apt-get install -y protobuf-compiler
-        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-        export PATH=$PATH:$(go env GOPATH)/bin
-        
     - name: Build InventoryService
       working-directory: services/InventoryService
-      run: go build -v ./cmd/server/main.go
+      run: make build
       
     - name: Run Tests
       working-directory: services/InventoryService
@@ -148,6 +158,11 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Install Pact FFI (Consumer side)
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh | bash
+        echo "$HOME/pact/bin" >> $GITHUB_PATH
         
     - name: Restore Test Dependencies
       run: dotnet restore services/dotnet-backend.sln
