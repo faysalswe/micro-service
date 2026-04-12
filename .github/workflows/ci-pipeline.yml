@@ -187,18 +187,24 @@ jobs:
     - name: Install Pact FFI
       run: |
         curl -fsSL https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh | bash
-        # Add pact to PATH
         echo "$HOME/pact/bin" >> $GITHUB_PATH
         
         # Install pact-go v2 dependencies (FFI)
         # Using a more robust installation method for self-hosted runners
-        if [ ! -d "/usr/local/lib" ]; then sudo mkdir -p /usr/local/lib; fi
-        go run github.com/pact-foundation/pact-go/v2@latest install --libDir /usr/local/lib || \
-        go run github.com/pact-foundation/pact-go/v2@latest install --libDir $HOME/.pact/lib
+        LIB_DIR="/usr/local/lib"
+        if [ ! -d "$LIB_DIR" ]; then sudo mkdir -p "$LIB_DIR"; fi
+        
+        # Attempt installation to /usr/local/lib, fallback to $HOME/.pact/lib
+        go run github.com/pact-foundation/pact-go/v2@latest install --libDir "$LIB_DIR" || \
+        go run github.com/pact-foundation/pact-go/v2@latest install --libDir "$HOME/.pact/lib"
         
         if [ -d "$HOME/.pact/lib" ]; then
-          echo "LD_LIBRARY_PATH=$HOME/.pact/lib" >> $GITHUB_ENV
-          echo "DYLD_LIBRARY_PATH=$HOME/.pact/lib" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$HOME/.pact/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "DYLD_LIBRARY_PATH=$HOME/.pact/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+        fi
+        if [ -d "/usr/local/lib" ]; then
+          echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
         fi
         
     - name: Build InventoryService
@@ -207,7 +213,10 @@ jobs:
       
     - name: Run Tests
       working-directory: services/InventoryService
-      run: go test -v ./...
+      run: |
+        export LD_LIBRARY_PATH=$HOME/.pact/lib:/usr/local/lib:$LD_LIBRARY_PATH
+        export DYLD_LIBRARY_PATH=$HOME/.pact/lib:/usr/local/lib:$DYLD_LIBRARY_PATH
+        go test -v ./...
 
   # Job 5: Contract Testing with Pact
   contract-tests:
