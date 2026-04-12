@@ -20,16 +20,18 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ env.NODE_VERSION }}
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Install Protos Dependencies
-      working-directory: protos
-      run: npm install
+    - name: Restore Dependencies
+      run: |
+        dotnet restore services/OrderService/OrderService.csproj
+        dotnet restore services/OrderService.Tests/OrderService.Tests.csproj
 
-    - name: Generate Protos
-      working-directory: protos
-      run: npm run generate
-
+    - name: Build OrderService
+      run: dotnet build services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-restore
+    - name: Run Unit Tests
+      run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
+      
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -45,7 +47,7 @@ jobs:
     name: OrderService (.NET) - Build & Test
     runs-on: self-hosted
     needs: [generate-protos]
-
+    
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -55,28 +57,13 @@ jobs:
       with:
         name: generated-protos
         path: .
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-
-    - name: Restore Dependencies
-      run: |
-        dotnet restore services/OrderService/OrderService.csproj
-        dotnet restore services/OrderService.Tests/OrderService.Tests.csproj
-
-    - name: Build OrderService
-      run: dotnet build services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-restore
-    - name: Run Unit Tests
-      run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
-
+...
   # Job 2: Build and Test Node.js PaymentService
   paymentservice-build-test:
     name: PaymentService (Node.js) - Build & Test
     runs-on: self-hosted
     needs: [generate-protos]
-
+    
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -109,6 +96,12 @@ jobs:
         path: services/PaymentService/coverage/
         retention-days: 1
 
+    - name: Download Generated Protos
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: .
+...
   # Job 3: Build and Test IdentityService
   identityservice-build-test:
     name: IdentityService (.NET) - Build & Test
@@ -146,6 +139,12 @@ jobs:
 
     - name: Download Generated Protos
       uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: .
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
         name: generated-protos
         path: .
