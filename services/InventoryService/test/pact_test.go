@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"inventory-service/internal/api/rest"
-	"inventory-service/internal/models"
+	invmodels "inventory-service/internal/models"
 	"github.com/gin-gonic/gin"
+	pactmodels "github.com/pact-foundation/pact-go/v2/models"
 	"github.com/pact-foundation/pact-go/v2/provider"
 	"github.com/stretchr/testify/mock"
 )
@@ -33,9 +34,9 @@ func (m *MockInventoryService) GetStock(ctx context.Context, productID string) (
 	return int32(args.Int(0)), args.Error(1)
 }
 
-func (m *MockInventoryService) ListProducts(ctx context.Context) ([]models.ProductStock, error) {
+func (m *MockInventoryService) ListProducts(ctx context.Context) ([]invmodels.ProductStock, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]models.ProductStock), args.Error(1)
+	return args.Get(0).([]invmodels.ProductStock), args.Error(1)
 }
 
 func (m *MockInventoryService) CreateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error) {
@@ -62,10 +63,8 @@ func TestInventoryPactProvider(t *testing.T) {
 	// 1. Setup Mock Service
 	mockSvc := new(MockInventoryService)
 	
-	// Mock behavior for the specific pact interactions
-	mockSvc.On("GetStock", mock.Anything, "PROD-001").Return(100, nil)
-	mockSvc.On("Reserve", mock.Anything, mock.Anything, "PROD-001", int32(5)).Return(true, "Stock reserved successfully", nil)
-	mockSvc.On("RestockItems", mock.Anything, "PROD-001", int32(10)).Return(true, "Stock restocked successfully", nil)
+	// Default mock behavior for interactions without specific state handlers
+	mockSvc.On("RestockItems", mock.Anything, "PROD-001", int32(10)).Return(true, "Stock restocked successfully", nil).Maybe()
 
 	// 2. Start the REST server
 	gin.SetMode(gin.TestMode)
@@ -90,9 +89,20 @@ func TestInventoryPactProvider(t *testing.T) {
 		PactFiles:          []string{"../../../tests/pacts/OrderService-InventoryService.json"},
 		ProviderBranch:     "main",
 		FailIfNoPactsFound: true,
+		StateHandlers: pactmodels.StateHandlers{
+			"Product PROD-001 exists with 100 units": func(setup bool, state pactmodels.ProviderState) (pactmodels.ProviderStateResponse, error) {
+				mockSvc.On("GetStock", mock.Anything, "PROD-001").Return(100, nil)
+				return nil, nil
+			},
+			"Product PROD-001 has 100 units": func(setup bool, state pactmodels.ProviderState) (pactmodels.ProviderStateResponse, error) {
+				// This state is for reservation test
+				mockSvc.On("Reserve", mock.Anything, mock.Anything, "PROD-001", int32(5)).Return(true, "Stock reserved successfully", nil)
+				return nil, nil
+			},
+		},
 	})
 
 	if err != nil {
-		t.Logf("Pact verification failed: %v", err)
+		t.Fatalf("Pact verification failed: %v", err)
 	}
 }
