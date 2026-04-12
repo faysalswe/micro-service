@@ -3,6 +3,21 @@ name: Microservices CI Pipeline
 on:
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Select Branch'
+        required: true
+        default: 'main'
+        type: choice
+        options:
+          - main
+          - develop
+          - other
+      custom_branch:
+        description: 'If "other" selected, enter branch name'
+        required: false
+        default: ''
 
 env:
   DOTNET_VERSION: '10.0.x'
@@ -16,6 +31,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.target_branch == 'other' && github.event.inputs.custom_branch || github.event.inputs.target_branch) || github.ref }}
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -49,6 +66,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.target_branch == 'other' && github.event.inputs.custom_branch || github.event.inputs.target_branch) || github.ref }}
 
     - name: Download Generated Protos
       uses: actions/download-artifact@v4
@@ -81,6 +100,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.target_branch == 'other' && github.event.inputs.custom_branch || github.event.inputs.target_branch) || github.ref }}
 
     - name: Download Generated Protos
       uses: actions/download-artifact@v4
@@ -119,6 +140,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.target_branch == 'other' && github.event.inputs.custom_branch || github.event.inputs.target_branch) || github.ref }}
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -145,6 +168,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.target_branch == 'other' && github.event.inputs.custom_branch || github.event.inputs.target_branch) || github.ref }}
 
     - name: Download Generated Protos
       uses: actions/download-artifact@v4
@@ -193,6 +218,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.target_branch == 'other' && github.event.inputs.custom_branch || github.event.inputs.target_branch) || github.ref }}
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -271,6 +298,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.target_branch == 'other' && github.event.inputs.custom_branch || github.event.inputs.target_branch) || github.ref }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
