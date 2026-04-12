@@ -21,13 +21,14 @@ jobs:
       uses: actions/setup-node@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-        
+
     - name: Restore Dependencies
-      run: dotnet restore services/dotnet-backend.sln
-      
+      run: |
+        dotnet restore services/OrderService/OrderService.csproj
+        dotnet restore services/OrderService.Tests/OrderService.Tests.csproj
+
     - name: Build OrderService
       run: dotnet build services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-restore
-      
     - name: Run Unit Tests
       run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
       
@@ -66,12 +67,17 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
-      
+
+    - name: Download Generated Protos
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: .
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        
     - name: Install pnpm
       run: npm install -g pnpm
         
@@ -111,7 +117,9 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore Dependencies
-      run: dotnet restore services/dotnet-backend.sln
+      run: |
+        dotnet restore services/IdentityService/IdentityService.csproj
+        dotnet restore services/IdentityService.Tests/IdentityService.Tests.csproj
       
     - name: Build IdentityService
       run: dotnet build services/IdentityService.Tests/IdentityService.Tests.csproj --configuration Release --no-restore
@@ -138,38 +146,8 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ env.NODE_VERSION }}
-        
-    - name: Install Pact FFI
-      run: |
-        curl -fsSL https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh | bash
-        # Add pact to PATH
-        echo "$HOME/pact/bin" >> $GITHUB_PATH
-        # Install pact-go v2 dependencies (FFI)
-        # Note: In a self-hosted environment, this might need manual intervention if permissions are restricted
-        # We will attempt the installation via the pact-go binary
-        go run github.com/pact-foundation/pact-go/v2@latest install --libDir /usr/local/lib
-        
-    - name: Install Protoc & Plugins
-      run: |
-        if command -v apt-get >/dev/null; then
-          sudo apt-get update && sudo apt-get install -y protobuf-compiler
-        elif command -v brew >/dev/null; then
-          brew install protobuf
-        else
-          echo "No supported package manager found (apt-get or brew)"
-          exit 1
-        fi
-        
-        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-        
-        # Persist Go bin to PATH for subsequent steps
-        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-        
-    - name: Install Protos Dependencies
-      working-directory: protos
-      run: npm install
+        name: generated-protos
+        path: .
 
     - name: Setup Go
       uses: actions/setup-go@v5
@@ -197,7 +175,7 @@ jobs:
         
     - name: Build InventoryService
       working-directory: services/InventoryService
-      run: make build
+      run: go build -o inventory-service ./cmd/server/main.go
       
     - name: Run Tests
       working-directory: services/InventoryService
@@ -366,65 +344,4 @@ jobs:
       run: |
         echo "Docker images built and pushed to ghcr.io/${{ github.repository }}"
         echo "Tags: ${{ github.sha }}, ${{ steps.meta.outputs.sha_short }}, latest"
-
-  # Job 8: Local CD - Deploy to K3d Cluster
-  local-deploy-k3d:
-    name: Local CD - Deploy to K3d
-    runs-on: self-hosted
-    needs: [integration-check]
-    if: github.ref == 'refs/heads/develop'
-
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: Ensure K3d Cluster Exists
-      run: |
-        if ! k3d cluster list | grep -q "micro-cluster"; then
-          echo "🚀 Creating K3d cluster from config file..."
-          k3d cluster create --config platform/cluster/k3d-cluster.yaml --wait
-        else
-          echo "✅ K3d cluster already exists"
-        fi
-
-    - name: Build and Push Local Images
-      run: |
-        # Generate a short SHA for the version
-        VERSION=$(echo ${{ github.sha }} | cut -c1-7)
-        echo "🚀 Deploying Version: $VERSION"
-
-        # Build all services with Version Injection
-        docker build -t localhost:5001/identity-service:latest --build-arg APP_VERSION=$VERSION -f services/IdentityService/Dockerfile .
-        docker build -t localhost:5001/order-service:latest --build-arg APP_VERSION=$VERSION -f services/OrderService/Dockerfile .
-        docker build -t localhost:5001/payment-service:latest --build-arg APP_VERSION=$VERSION -f services/PaymentService/Dockerfile .
-        docker build -t localhost:5001/inventory-service:latest --build-arg APP_VERSION=$VERSION -f services/InventoryService/Dockerfile .
-        
-        # Push all to Local Registry (Port 5001)
-        docker push localhost:5001/identity-service:latest
-        docker push localhost:5001/order-service:latest
-        docker push localhost:5001/payment-service:latest
-        docker push localhost:5001/inventory-service:latest
-
-    - name: Deploy to Kubernetes via Helm
-      run: |
-        VERSION=$(echo ${{ github.sha }} | cut -c1-7)
-        
-        # Deploy all services using Helm with injected VERSION
-        # Note: Internally, K3d uses port 5000 for its registry mirror
-        helm upgrade --install identity-service ./platform/charts/apps/identity-service --namespace default \
-          --set image.repository=k3d-micro-registry:5000/identity-service --set image.tag=latest --set env.APP_VERSION=$VERSION
-          
-        helm upgrade --install order-service ./platform/charts/apps/order-service --namespace default \
-          --set image.repository=k3d-micro-registry:5000/order-service --set image.tag=latest --set env.APP_VERSION=$VERSION
-          
-        helm upgrade --install payment-service ./platform/charts/apps/payment-service --namespace default \
-          --set image.repository=k3d-micro-registry:5000/payment-service --set image.tag=latest --set env.APP_VERSION=$VERSION
-          
-        helm upgrade --install inventory-service ./platform/charts/apps/inventory-service --namespace default \
-          --set image.repository=k3d-micro-registry:5000/inventory-service --set image.tag=latest --set env.APP_VERSION=$VERSION
-
-    - name: Verify Deployment
-      run: |
-        kubectl get pods -n default
-        kubectl get svc -n default
 
