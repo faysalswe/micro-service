@@ -24,4 +24,3 @@ options:
           - server:*
   kubeconfig:
     updateDefaultKubeconfig: true
-    switchContext: true
