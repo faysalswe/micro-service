@@ -20,17 +20,15 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+        node-version: ${{ env.NODE_VERSION }}
 
-    - name: Restore Dependencies
-      run: |
-        dotnet restore services/OrderService/OrderService.csproj
-        dotnet restore services/OrderService.Tests/OrderService.Tests.csproj
+    - name: Install Protos Dependencies
+      working-directory: protos
+      run: npm install
 
-    - name: Build OrderService
-      run: dotnet build services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-restore
-    - name: Run Unit Tests
-      run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
+    - name: Generate Protos
+      working-directory: protos
+      run: npm run generate
       
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
@@ -57,7 +55,23 @@ jobs:
       with:
         name: generated-protos
         path: .
-...
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore Dependencies
+      run: |
+        dotnet restore services/OrderService/OrderService.csproj
+        dotnet restore services/OrderService.Tests/OrderService.Tests.csproj
+
+    - name: Build OrderService
+      run: dotnet build services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --no-restore
+
+    - name: Run Unit Tests
+      run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --configuration Release --verbosity normal --filter "FullyQualifiedName~OrderProcessingServiceTests"
+
   # Job 2: Build and Test Node.js PaymentService
   paymentservice-build-test:
     name: PaymentService (Node.js) - Build & Test
@@ -78,6 +92,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
+
     - name: Install pnpm
       run: npm install -g pnpm
         
@@ -96,12 +111,6 @@ jobs:
         path: services/PaymentService/coverage/
         retention-days: 1
 
-    - name: Download Generated Protos
-      uses: actions/download-artifact@v4
-      with:
-        name: generated-protos
-        path: .
-...
   # Job 3: Build and Test IdentityService
   identityservice-build-test:
     name: IdentityService (.NET) - Build & Test
@@ -139,12 +148,6 @@ jobs:
 
     - name: Download Generated Protos
       uses: actions/download-artifact@v4
-      with:
-        name: generated-protos
-        path: .
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
       with:
         name: generated-protos
         path: .
@@ -202,15 +205,12 @@ jobs:
         # Add pact to PATH
         echo "$HOME/pact/bin" >> $GITHUB_PATH
         
-        # Install pact-go v2 dependencies (FFI) for provider verification if needed, 
-        # or just ensure shared libraries are available for .NET Pact
-        if [ ! -d "/usr/local/lib" ]; then sudo mkdir -p /usr/local/lib; fi
-        
-        # For .NET, Pact usually downloads its own binaries, but adding the standalone
-        # to the path ensures we can use pact-broker CLI etc.
-        
     - name: Restore Test Dependencies
-      run: dotnet restore services/dotnet-backend.sln
+      run: |
+        dotnet restore services/OrderService/OrderService.csproj
+        dotnet restore services/OrderService.Tests/OrderService.Tests.csproj
+        dotnet restore services/IdentityService/IdentityService.csproj
+        dotnet restore services/IdentityService.Tests/IdentityService.Tests.csproj
       
     - name: Run Contract Tests (Consumer)
       run: dotnet test services/OrderService.Tests/OrderService.Tests.csproj --filter "FullyQualifiedName~ContractTests" --verbosity normal
@@ -344,4 +344,3 @@ jobs:
       run: |
         echo "Docker images built and pushed to ghcr.io/${{ github.repository }}"
         echo "Tags: ${{ github.sha }}, ${{ steps.meta.outputs.sha_short }}, latest"
-
