@@ -54,7 +54,6 @@ jobs:
         path: |
           services/OrderService/Generated/
           services/PaymentService/src/generated/
-          services/InventoryService/proto/
         retention-days: 1
 
   # Job 1: Build and Test .NET OrderService
@@ -159,78 +158,11 @@ jobs:
     - name: Run Unit Tests
       run: dotnet test services/IdentityService.Tests/IdentityService.Tests.csproj --configuration Release --verbosity normal
 
-  # Job 4: Build and Test Go InventoryService
-  inventoryservice-build-test:
-    name: InventoryService (Go) - Build & Test
-    runs-on: self-hosted
-    needs: [generate-protos]
-    
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.target_branch == 'other' && github.event.inputs.custom_branch || github.event.inputs.target_branch) || github.ref }}
-
-    - name: Download Generated Protos
-      uses: actions/download-artifact@v4
-      with:
-        name: generated-protos
-        path: .
-
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.25'
-        cache: true
-        cache-dependency-path: services/InventoryService/go.sum
-        
-    - name: Install Pact FFI
-      run: |
-        curl -fsSL https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh | bash
-        echo "$HOME/pact/bin" >> $GITHUB_PATH
-        
-        # Install pact-go v2 dependencies (FFI)
-        # Using a more robust installation method for self-hosted runners
-        LIB_DIR="/usr/local/lib"
-        if [ ! -d "$LIB_DIR" ]; then sudo mkdir -p "$LIB_DIR"; fi
-        
-        # Attempt installation to /usr/local/lib, fallback to $HOME/.pact/lib
-        go run github.com/pact-foundation/pact-go/v2@latest install --libDir "$LIB_DIR" || \
-        go run github.com/pact-foundation/pact-go/v2@latest install --libDir "$HOME/.pact/lib"
-        
-        if [ -d "$HOME/.pact/lib" ]; then
-          echo "LD_LIBRARY_PATH=$HOME/.pact/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "DYLD_LIBRARY_PATH=$HOME/.pact/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
-        fi
-        if [ -d "/usr/local/lib" ]; then
-          echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
-        fi
-
-    - name: CI Diagnostics
-      run: |
-        echo "--- Environment ---"
-        env | grep _PATH || true
-        echo "--- Library Check ---"
-        ls -la /usr/local/lib/libpact_ffi* 2>/dev/null || echo "/usr/local/lib/libpact_ffi not found"
-        ls -la $HOME/.pact/lib/libpact_ffi* 2>/dev/null || echo "$HOME/.pact/lib/libpact_ffi not found"
-        
-    - name: Build InventoryService
-      working-directory: services/InventoryService
-      run: go build -o inventory-service ./cmd/server/main.go
-      
-    - name: Run Tests
-      working-directory: services/InventoryService
-      run: |
-        export LD_LIBRARY_PATH=$HOME/.pact/lib:/usr/local/lib:$LD_LIBRARY_PATH
-        export DYLD_LIBRARY_PATH=$HOME/.pact/lib:/usr/local/lib:$DYLD_LIBRARY_PATH
-        go test -v ./...
-
   # Job 5: Contract Testing with Pact
   contract-tests:
     name: Contract Tests (Pact)
     runs-on: self-hosted
-    needs: [orderservice-build-test, paymentservice-build-test, identityservice-build-test, inventoryservice-build-test]
+    needs: [orderservice-build-test, paymentservice-build-test, identityservice-build-test]
     
     steps:
     - name: Checkout Repository
@@ -278,7 +210,7 @@ jobs:
   integration-check:
     name: Integration Status Check
     runs-on: self-hosted
-    needs: [orderservice-build-test, paymentservice-build-test, identityservice-build-test, inventoryservice-build-test, contract-tests]
+    needs: [orderservice-build-test, paymentservice-build-test, identityservice-build-test, contract-tests]
     if: always()
 
     steps:
@@ -287,7 +219,6 @@ jobs:
         if [[ "${{ needs.orderservice-build-test.result }}" == "success" && \
               "${{ needs.paymentservice-build-test.result }}" == "success" && \
               "${{ needs.identityservice-build-test.result }}" == "success" && \
-              "${{ needs.inventoryservice-build-test.result }}" == "success" && \
               "${{ needs.contract-tests.result }}" == "success" ]]; then
           echo "All services passed CI checks"
           exit 0
@@ -296,7 +227,6 @@ jobs:
           echo "OrderService: ${{ needs.orderservice-build-test.result }}"
           echo "PaymentService: ${{ needs.paymentservice-build-test.result }}"
           echo "IdentityService: ${{ needs.identityservice-build-test.result }}"
-          echo "InventoryService: ${{ needs.inventoryservice-build-test.result }}"
           echo "Contract Tests: ${{ needs.contract-tests.result }}"
           exit 1
         fi
@@ -370,19 +300,6 @@ jobs:
           ghcr.io/${{ github.repository }}/identity-service:${{ github.sha }}
           ghcr.io/${{ github.repository }}/identity-service:${{ steps.meta.outputs.sha_short }}
           ghcr.io/${{ github.repository }}/identity-service:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    - name: Build and Push InventoryService
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./services/InventoryService/Dockerfile
-        push: true
-        tags: |
-          ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }}
-          ghcr.io/${{ github.repository }}/inventory-service:${{ steps.meta.outputs.sha_short }}
-          ghcr.io/${{ github.repository }}/inventory-service:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
