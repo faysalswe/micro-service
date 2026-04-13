@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"testing"
+	"time"
 
 	"inventory-service/internal/api/rest"
 	invmodels "inventory-service/internal/models"
@@ -74,11 +75,31 @@ func TestInventoryPactProvider(t *testing.T) {
 	handler.SetupRoutes(r)
 	
 	// Start server on a random port
-	ln, _ := net.Listen("tcp", "127.0.0.1:0")
+	ln, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		t.Fatalf("Failed to listen: %v", err)
+	}
 	addr := ln.Addr().String()
 	ln.Close()
 
-	go r.Run(addr)
+	go func() {
+		if err := r.Run(addr); err != nil {
+			t.Logf("Server exited: %v", err)
+		}
+	}()
+
+	// Wait for server to be ready
+	for i := 0; i < 10; i++ {
+		conn, err := net.DialTimeout("tcp", addr, 100*time.Millisecond)
+		if err == nil {
+			conn.Close()
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+		if i == 9 {
+			t.Fatalf("Server failed to start on %s", addr)
+		}
+	}
 
 	// 3. Verify the Pact
 	verifier := provider.NewVerifier()
