@@ -206,6 +206,14 @@ jobs:
           echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
         fi
+
+    - name: CI Diagnostics
+      run: |
+        echo "--- Environment ---"
+        env | grep _PATH || true
+        echo "--- Library Check ---"
+        ls -la /usr/local/lib/libpact_ffi* 2>/dev/null || echo "/usr/local/lib/libpact_ffi not found"
+        ls -la $HOME/.pact/lib/libpact_ffi* 2>/dev/null || echo "$HOME/.pact/lib/libpact_ffi not found"
         
     - name: Build InventoryService
       working-directory: services/InventoryService
