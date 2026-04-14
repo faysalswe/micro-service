@@ -4,7 +4,7 @@ This project is a polyglot microservices architecture used as a testing ground f
 
 ## Mastery Roadmap (The 3 Pillars)
 
-1.  **Pillar 1: HA Platform Deployment**: Multi-node Kind cluster, Anti-affinity, Kong Gateway, and Persistent Databases.
+1.  **Pillar 1: HA Platform Deployment**: Multi-node k3s/k3d cluster, Anti-affinity, Kong Gateway, and Persistent Databases.
 2.  **Pillar 2: Lightweight Professional Cluster**: Bootstrapping k3s on Linux VMs with SSL automation.
 3.  **Pillar 3: Observability & Ghost Diagnostics**: Distributed tracing (Jaeger), Metrics (Prometheus), and Log Aggregation (Loki).
 
@@ -14,7 +14,7 @@ This project is a polyglot microservices architecture used as a testing ground f
 - **`services/`**: Backend microservices (.NET, Go, Node.js).
 - **`platform/`**: The "Platform Engineering" hub.
   - `charts/`: Helm blueprints for apps and infrastructure.
-  - `cluster/`: Definition for Kind and Docker Compose.
+  - `cluster/`: Definition for k3s/k3d and Docker Compose.
   - `config/`: Gateway and monitoring configuration.
 - **`protos/`**: gRPC definitions.
 
@@ -29,4 +29,4 @@ This project is a polyglot microservices architecture used as a testing ground f
   - **Infrastructure Monitoring**: cAdvisor and Node Exporter are now live in Docker Compose and scraped by Prometheus.
 
 ## Tools to Master
-`kubectl`, `helm`, `Kind`, `k3s`, `Kong`, `OpenTelemetry`, `PromQL`, `LogQL`, `Jaeger`, `Cert-Manager`.
+`kubectl`, `helm`, `k3s`, `k3d`, `Kong`, `OpenTelemetry`, `PromQL`, `LogQL`, `Jaeger`, `Cert-Manager`.

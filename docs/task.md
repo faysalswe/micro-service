@@ -1,13 +1,13 @@
 # Mastery Roadmap: SRE & Observability
 
-This roadmap is designed to help you master Kubernetes, High-Availability, and Observability using a polyglot microservices system as the "Patient."
+This roadmap is designed to help you master Kubernetes, High-Availability, and Observability using a polyglot microservices system.
 
 ---
 
 ## Pillar 1: High-Availability (HA) Platform Deployment
 **Objective:** Move from Docker Compose to a Production-grade Kubernetes environment.
 
-- **Kind Cluster Configuration:** 
+- **k3d Cluster Configuration:** 
   - Create a 4-node cluster (1 Control Plane + 3 Workers).
   - Use `podAntiAffinity` to ensure `OrderService` replicas never live on the same node.
 - **Gateway & Ingress:** 
@@ -23,8 +23,8 @@ This roadmap is designed to help you master Kubernetes, High-Availability, and O
 **Objective:** Deploy a production-ready, internet-facing cluster on a Linux VM.
 
 - **k3s Bootstrapping:** 
-  - Install a certified K8s cluster (k3s) on a single Ubuntu VM.
-  - Understand the SQLite-based control plane.
+  - Install a certified K8s cluster (k3s) on a fresh Ubuntu VM: `curl -sfL https://get.k3s.io | sh -`.
+  - Configure `--tls-san [Public-IP]` for secure remote access.
 - **Networking & SSL:** 
   - Expose the cluster securely to the public internet.
   - Automate SSL certificates using **Cert-Manager** and Let's Encrypt.
@@ -48,7 +48,21 @@ This roadmap is designed to help you master Kubernetes, High-Availability, and O
 
 ---
 
+## Pillar 4: GitOps & Cloud Scale
+
+### A. ArgoCD GitOps Implementation
+1.  **Installation**: Deploy ArgoCD into the `argocd` namespace.
+2.  **App-of-Apps Pattern**: Define an `Application` manifest that points to the `platform/charts/` directory.
+3.  **Sync Policy**: Enable **Automated Sync** and **Self-Healing** to ensure Git is the "Source of Truth."
+
+### B. Cloud Deployment (Azure AKS)
+1.  **Infrastructure**: Provision an **Azure Kubernetes Service (AKS)** cluster using GitHub Actions.
+2.  **Image Registry**: Use **Azure Container Registry (ACR)** for secure image storage.
+3.  **Security**: Integrate **Azure Key Vault** for secret management and use Managed Identities.
+
+---
+
 ## Tools to Master
-- **Infrastructure:** `kubectl`, `helm`, `Kind`, `k3s`, `Kong`.
+- **Infrastructure:** `kubectl`, `helm`, `k3d`, `k3s`, `Kong`, `ArgoCD`.
 - **Observability:** `OpenTelemetry`, `PromQL`, `LogQL`, `Jaeger`.
-- **Security:** `Cert-Manager`, `Non-Root Users`, `Secrets`.
+- **Security:** `Cert-Manager`, `Non-Root Users`, `Secrets`, `Azure Key Vault`.
