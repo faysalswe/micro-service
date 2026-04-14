@@ -1,6 +1,12 @@
-name: Manual Deployment to K3d
+name: Local Mac CD - Deploy to K3d
 
 on:
+  workflow_run:
+    workflows: ["Microservices CI Pipeline"]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       environment:
@@ -9,9 +15,13 @@ on:
         default: 'local-k3d'
 
 jobs:
-  local-mac-deploy-k3d:
-    name: Local Mac CD - Deploy to K3d
+  deploy-to-k3d:
+    name: CD - Deploy to Local K3d
     runs-on: self-hosted
+    # Only run if the triggering CI pipeline was successful OR if triggered manually
+    if: >
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'workflow_dispatch'
 
     steps:
     - name: Checkout Repository
