@@ -38,8 +38,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
       - ConnectionStrings__DefaultConnection=Host=order-db;Database=orders_db;Username=${DB_USER:-admin};Password=${DB_PASSWORD:-password123}
       - Redis__Configuration=redis:${PORT_REDIS:-6379}
-      - GrpcSettings__PaymentServiceUrl=${URL_PAYMENT_SERVICE:-http://payment-service:50012}
-      - GrpcSettings__InventoryServiceUrl=${URL_INVENTORY_SERVICE:-http://inventory-service:50013}
+      - GrpcSettings__PaymentServiceUrl=${URL_PAYMENT_SERVICE_GRPC:-http://payment-service:50012}
+      - GrpcSettings__InventoryServiceUrl=${URL_INVENTORY_SERVICE_GRPC:-http://inventory-service:50013}
       - OpenTelemetry__Endpoint=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
       - LOKI_URL=${LOKI_URL:-http://loki:3100}
 
@@ -51,12 +51,12 @@ services:
       dockerfile: services/PaymentService/Dockerfile.debug
     container_name: payment-service
     ports:
-      - "${PORT_PAYMENT_SERVICE:-5012}:5012"
-      - "${INTERNAL_PORT_GRPC_PAYMENT:-50012}:50012"
+      - "${PORT_PAYMENT_SERVICE:-5012}:${INTERNAL_PORT_PAYMENT:-5012}"
+      - "${INTERNAL_PORT_GRPC_PAYMENT:-50012}:${INTERNAL_PORT_GRPC_PAYMENT:-50012}"
       - "9229:9229"
     environment:
       - NODE_ENV=${NODE_ENV:-development}
-      - REST_PORT=${PORT_PAYMENT_SERVICE:-5012}
+      - REST_PORT=${INTERNAL_PORT_PAYMENT:-5012}
       - PORT=${INTERNAL_PORT_GRPC_PAYMENT:-50012}
       - MONGO_URI=mongodb://${DB_USER:-admin}:${DB_PASSWORD:-password123}@payment-db:27017
       - MONGO_DB_NAME=payments_db
@@ -71,8 +71,8 @@ services:
       dockerfile: services/InventoryService/Dockerfile.debug
     container_name: inventory-service
     ports:
-      - "${PORT_INVENTORY_SERVICE:-5013}:5013"
-      - "${INTERNAL_PORT_GRPC_INVENTORY:-50013}:50013"
+      - "${PORT_INVENTORY_SERVICE:-5013}:${INTERNAL_PORT_INVENTORY:-5013}"
+      - "${INTERNAL_PORT_GRPC_INVENTORY:-50013}:${INTERNAL_PORT_GRPC_INVENTORY:-50013}"
       - "4013:4013"
     environment:
       - SERVICE_NAME=InventoryService
@@ -81,6 +81,6 @@ services:
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password123}
       - DB_NAME=inventory_db
-      - REST_PORT=${PORT_INVENTORY_SERVICE:-5013}
+      - REST_PORT=${INTERNAL_PORT_INVENTORY:-5013}
       - GRPC_PORT=${INTERNAL_PORT_GRPC_INVENTORY:-50013}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
