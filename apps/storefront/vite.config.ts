@@ -10,6 +10,16 @@ export default defineConfig({
   server: {
     port: 5014,
     strictPort: false,
+    proxy: {
+      '/auth': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
   },
   // Optimize deps for faster dev server startup
   optimizeDeps: {

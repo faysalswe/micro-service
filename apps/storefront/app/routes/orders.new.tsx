@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import type { MetaFunction, LoaderFunctionArgs } from 'react-router';
-import { data as json, useNavigate } from 'react-router';
+import { data as json, useNavigate, useSearchParams } from 'react-router';
 import { 
   Container, 
   Title, 
@@ -54,6 +54,8 @@ export default function NewOrderPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryProductId = searchParams.get('productId');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,7 +64,7 @@ export default function NewOrderPage() {
 
   const form = useForm({
     initialValues: {
-      productId: '',
+      productId: queryProductId || '',
       quantity: 1,
       amount: 0,
     },
@@ -75,20 +77,24 @@ export default function NewOrderPage() {
 
   // Set initial product when data loads
   useEffect(() => {
-    if (products && products.length > 0 && !form.values.productId) {
-      const firstProd = products[0];
-      form.setValues({
-        productId: firstProd.productID,
-        amount: firstProd.price * form.values.quantity,
-        quantity: form.values.quantity
-      });
+    if (products && products.length > 0) {
+      const targetId = queryProductId || form.values.productId || products[0].productId;
+      const product = products.find(p => p.productId === targetId);
+      
+      if (product && (form.values.productId !== product.productId || form.values.amount === 0)) {
+        form.setValues({
+          productId: product.productId,
+          amount: product.price * form.values.quantity,
+          quantity: form.values.quantity
+        });
+      }
     }
-  }, [products]);
+  }, [products, queryProductId]);
 
   const handleProductChange = (value: string | null) => {
     if (!value || !products) return;
     
-    const product = products.find(p => p.productID === value);
+    const product = products.find(p => p.productId === value);
     if (product) {
       form.setFieldValue('productId', value);
       form.setFieldValue('amount', product.price * form.values.quantity);
@@ -100,7 +106,7 @@ export default function NewOrderPage() {
     form.setFieldValue('quantity', qty);
     
     if (!products) return;
-    const product = products.find(p => p.productID === form.values.productId);
+    const product = products.find(p => p.productId === form.values.productId);
     if (product) {
       form.setFieldValue('amount', product.price * qty);
     }
@@ -184,7 +190,7 @@ export default function NewOrderPage() {
                   description="Fetched from Inventory database"
                   placeholder="Choose a product"
                   data={products?.map(p => ({
-                    value: p.productID,
+                    value: p.productId,
                     label: `${p.name} ($${p.price}) - In Stock: ${p.quantity}`
                   }))}
                   {...form.getInputProps('productId')}
