@@ -6,7 +6,7 @@ import "inventory-service/internal/models"
 // These are reusable and act as your API "Contract"
 
 type ProductInput struct {
-	ProductID string  `json:"productID" example:"PROD-001" doc:"Unique ID for the product"`
+	ProductID string  `json:"productId" example:"PROD-001" doc:"Unique ID for the product"`
 	Name      string  `json:"name"      example:"Laptop"   doc:"Product name"`
 	Price     float64 `json:"price"     example:"1200.00"  doc:"Unit price"`
 	Quantity  int32   `json:"quantity"  example:"100"      doc:"Initial stock level"`
@@ -69,7 +69,7 @@ type ListProductsResponse struct {
 }
 
 type StockBody struct {
-	ProductID string `json:"productID" example:"PROD-001"`
+	ProductID string `json:"productId" example:"PROD-001"`
 	Quantity  int32  `json:"quantity"  example:"50"`
 }
 

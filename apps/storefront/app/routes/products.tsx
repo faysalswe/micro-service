@@ -11,7 +11,7 @@ export const meta: MetaFunction = () => [
 ];
 
 interface Product {
-  productID: string;
+  productId: string;
   name: string;
   price: number;
   quantity: number;
@@ -84,7 +84,7 @@ export default function ProductsPage() {
         ) : (
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4 }} spacing="lg">
             {products.map((product) => (
-              <ProductCard key={product.productID} product={product} />
+              <ProductCard key={product.productId} product={product} />
             ))}
           </SimpleGrid>
         )}

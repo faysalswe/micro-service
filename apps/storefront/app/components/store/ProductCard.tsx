@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 
 interface ProductCardProps {
   product: {
-    productID: string;
+    productId: string;
     name: string;
     price: number;
     quantity: number;
@@ -36,7 +36,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </Group>
 
           <Text size="sm" c="dimmed" mb="xs" className="font-mono">
-            SKU: {product.productID}
+            SKU: {product.productId}
           </Text>
 
           <Text size="xl" fw={700} color="blue">
@@ -55,7 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
           variant={isOutOfStock ? 'light' : 'filled'}
           disabled={isOutOfStock}
           component={Link}
-          to={isOutOfStock ? '#' : `/orders/new?productId=${product.productID}`}
+          to={isOutOfStock ? '#' : `/orders/new?productId=${product.productId}`}
           leftSection={<IconShoppingCart size={16} />}
         >
           {isOutOfStock ? 'Unavailable' : 'Buy Now'}

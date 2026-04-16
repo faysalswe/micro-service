@@ -309,7 +309,7 @@ export class ApiClient {
   }
 
   async getInventory() {
-    return this.get<Array<{ productID: string; name: string; price: number; quantity: number }>>(
+    return this.get<Array<{ productId: string; name: string; price: number; quantity: number }>>(
       API_ENDPOINTS.INVENTORY.LIST,
       { skipAuth: true }
     );

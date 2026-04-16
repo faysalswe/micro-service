@@ -44,10 +44,10 @@ import { FloatLabelModule } from 'primeng/floatlabel';
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-8);">
                 <div class="flex flex-col gap-2">
                     <p-floatlabel variant="on">
-                        <input pInputText id="productID" formControlName="productID" [readOnly]="isEditMode" class="w-full" style="padding: var(--space-4);" />
-                        <label for="productID">SKU Identifier</label>
+                        <input pInputText id="productId" formControlName="productId" [readOnly]="isEditMode" class="w-full" style="padding: var(--space-4);" />
+                        <label for="productId">SKU Identifier</label>
                     </p-floatlabel>
-                    <small style="color: var(--error); font-weight: 600; padding-left: var(--space-2);" *ngIf="productForm.get('productID')?.invalid && productForm.get('productID')?.touched">SKU is required.</small>
+                    <small style="color: var(--error); font-weight: 600; padding-left: var(--space-2);" *ngIf="productForm.get('productId')?.invalid && productForm.get('productId')?.touched">SKU is required.</small>
                 </div>
 
                 <div class="flex flex-col gap-2">
@@ -124,7 +124,7 @@ export class ProductFormComponent implements OnInit {
     private route: ActivatedRoute
   ) {
     this.productForm = this.fb.group({
-      productID: ['', [Validators.required]],
+      productId: ['', [Validators.required]],
       name: ['', [Validators.required]],
       price: [0, [Validators.required, Validators.min(0.01)]],
       quantity: [0, [Validators.required, Validators.min(0)]]
@@ -137,7 +137,7 @@ export class ProductFormComponent implements OnInit {
       this.isEditMode = true;
       this.loading = true;
       this.inventoryService.getProducts().subscribe(products => {
-        const product = products.find(p => p.productID === id);
+        const product = products.find(p => p.productId === id);
         if (product) {
           this.productForm.patchValue(product);
         }
@@ -151,7 +151,7 @@ export class ProductFormComponent implements OnInit {
     this.loading = true;
     const productData = this.productForm.value;
     if (this.isEditMode) {
-      this.inventoryService.updateProduct(productData.productID, productData).subscribe({
+      this.inventoryService.updateProduct(productData.productId, productData).subscribe({
         next: () => this.router.navigate(['/']),
         error: (err) => { alert('Error updating product: ' + err.message); this.loading = false; }
       });

@@ -5,11 +5,11 @@ import (
 )
 
 type ProductStock struct {
-	ProductID string    `gorm:"primaryKey;size:255"`
-	Name      string    `gorm:"size:255"`
-	Price     float64   `gorm:"type:decimal(10,2)"`
-	Quantity  int32     `gorm:"not null"`
-	UpdatedAt time.Time
+	ProductID string    `gorm:"primaryKey;size:255" json:"productId"`
+	Name      string    `gorm:"size:255" json:"name"`
+	Price     float64   `gorm:"type:decimal(10,2)" json:"price"`
+	Quantity  int32     `gorm:"not null" json:"quantity"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type IdempotencyRecord struct {

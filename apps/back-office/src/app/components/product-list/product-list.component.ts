@@ -74,7 +74,7 @@ import { TooltipModule } from 'primeng/tooltip';
         >
             <ng-template pTemplate="header">
             <tr>
-                <th pSortableColumn="productID" style="padding: 1.25rem 1rem;">SKU <p-sortIcon field="productID"></p-sortIcon></th>
+                <th pSortableColumn="productId" style="padding: 1.25rem 1rem;">SKU <p-sortIcon field="productId"></p-sortIcon></th>
                 <th pSortableColumn="name">Product Name <p-sortIcon field="name"></p-sortIcon></th>
                 <th pSortableColumn="price">Unit Price <p-sortIcon field="price"></p-sortIcon></th>
                 <th pSortableColumn="quantity">Inventory <p-sortIcon field="quantity"></p-sortIcon></th>
@@ -83,7 +83,7 @@ import { TooltipModule } from 'primeng/tooltip';
             </ng-template>
             <ng-template pTemplate="body" let-product>
             <tr>
-                <td style="font-family: var(--font-mono); font-weight: 600; color: var(--primary-color);">{{product.productID}}</td>
+                <td style="font-family: var(--font-mono); font-weight: 600; color: var(--primary-color);">{{product.productId}}</td>
                 <td style="font-weight: 500;">{{product.name}}</td>
                 <td style="font-weight: 700;">{{product.price | currency}}</td>
                 <td>
@@ -94,8 +94,8 @@ import { TooltipModule } from 'primeng/tooltip';
                 </td>
                 <td>
                     <div class="flex">
-                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" [routerLink]="['/products/edit', product.productID]" pTooltip="Edit"></p-button>
-                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (click)="deleteProduct(product.productID)" pTooltip="Delete"></p-button>
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" [routerLink]="['/products/edit', product.productId]" pTooltip="Edit"></p-button>
+                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (click)="deleteProduct(product.productId)" pTooltip="Delete"></p-button>
                     </div>
                 </td>
             </tr>
