@@ -31,6 +31,7 @@ export function Navigation({ opened, toggle }: NavigationProps) {
 
   const navLinks = [
     { label: 'Home', href: '/' },
+    { label: 'Products', href: '/products' },
     { label: 'Orders', href: '/orders', auth: true },
     { label: 'Payments', href: '/payments', auth: true },
     { label: 'Dashboard', href: '/dashboard', auth: true },
