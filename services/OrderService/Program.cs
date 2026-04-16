@@ -100,6 +100,17 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
     db.Database.Migrate();
+
+    if (!db.Orders.Any())
+    {
+        db.Orders.AddRange(new List<Order>
+        {
+            new Order { Id = Guid.Parse("f284b868-e7c6-4318-8743-3453b3b44b20"), UserId = "admin", ProductId = "prod-001", Amount = 999.99, Quantity = 1, Status = "COMPLETED", CreatedAt = DateTime.UtcNow.AddDays(-1) },
+            new Order { Id = Guid.Parse("d7f57c5e-8e8e-4a4a-9b9b-1c1c1c1c1c1c"), UserId = "admin", ProductId = "prod-002", Amount = 1199.00, Quantity = 1, Status = "COMPLETED", CreatedAt = DateTime.UtcNow.AddHours(-5) }
+        });
+        db.SaveChanges();
+        Console.WriteLine("✅ Order database seeded with sample orders");
+    }
 }
 
 // Add middleware to enrich logs with trace context
