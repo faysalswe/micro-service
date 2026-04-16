@@ -59,11 +59,20 @@ services:
               secret_is_base64: false
               run_on_preflight: true
 
-  # Inventory Service (REST API) - PROTECTED
+  # Inventory Service (REST API)
   - name: inventory-service
     url: http://host.docker.internal:5013
     routes:
-      - name: inventory-api
+      # 1. PUBLIC: Exact match for the List API ONLY
+      - name: inventory-list-public
+        paths:
+          - ~/api/inventory$
+        methods:
+          - GET
+        strip_path: false
+
+      # 2. PRIVATE: All other Inventory requests (Details, POST, PUT, etc.)
+      - name: inventory-all-private
         paths:
           - /api/inventory
         strip_path: false
