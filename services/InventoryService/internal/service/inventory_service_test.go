@@ -30,6 +30,11 @@ func (m *MockRepository) GetStock(ctx context.Context, productID string) (int32,
 	return int32(args.Int(0)), args.Error(1)
 }
 
+func (m *MockRepository) GetProduct(ctx context.Context, productID string) (models.ProductStock, error) {
+	args := m.Called(ctx, productID)
+	return args.Get(0).(models.ProductStock), args.Error(1)
+}
+
 func (m *MockRepository) ListProducts(ctx context.Context) ([]models.ProductStock, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]models.ProductStock), args.Error(1)

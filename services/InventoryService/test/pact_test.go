@@ -35,6 +35,11 @@ func (m *MockInventoryService) GetStock(ctx context.Context, productID string) (
 	return int32(args.Int(0)), args.Error(1)
 }
 
+func (m *MockInventoryService) GetProduct(ctx context.Context, productID string) (invmodels.ProductStock, error) {
+	args := m.Called(ctx, productID)
+	return args.Get(0).(invmodels.ProductStock), args.Error(1)
+}
+
 func (m *MockInventoryService) ListProducts(ctx context.Context) ([]invmodels.ProductStock, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]invmodels.ProductStock), args.Error(1)
@@ -104,7 +109,7 @@ func TestInventoryPactProvider(t *testing.T) {
 	// 3. Verify the Pact
 	verifier := provider.NewVerifier()
 	
-	err := verifier.VerifyProvider(t, provider.VerifyRequest{
+	err = verifier.VerifyProvider(t, provider.VerifyRequest{
 		Provider:           "InventoryService",
 		ProviderBaseURL:    fmt.Sprintf("http://%s", addr),
 		PactFiles:          []string{"../../../tests/pacts/OrderService-InventoryService.json"},

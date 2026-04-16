@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"inventory-service/internal/models"
 	"inventory-service/internal/service"
 	"net/http"
 	"github.com/danielgtaylor/huma/v2"
@@ -23,20 +24,18 @@ func RegisterInventoryHandlers(api huma.API, svc service.InventoryService) {
 		return &ListProductsResponse{Body: products}, nil
 	})
 
-	// Get stock for a specific product
+	// Get a specific product by ID
 	huma.Register(api, huma.Operation{
-		OperationID: "get-stock",
+		OperationID: "get-product",
 		Method:      http.MethodGet,
 		Path:        "/api/inventory/{id}",
-		Summary:     "Get product stock",
+		Summary:     "Get product details",
 		Tags:        []string{"Inventory"},
-	}, func(ctx context.Context, input *ProductIDParam) (*StockResponse, error) {
-		stock, err := svc.GetStock(ctx, input.ID)
+	}, func(ctx context.Context, input *ProductIDParam) (*struct{ Body models.ProductStock }, error) {
+		product, err := svc.GetProduct(ctx, input.ID)
 		if err != nil {
 			return nil, huma.Error404NotFound("Product not found")
 		}
-		return &StockResponse{
-			Body: StockBody{ProductID: input.ID, Quantity: stock},
-		}, nil
+		return &struct{ Body models.ProductStock }{Body: product}, nil
 	})
 }

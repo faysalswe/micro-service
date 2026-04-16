@@ -10,6 +10,7 @@ type InventoryService interface {
 	Reserve(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error)
 	Release(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error)
 	GetStock(ctx context.Context, productID string) (int32, error)
+	GetProduct(ctx context.Context, productID string) (models.ProductStock, error)
 	ListProducts(ctx context.Context) ([]models.ProductStock, error)
 	CreateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error)
 	UpdateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error)
@@ -87,6 +88,10 @@ func (s *inventoryService) Release(ctx context.Context, orderID string, productI
 		return false, err.Error(), nil
 	}
 	return true, "Stock released successfully", nil
+}
+
+func (s *inventoryService) GetProduct(ctx context.Context, productID string) (models.ProductStock, error) {
+	return s.repo.GetProduct(ctx, productID)
 }
 
 func (s *inventoryService) GetStock(ctx context.Context, productID string) (int32, error) {

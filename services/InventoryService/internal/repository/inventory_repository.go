@@ -13,6 +13,7 @@ type InventoryRepository interface {
 	ReserveStock(ctx context.Context, orderID string, productID string, quantity int32) error
 	ReleaseStock(ctx context.Context, orderID string, productID string, quantity int32) error
 	GetStock(ctx context.Context, productID string) (int32, error)
+	GetProduct(ctx context.Context, productID string) (models.ProductStock, error)
 	ListProducts(ctx context.Context) ([]models.ProductStock, error)
 	CreateProduct(ctx context.Context, product models.ProductStock) error
 	UpdateProduct(ctx context.Context, product models.ProductStock) error
@@ -150,6 +151,15 @@ func (r *postgresRepository) RestockItems(ctx context.Context, productID string,
 
 		return nil
 	})
+}
+
+func (r *postgresRepository) GetProduct(ctx context.Context, productID string) (models.ProductStock, error) {
+	ctx, span := r.tracer.Start(ctx, "GetProduct")
+	defer span.End()
+
+	var product models.ProductStock
+	err := r.db.WithContext(ctx).Where("product_id = ?", productID).First(&product).Error
+	return product, err
 }
 
 func (r *postgresRepository) GetStock(ctx context.Context, productID string) (int32, error) {
