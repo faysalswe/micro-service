@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { jwtDecode } from 'jwt-decode';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { IsAdmin, SecurityRoles } from '../shared/security-roles';
 
 interface DecodedToken {
   role?: string;
@@ -48,8 +49,7 @@ export class AuthService {
   }
 
   isAdmin(): boolean {
-    const role = this.currentUserRole();
-    return role === 'Admin' || role === 'ADMIN';
+    return IsAdmin(this.currentUserRole());
   }
 
   private loadToken() {
@@ -67,7 +67,7 @@ export class AuthService {
           this.currentUserRole.set(Array.isArray(role) ? role[0] : role);
         } else {
           // If no role but token is valid, at least mark as authenticated with a generic role
-          this.currentUserRole.set('User');
+          this.currentUserRole.set(SecurityRoles.User);
         }
       } catch (error) {
         console.error('Failed to decode token:', error);

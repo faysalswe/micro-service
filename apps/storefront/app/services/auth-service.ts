@@ -5,6 +5,7 @@
 
 import { apiClient, ApiError } from './api-client';
 import { STORAGE_KEYS } from '~/constants';
+import { UserRole } from '~/types';
 
 /**
  * Login credentials
@@ -98,10 +99,17 @@ export class AuthService {
       if (!payload) throw new Error('Invalid token format');
       // Use window.atob safely
       const decoded = JSON.parse(window.atob(payload));
+      
+      // Try multiple common role claim keys
+      const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 
+                   decoded.role || 
+                   decoded.roles || 
+                   UserRole.USER;
+
       this.user = {
         id: decoded.user_id || decoded.sub,
         username: decoded.sub,
-        role: decoded.role || 'USER',
+        role: Array.isArray(role) ? role[0] : role,
         exp: decoded.exp,
         iat: decoded.iat,
       };

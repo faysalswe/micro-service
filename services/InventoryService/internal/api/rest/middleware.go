@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/danielgtaylor/huma/v2"
+	"inventory-service/internal/security"
 )
 
 // ValidateAdminToken is a helper for Huma handlers to check permissions
@@ -44,12 +45,13 @@ func ValidateAdminToken(ctx huma.Context) error {
 		return huma.Error401Unauthorized("Invalid token claims")
 	}
 
-	role, hasRole := claims["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+	roleClaim, hasRole := claims["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
 	if !hasRole {
-		role = claims["role"]
+		roleClaim = claims["role"]
 	}
 
-	if role != "Admin" && role != "ADMIN" {
+	role, ok := roleClaim.(string)
+	if !ok || !security.IsAdmin(role) {
 		return huma.Error403Forbidden("Access denied: Admin role required")
 	}
 
