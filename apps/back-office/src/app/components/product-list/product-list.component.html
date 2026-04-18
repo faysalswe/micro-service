@@ -1,1 +1,136 @@
-<p>product-list works!</p>
+<p-toast></p-toast>
+
+<div class="flex flex-col gap-6 animate-in">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+        <h1 class="page-title">Inventory Dashboard</h1>
+        <p class="text-gray-500 font-medium">Global SKU catalog and stock level monitoring.</p>
+    </div>
+    <div class="flex gap-2">
+        <p-button label="Refresh" icon="pi pi-refresh" [text]="true" (click)="loadProducts()" severity="secondary"></p-button>
+        <p-button label="New Product" icon="pi pi-plus" (click)="openCreateModal()" severity="primary" styleClass="font-bold"></p-button>
+    </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stat-grid">
+    <div class="card-base flex items-center gap-4">
+        <div class="stat-icon blue"><i class="pi pi-box"></i></div>
+        <div class="flex flex-col">
+            <span class="stat-label">Total SKUs</span>
+            <span class="stat-value">{{products().length}}</span>
+        </div>
+    </div>
+
+    <div class="card-base flex items-center gap-4">
+        <div class="stat-icon green"><i class="pi pi-dollar"></i></div>
+        <div class="flex flex-col">
+            <span class="stat-label">Inventory Value</span>
+            <span class="stat-value">{{totalValue() | currency}}</span>
+        </div>
+    </div>
+
+    <div class="card-base flex items-center gap-4">
+        <div class="stat-icon amber"><i class="pi pi-exclamation-triangle"></i></div>
+        <div class="flex flex-col">
+            <span class="stat-label">Low Stock</span>
+            <span class="stat-value">{{lowStockCount()}}</span>
+        </div>
+    </div>
+
+    <div class="card-base flex items-center gap-4">
+        <div class="stat-icon red"><i class="pi pi-times-circle"></i></div>
+        <div class="flex flex-col">
+            <span class="stat-label">Out of Stock</span>
+            <span class="stat-value">{{outOfStockCount()}}</span>
+        </div>
+    </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="card-base" style="padding: 0; overflow: hidden; border-radius: 12px;">
+    <p-table 
+        #dt
+        [value]="products()" 
+        [paginator]="true" 
+        [rows]="10" 
+        [showCurrentPageReport]="true"
+        responsiveLayout="scroll"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [globalFilterFields]="['productId', 'name']"
+        [loading]="loading()"
+        styleClass="p-datatable-sm"
+    >
+        <ng-template pTemplate="caption">
+            <div class="flex justify-between items-center px-4 py-3">
+                <h3 class="section-title" style="margin: 0;">Stock Records</h3>
+                <p-iconfield iconPosition="left">
+                    <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                    <input 
+                        pInputText 
+                        type="text" 
+                        (input)="onFilter($event)" 
+                        placeholder="Search SKU or Name..." 
+                        class="w-full md:w-80"
+                        style="padding-top: 0.5rem; padding-bottom: 0.5rem;"
+                    />
+                </p-iconfield>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+        <tr>
+            <th pSortableColumn="productId" style="width: 15%; padding: 1rem;">SKU <p-sortIcon field="productId"></p-sortIcon></th>
+            <th pSortableColumn="name" style="width: 40%;">Product Name <p-sortIcon field="name"></p-sortIcon></th>
+            <th pSortableColumn="price" style="width: 15%;">Unit Price <p-sortIcon field="price"></p-sortIcon></th>
+            <th pSortableColumn="quantity" style="width: 15%;">Inventory <p-sortIcon field="quantity"></p-sortIcon></th>
+            <th style="width: 15%; text-align: center;">Actions</th>
+        </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-product>
+        <tr class="hover:bg-slate-50 transition-colors">
+            <td style="font-family: var(--font-mono); font-weight: 700; color: var(--brand-600); padding: 1rem;">
+                {{product.productId}}
+            </td>
+            <td>
+                <div class="flex flex-col">
+                    <span style="font-weight: 600; color: var(--slate-900);">{{product.name}}</span>
+                    <span style="font-size: 0.75rem; color: var(--slate-400);">Updated: {{product.updatedAt | date:'short'}}</span>
+                </div>
+            </td>
+            <td>
+                <span style="font-weight: 700; color: var(--slate-900);">{{product.price | currency}}</span>
+            </td>
+            <td>
+                <div class="flex items-center gap-2">
+                    <p-tag [value]="product.quantity.toString()" [severity]="getSeverity(product.quantity)" [rounded]="true" styleClass="px-3"></p-tag>
+                    <span style="font-size: 0.65rem; font-weight: 800; color: var(--error); text-transform: uppercase;" *ngIf="product.quantity === 0">Critically Empty</span>
+                </div>
+            </td>
+            <td>
+                <div class="flex justify-center gap-1">
+                    <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="secondary" (click)="openEditModal(product.productId)" pTooltip="Modify Details" tooltipPosition="bottom"></p-button>
+                    <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (click)="deleteProduct(product.productId)" pTooltip="Permanent Delete" tooltipPosition="bottom"></p-button>
+                </div>
+            </td>
+        </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+        <tr>
+            <td colspan="5" style="padding: 6rem 2rem; text-align: center;">
+                <div class="flex flex-col items-center gap-3">
+                    <i class="pi pi-search-plus" style="font-size: 4rem; color: var(--slate-200);"></i>
+                    <h4 style="margin: 0; color: var(--slate-900); font-weight: 700;">No Products Found</h4>
+                    <p style="color: var(--slate-500); max-width: 300px; margin: 0 auto;">We couldn't find any products matching your current criteria or the inventory is empty.</p>
+                    <p-button label="Clear Filters" icon="pi pi-filter-slash" [text]="true" (click)="loadProducts()" styleClass="mt-2"></p-button>
+                </div>
+            </td>
+        </tr>
+        </ng-template>
+    </p-table>
+    </div>
+</div>

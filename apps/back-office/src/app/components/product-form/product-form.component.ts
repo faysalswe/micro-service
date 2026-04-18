@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -8,6 +8,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { CardModule } from 'primeng/card';
 import { FloatLabelModule } from 'primeng/floatlabel';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 
 @Component({
   selector: 'app-product-form',
@@ -20,146 +23,120 @@ import { FloatLabelModule } from 'primeng/floatlabel';
     InputTextModule, 
     InputNumberModule,
     CardModule,
-    FloatLabelModule
+    FloatLabelModule,
+    ToastModule
   ],
-  template: `
-    <div style="max-width: 800px; margin: 0 auto;">
-      <!-- Header -->
-      <div class="flex items-center gap-3" style="margin-bottom: var(--space-8);">
-        <p-button icon="pi pi-chevron-left" [text]="true" routerLink="/" severity="secondary" 
-                  styleClass="card-base" [style]="{'padding': 'var(--space-4)', 'background': 'white'}"></p-button>
-        <div>
-            <h2 class="title-page">
-              {{ isEditMode ? 'Edit Product' : 'New Product Entry' }}
-            </h2>
-            <p class="subtitle-page">Configure inventory details for the global catalog.</p>
-        </div>
-      </div>
-
-      <div class="card-base">
-        <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-10">
-          
-          <div class="flex flex-col gap-6">
-            <h3 class="section-title">General Information</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-8);">
-                <div class="flex flex-col gap-2">
-                    <p-floatlabel variant="on">
-                        <input pInputText id="productId" formControlName="productId" [readOnly]="isEditMode" class="w-full" style="padding: var(--space-4);" />
-                        <label for="productId">SKU Identifier</label>
-                    </p-floatlabel>
-                    <small style="color: var(--error); font-weight: 600; padding-left: var(--space-2);" *ngIf="productForm.get('productId')?.invalid && productForm.get('productId')?.touched">SKU is required.</small>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <p-floatlabel variant="on">
-                        <input pInputText id="name" formControlName="name" class="w-full" style="padding: var(--space-4);" />
-                        <label for="name">Product Name</label>
-                    </p-floatlabel>
-                    <small style="color: var(--error); font-weight: 600; padding-left: var(--space-2);" *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched">Name is required.</small>
-                </div>
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-6">
-            <h3 class="section-title" style="border-left-color: var(--success);">Inventory & Pricing</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-8);">
-                <div class="flex flex-col gap-2">
-                    <p-floatlabel variant="on">
-                        <p-inputNumber 
-                            id="price" 
-                            formControlName="price" 
-                            mode="currency" 
-                            currency="USD" 
-                            locale="en-US" 
-                            styleClass="w-full"
-                            inputStyleClass="w-full"
-                            [inputStyle]="{'padding': 'var(--space-4)'}"
-                        ></p-inputNumber>
-                        <label for="price">Unit Price</label>
-                    </p-floatlabel>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <p-floatlabel variant="on">
-                        <p-inputNumber 
-                            id="quantity" 
-                            formControlName="quantity" 
-                            [showButtons]="true" 
-                            [min]="0"
-                            styleClass="w-full"
-                            inputStyleClass="w-full"
-                            [inputStyle]="{'padding': 'var(--space-4)'}"
-                        ></p-inputNumber>
-                        <label for="quantity">Stock Quantity</label>
-                    </p-floatlabel>
-                </div>
-            </div>
-          </div>
-
-          <div class="flex justify-between items-center" style="padding-top: var(--space-8); border-top: 1px solid var(--slate-100);">
-            <p-button label="Cancel" severity="secondary" [text]="true" routerLink="/"></p-button>
-            <p-button 
-                [label]="loading ? 'Saving...' : (isEditMode ? 'Update Product' : 'Create Product')" 
-                [icon]="loading ? 'pi pi-spin pi-spinner' : 'pi pi-check-circle'"
-                type="submit" 
-                [disabled]="productForm.invalid || loading"
-                severity="primary"
-                [style]="{'padding': 'var(--space-4) var(--space-10)', 'font-weight': '700'}"
-            ></p-button>
-          </div>
-        </form>
-      </div>
-    </div>
-  `
+  templateUrl: './product-form.component.html'
 })
 export class ProductFormComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private inventoryService = inject(InventoryService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private messageService = inject(MessageService);
+  
+  // Dialog-specific injections (optional)
+  public ref = inject(DynamicDialogRef, { optional: true });
+  public config = inject(DynamicDialogConfig, { optional: true });
+
   productForm: FormGroup;
   isEditMode = false;
-  loading = false;
+  isDialog = false;
+  loading = signal(false);
 
-  constructor(
-    private fb: FormBuilder,
-    private inventoryService: InventoryService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {
+  constructor() {
     this.productForm = this.fb.group({
-      productId: ['', [Validators.required]],
-      name: ['', [Validators.required]],
-      price: [0, [Validators.required, Validators.min(0.01)]],
+      productId: ['', [Validators.required, Validators.pattern(/^[A-Z0-9-]+$/)]],
+      name: ['', [Validators.required, Validators.minLength(3)]],
+      price: [0, [Validators.required, Validators.min(0)]],
       quantity: [0, [Validators.required, Validators.min(0)]]
     });
   }
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.isEditMode = true;
-      this.loading = true;
-      this.inventoryService.getProducts().subscribe(products => {
-        const product = products.find(p => p.productId === id);
-        if (product) {
-          this.productForm.patchValue(product);
+    if (this.ref && this.config) {
+        this.isDialog = true;
+        if (this.config.data?.id) {
+            this.loadProductData(this.config.data.id);
         }
-        this.loading = false;
-      });
+    } else {
+        const id = this.route.snapshot.paramMap.get('id');
+        if (id) {
+            this.loadProductData(id);
+        }
     }
+  }
+
+  private loadProductData(id: string): void {
+    this.isEditMode = true;
+    this.loading.set(true);
+    this.inventoryService.getProducts().subscribe({
+        next: (products) => {
+            if (products) {
+                const product = products.find(p => p.productId === id);
+                if (product) {
+                    this.productForm.patchValue({
+                        productId: product.productId,
+                        name: product.name,
+                        price: Number(product.price),
+                        quantity: Number(product.quantity)
+                    });
+                } else {
+                    this.messageService.add({ severity: 'error', summary: 'SKU Not Found', detail: `The product code ${id} does not exist.` });
+                    if (!this.isDialog) this.router.navigate(['/dashboard']);
+                }
+            }
+            this.loading.set(false);
+        },
+        error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Network Failure', detail: 'Could not reach inventory service.' });
+            this.loading.set(false);
+        }
+    });
   }
 
   onSubmit(): void {
     if (this.productForm.invalid) return;
-    this.loading = true;
+    
+    this.loading.set(true);
     const productData = this.productForm.value;
-    if (this.isEditMode) {
-      this.inventoryService.updateProduct(productData.productId, productData).subscribe({
-        next: () => this.router.navigate(['/']),
-        error: (err) => { alert('Error updating product: ' + err.message); this.loading = false; }
-      });
+    
+    const obs = this.isEditMode 
+      ? this.inventoryService.updateProduct(productData.productId, productData)
+      : this.inventoryService.createProduct(productData);
+
+    obs.subscribe({
+      next: (res) => {
+        const success = res?.success ?? true;
+        if (success) {
+            this.messageService.add({ 
+                severity: 'success', 
+                summary: this.isEditMode ? 'Stock Updated' : 'SKU Created', 
+                detail: `System has synchronized ${productData.productId} successfully.` 
+            });
+            
+            if (this.isDialog) {
+                setTimeout(() => this.ref?.close(true), 800);
+            } else {
+                setTimeout(() => this.router.navigate(['/dashboard']), 1200);
+            }
+        } else {
+            this.messageService.add({ severity: 'error', summary: 'System Rejected', detail: res?.message || 'Operation failed.' });
+            this.loading.set(false);
+        }
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Execution Error', detail: err.error?.message || err.message });
+        this.loading.set(false);
+      }
+    });
+  }
+
+  onCancel(): void {
+    if (this.isDialog) {
+        this.ref?.close(false);
     } else {
-      this.inventoryService.createProduct(productData).subscribe({
-        next: () => this.router.navigate(['/']),
-        error: (err) => { alert('Error creating product: ' + err.message); this.loading = false; }
-      });
+        this.router.navigate(['/dashboard']);
     }
   }
 }
