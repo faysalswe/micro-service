@@ -1,13 +1,13 @@
-using OrderService.Services;
-using OrderService.Data;
-using OrderService.Configuration;
+using System.Diagnostics;
+using IdentityService.Configuration;
 using Microsoft.EntityFrameworkCore;
-using Polly;
-using Polly.Extensions.Http;
+using Microsoft.OpenApi.Models;
+using OrderService.Data;
+using OrderService.Models;
+using OrderService.Services;
+using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Context;
-using System.Diagnostics;
-using Scalar.AspNetCore;
 
 // Build initial configuration for logging
 var initialConfig = new ConfigurationBuilder()
@@ -25,163 +25,106 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // Dynamically log all configured Kestrel endpoints and API Documentation
-    var kestrelEndpoints = builder.Configuration.GetSection("Kestrel:Endpoints").GetChildren();
-    foreach (var endpoint in kestrelEndpoints)
-    {
-        var name = endpoint.Key;
-        var url = endpoint["Url"] ?? "unknown";
-        var protocols = endpoint["Protocols"] ?? "default";
-        
-        Log.Information("Configured Endpoint: {Name} -> {Url} ({Protocols})", name, url, protocols);
-
-        // If this is an HTTP endpoint, log the Doc paths
-        if (protocols.Contains("Http1", StringComparison.OrdinalIgnoreCase) || name.Contains("Http", StringComparison.OrdinalIgnoreCase))
-        {
-            var cleanUrl = url.Replace("0.0.0.0", "localhost").Replace("+", "localhost").Replace("*", "localhost");
-            Log.Information("API Documentation (Scalar): {DocUrl}/scalar/v1", cleanUrl);
-        }
-    }
+    // Add services to the container.
+    builder.Services.AddGrpc();
+    builder.Services.AddGrpcHealthChecks();
+    builder.Services.AddControllers();
+    builder.Services.AddOpenApi();
 
     // Use Serilog for logging
     builder.Host.UseSerilog();
 
-    // Add services to the container.
-    builder.Services.AddGrpc();
+    // Database Configuration (PostgreSQL)
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    builder.Services.AddDbContext<OrderDbContext>(options =>
+        options.UseNpgsql(connectionString));
 
-    // Add REST API controllers
-    builder.Services.AddControllers();
+    var app = builder.Build();
 
-    // Add native OpenAPI
-    builder.Services.AddOpenApi();
-    builder.Services.AddServiceTracing(builder.Configuration);
-
-    // Add Saga and Idempotency services
-    builder.Services.AddScoped<ISagaService, SagaService>();
-    builder.Services.AddScoped<IIdempotencyService, IdempotencyService>();
-
-// Define Resilience Policies
-var retryPolicy = HttpPolicyExtensions
-    .HandleTransientHttpError()
-    .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-
-var circuitBreakerPolicy = HttpPolicyExtensions
-    .HandleTransientHttpError()
-    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
-
-// Register gRPC Client for PaymentService with Resilience
-builder.Services.AddGrpcClient<Payments.V1.PaymentService.PaymentServiceClient>(o =>
-{
-    o.Address = new Uri(builder.Configuration["GrpcSettings:PaymentServiceUrl"] ?? "http://localhost:50012");
-})
-.AddPolicyHandler(retryPolicy)
-.AddPolicyHandler(circuitBreakerPolicy);
-
-// Register gRPC Client for InventoryService with Resilience
-builder.Services.AddGrpcClient<Inventory.V1.InventoryService.InventoryServiceClient>(o =>
-{
-    o.Address = new Uri(builder.Configuration["GrpcSettings:InventoryServiceUrl"] ?? "http://localhost:50013");
-})
-.AddPolicyHandler(retryPolicy)
-.AddPolicyHandler(circuitBreakerPolicy);
-
-// Add DbContext
-builder.Services.AddDbContext<OrderDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Add gRPC Health Checks for Kubernetes probes
-builder.Services.AddGrpcHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "postgresql");
-
-var app = builder.Build();
-
-// Apply database migrations on startup
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
-    db.Database.Migrate();
-
-    if (!db.Orders.Any())
+    // Apply database migrations on startup
+    using (var scope = app.Services.CreateScope())
     {
-        db.Orders.AddRange(new List<Order>
+        var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+        db.Database.Migrate();
+
+        if (!db.Orders.Any())
         {
-            new Order { Id = Guid.Parse("f284b868-e7c6-4318-8743-3453b3b44b20"), UserId = "admin", ProductId = "prod-001", Amount = 999.99, Quantity = 1, Status = "COMPLETED", CreatedAt = DateTime.UtcNow.AddDays(-1) },
-            new Order { Id = Guid.Parse("d7f57c5e-8e8e-4a4a-9b9b-1c1c1c1c1c1c"), UserId = "admin", ProductId = "prod-002", Amount = 1199.00, Quantity = 1, Status = "COMPLETED", CreatedAt = DateTime.UtcNow.AddHours(-5) }
-        });
-        db.SaveChanges();
-        Console.WriteLine("✅ Order database seeded with sample orders");
+            var defaultOrders = DbSeeder.GetDefaultOrders();
+            db.Orders.AddRange(defaultOrders);
+            db.SaveChanges();
+            Log.Information("✅ Order database seeded with {Count} sample orders from DbSeeder", defaultOrders.Count);
+        }
     }
-}
 
-// Add middleware to enrich logs with trace context
-app.Use(async (context, next) =>
-{
-    var activity = Activity.Current;
-    if (activity != null)
+    // Add middleware to enrich logs with trace context
+    app.Use(async (context, next) =>
     {
-        using (LogContext.PushProperty("trace_id", activity.TraceId.ToString()))
-        using (LogContext.PushProperty("span_id", activity.SpanId.ToString()))
+        var activity = Activity.Current;
+        if (activity != null)
         {
-            // Check for X-Correlation-ID header
-            if (context.Request.Headers.TryGetValue("X-Correlation-ID", out var correlationId))
+            using (LogContext.PushProperty("trace_id", activity.TraceId.ToString()))
+            using (LogContext.PushProperty("span_id", activity.SpanId.ToString()))
             {
-                using (LogContext.PushProperty("correlation_id", correlationId.ToString()))
+                // Check for X-Correlation-ID header
+                if (context.Request.Headers.TryGetValue("X-Correlation-ID", out var correlationId))
+                {
+                    using (LogContext.PushProperty("correlation_id", correlationId.ToString()))
+                    {
+                        await next();
+                    }
+                }
+                else
                 {
                     await next();
                 }
             }
-            else
-            {
-                await next();
-            }
         }
-    }
-    else
+        else
+        {
+            await next();
+        }
+    });
+
+    // Configure the HTTP request pipeline.
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+
+    app.MapGrpcService<OrderProcessingService>();
+
+    // Map REST API controllers
+    app.MapControllers();
+
+    // Map gRPC health check service for Kubernetes probes (grpc_health_probe)
+    app.MapGrpcHealthChecksService();
+
+    // HTTP health endpoints for compatibility with HTTP-based probes
+    app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+
+    var appVersion = builder.Configuration["APP_VERSION"] ?? "1.0.0-dev";
+    app.MapGet("/health", () => Results.Ok(new { 
+        status = "healthy", 
+        service = "OrderService", 
+        version = appVersion, 
+        timestamp = DateTime.UtcNow 
+    }));
+
+    app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
+
+    app.MapGet("/health/ready", async (OrderDbContext db) =>
     {
-        await next();
-    }
-});
+        try
+        {
+            await db.Database.CanConnectAsync();
+            return Results.Ok(new { status = "ready", database = "connected" });
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Readiness check failed - database connection issue");
+            return Results.Json(new { status = "not_ready", database = "disconnected" }, statusCode: 503);
+        }
+    });
 
-// Configure the HTTP request pipeline.
-app.MapOpenApi();
-app.MapScalarApiReference();
-
-app.MapGrpcService<OrderProcessingService>();
-
-// Map REST API controllers
-app.MapControllers();
-
-// Map gRPC health check service for Kubernetes probes (grpc_health_probe)
-app.MapGrpcHealthChecksService();
-
-// HTTP health endpoints for compatibility with HTTP-based probes
-app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-
-var appVersion = builder.Configuration["APP_VERSION"] ?? "1.0.0-dev";
-app.MapGet("/health", () => Results.Ok(new { 
-    status = "healthy", 
-    service = "OrderService", 
-    version = appVersion, 
-    timestamp = DateTime.UtcNow 
-}));
-
-app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
-
-app.MapGet("/health/ready", async (OrderDbContext db) =>
-{
-    try
-    {
-        await db.Database.CanConnectAsync();
-        return Results.Ok(new { status = "ready", database = "connected" });
-    }
-    catch (Exception ex)
-    {
-        Log.Warning(ex, "Readiness check failed - database connection issue");
-        return Results.Json(new { status = "not_ready", database = "disconnected" }, statusCode: 503);
-    }
-});
-
-app.Run();
+    app.Run();
 }
 catch (Exception ex)
 {

@@ -9,6 +9,7 @@ import { initializeTracing } from './tracing';
 import { logger } from './logger';
 import { HealthImplementation, ServingStatusMap } from 'grpc-health-check';
 import { createRestApi } from './rest-api';
+import { seedDatabase } from './data/seeder';
 
 // Static gRPC Imports
 import { createConnectRouter, ConnectRouter } from "@connectrpc/connect";
@@ -202,31 +203,6 @@ async function main() {
     logger.info(`Configured Endpoint: Http -> http://0.0.0.0:${restPort} (Http1)`);
     logger.info(`API Documentation (Scalar): http://localhost:${restPort}/api-docs`);
   });
-}
-
-async function seedDatabase(db: Db) {
-  const collection = db.collection('payments');
-  const count = await collection.countDocuments();
-  if (count === 0) {
-    const seedPayments = [
-      {
-        orderId: "f284b868-e7c6-4318-8743-3453b3b44b20",
-        userId: "admin",
-        amount: 999.99,
-        status: "COMPLETED",
-        created_at: new Date(Date.now() - 24 * 60 * 60 * 1000)
-      },
-      {
-        orderId: "d7f57c5e-8e8e-4a4a-9b9b-1c1c1c1c1c1c",
-        userId: "admin",
-        amount: 1199.00,
-        status: "COMPLETED",
-        created_at: new Date(Date.now() - 5 * 60 * 60 * 1000)
-      }
-    ];
-    await collection.insertMany(seedPayments);
-    logger.info('✅ Payment database seeded with initial records');
-  }
 }
 
 main();
