@@ -14,11 +14,13 @@ export type Language = 'en' | 'bn' | 'de';
 
 /**
  * User role enum
+ * Centralized Role Registry: Align with IdentityService and Go Inventory Service.
  */
 export enum UserRole {
-  ADMIN = 'ADMIN',
-  USER = 'USER',
-  GUEST = 'GUEST',
+  ADMIN = 'Admin',
+  MANAGER = 'Manager',
+  AUDITOR = 'Auditor',
+  USER = 'User',
 }
 
 /**

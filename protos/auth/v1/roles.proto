@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option csharp_namespace = "IdentityService.Configuration";
+option go_package = "inventory-service/internal/security";
+
+// UserRole defines the strictly glued roles for the entire platform.
+// This is the SINGLE SOURCE OF TRUTH for security logic.
+enum UserRole {
+  USER_ROLE_UNSPECIFIED = 0;
+  USER_ROLE_ADMIN = 1;     // Full system access
+  USER_ROLE_MANAGER = 2;   // Management of inventory and orders
+  USER_ROLE_AUDITOR = 3;   // Read-only access to system records
+  USER_ROLE_USER = 4;      // Standard storefront customer
+}
