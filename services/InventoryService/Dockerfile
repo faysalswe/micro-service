@@ -3,8 +3,12 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-# Copy the service source including generated gRPC code in proto/
-COPY services/InventoryService/ ./
+# Copy the entire monorepo context to access shared protos if needed
+# and to keep paths consistent with go.mod
+COPY . .
+
+# Navigate to the service directory
+WORKDIR /app/services/InventoryService
 
 # Run go mod tidy to ensure go.sum is up to date
 RUN go mod tidy
