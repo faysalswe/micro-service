@@ -4,6 +4,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useNavigate } from 'react-router';
 import { authService, AuthUser } from '~/services/auth-service';
 import type { ApiError } from '~/services/api-client';
 
@@ -48,6 +49,7 @@ interface AuthProviderProps {
  * Auth provider component
  */
 export function AuthProvider({ children }: AuthProviderProps) {
+  const navigate = useNavigate();
   const [state, setState] = useState<AuthContextState>(() => {
     // During SSR, we start with isLoading: false because we can't check auth yet
     // On the client, we'll initialize in useEffect
@@ -148,6 +150,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isLoading: false,
       error: null,
     });
+    navigate('/login');
   };
 
   /**
