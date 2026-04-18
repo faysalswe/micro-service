@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 
+	"inventory-service/internal/api/grpc"
 	"inventory-service/internal/api/rest"
 	"inventory-service/internal/config"
 	"inventory-service/internal/database"
@@ -21,89 +22,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"google.golang.org/grpc"
+	googlegrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
-
-type server struct {
-	inventoryv1.UnimplementedInventoryServiceServer
-	service service.InventoryService
-}
-
-func (s *server) ReserveStock(ctx context.Context, req *inventoryv1.ReserveStockRequest) (*inventoryv1.ReserveStockResponse, error) {
-	success, msg, err := s.service.Reserve(ctx, req.OrderId, req.ProductId, req.Quantity)
-	if err != nil {
-		return nil, err
-	}
-	return &inventoryv1.ReserveStockResponse{Success: success, Message: msg}, nil
-}
-
-func (s *server) ReleaseStock(ctx context.Context, req *inventoryv1.ReleaseStockRequest) (*inventoryv1.ReleaseStockResponse, error) {
-	success, msg, err := s.service.Release(ctx, req.OrderId, req.ProductId, req.Quantity)
-	if err != nil {
-		return nil, err
-	}
-	return &inventoryv1.ReleaseStockResponse{Success: success, Message: msg}, nil
-}
-
-func (s *server) GetStock(ctx context.Context, req *inventoryv1.GetStockRequest) (*inventoryv1.GetStockResponse, error) {
-	quantity, err := s.service.GetStock(ctx, req.ProductId)
-	if err != nil {
-		return nil, err
-	}
-	return &inventoryv1.GetStockResponse{ProductId: req.ProductId, Quantity: quantity}, nil
-}
-
-func (s *server) ListProducts(ctx context.Context, req *inventoryv1.ListProductsRequest) (*inventoryv1.ListProductsResponse, error) {
-	products, err := s.service.ListProducts(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var protoProducts []*inventoryv1.ProductInfo
-	for _, p := range products {
-		protoProducts = append(protoProducts, &inventoryv1.ProductInfo{
-			ProductId: p.ProductID,
-			Name:      p.Name,
-			Price:     p.Price,
-			Quantity:  p.Quantity,
-		})
-	}
-
-	return &inventoryv1.ListProductsResponse{Products: protoProducts}, nil
-}
-
-func (s *server) CreateProduct(ctx context.Context, req *inventoryv1.CreateProductRequest) (*inventoryv1.CreateProductResponse, error) {
-	success, msg, err := s.service.CreateProduct(ctx, req.ProductId, req.Name, req.Price, req.Quantity)
-	if err != nil {
-		return nil, err
-	}
-	return &inventoryv1.CreateProductResponse{Success: success, Message: msg}, nil
-}
-
-func (s *server) UpdateProduct(ctx context.Context, req *inventoryv1.UpdateProductRequest) (*inventoryv1.UpdateProductResponse, error) {
-	success, msg, err := s.service.UpdateProduct(ctx, req.ProductId, req.Name, req.Price, req.Quantity)
-	if err != nil {
-		return nil, err
-	}
-	return &inventoryv1.UpdateProductResponse{Success: success, Message: msg}, nil
-}
-
-func (s *server) DeleteProduct(ctx context.Context, req *inventoryv1.DeleteProductRequest) (*inventoryv1.DeleteProductResponse, error) {
-	success, msg, err := s.service.DeleteProduct(ctx, req.ProductId)
-	if err != nil {
-		return nil, err
-	}
-	return &inventoryv1.DeleteProductResponse{Success: success, Message: msg}, nil
-}
-
-func (s *server) RestockItems(ctx context.Context, req *inventoryv1.RestockItemsRequest) (*inventoryv1.RestockItemsResponse, error) {
-	success, msg, err := s.service.RestockItems(ctx, req.ProductId, req.Quantity)
-	if err != nil {
-		return nil, err
-	}
-	return &inventoryv1.RestockItemsResponse{Success: success, Message: msg}, nil
-}
 
 func startRESTServer(svc service.InventoryService, port string) {
 	// Set Gin to ReleaseMode to hide the debug output
@@ -174,10 +95,12 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer(
-		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	s := googlegrpc.NewServer(
+		googlegrpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
-	inventoryv1.RegisterInventoryServiceServer(s, &server{service: svc})
+	
+	inventoryHandler := grpc.NewInventoryHandler(svc)
+	inventoryv1.RegisterInventoryServiceServer(s, inventoryHandler)
 
 	// Enable reflection for easy testing with grpcurl
 	reflection.Register(s)

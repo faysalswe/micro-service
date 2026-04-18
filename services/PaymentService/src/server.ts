@@ -2,7 +2,6 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import * as grpc from '@grpc/grpc-js';
 import { MongoClient, Db } from 'mongodb';
 import CircuitBreaker from 'opossum';
 import { initializeTracing } from './tracing';
@@ -12,16 +11,9 @@ import { createRestApi } from './rest-api';
 import { seedDatabase } from './data/seeder';
 
 // Static gRPC Imports
-import { createConnectRouter, ConnectRouter } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
 import * as http2 from "http2";
-import { PaymentService } from "./generated/payments/v1/payments_connect";
-import { 
-  ProcessPaymentRequest, 
-  ProcessPaymentResponse, 
-  RefundPaymentRequest, 
-  RefundPaymentResponse 
-} from "./generated/payments/v1/payments_pb";
+import { createPaymentHandler } from "./api/grpc/payment-handler";
 
 // Validate required environment variables
 const requiredEnvVars = ['REST_PORT', 'LOKI_URL'];
@@ -112,61 +104,6 @@ async function checkDatabaseHealth(): Promise<boolean> {
 }
 
 /**
- * Implementation of the Payment Service router
- */
-const routes = (router: ConnectRouter) => {
-  router.service(PaymentService, {
-    async processPayment(req: ProcessPaymentRequest): Promise<ProcessPaymentResponse> {
-      const { orderId, amount, userId } = req;
-      logger.info('Processing payment', { orderId, amount, userId });
-
-      try {
-        const success = amount < 1000;
-        const paymentRecord = {
-          orderId,
-          userId,
-          amount,
-          status: success ? 'COMPLETED' : 'DECLINED',
-          created_at: new Date()
-        };
-
-        const result = await dbBreaker.fire(paymentRecord);
-
-        return new ProcessPaymentResponse({
-          paymentId: result.insertedId.toString(),
-          success: success,
-          statusMessage: success ? 'Payment authorized successfully.' : 'Payment declined: Amount too high.',
-        });
-      } catch (err: any) {
-        logger.error('Error processing payment', { error: err.message, orderId });
-        throw err;
-      }
-    },
-
-    async refundPayment(req: RefundPaymentRequest): Promise<RefundPaymentResponse> {
-      const { paymentId, reason } = req;
-      logger.info('Processing refund', { paymentId, reason });
-
-      try {
-        await updateBreaker.fire({
-          id: paymentId,
-          update: { status: 'REFUNDED', refund_reason: reason, refunded_at: new Date() }
-        });
-
-        return new RefundPaymentResponse({
-          paymentId: paymentId,
-          success: true,
-          statusMessage: 'Refund processed successfully.',
-        });
-      } catch (err: any) {
-        logger.error('Refund processing failed', { error: err.message, paymentId });
-        throw err;
-      }
-    }
-  });
-};
-
-/**
  * Starts the servers.
  */
 async function main() {
@@ -187,6 +124,7 @@ async function main() {
   }
 
   // Create gRPC Server using Connect Node Adapter
+  const routes = createPaymentHandler(db, dbBreaker, updateBreaker);
   const handler = connectNodeAdapter({ routes });
   const grpcServer = http2.createServer(handler);
   
