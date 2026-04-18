@@ -30,6 +30,21 @@ try
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
 
+    // Register local services
+    builder.Services.AddScoped<ISagaService, SagaService>();
+    builder.Services.AddScoped<IIdempotencyService, IdempotencyService>();
+
+    // Register gRPC Clients
+    builder.Services.AddGrpcClient<Payments.V1.PaymentService.PaymentServiceClient>(o =>
+    {
+        o.Address = new Uri(builder.Configuration["GrpcSettings:PaymentServiceUrl"] ?? "http://localhost:50012");
+    });
+
+    builder.Services.AddGrpcClient<Inventory.V1.InventoryService.InventoryServiceClient>(o =>
+    {
+        o.Address = new Uri(builder.Configuration["GrpcSettings:InventoryServiceUrl"] ?? "http://localhost:50013");
+    });
+
     // Use Serilog for logging
     builder.Host.UseSerilog();
 
