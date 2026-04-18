@@ -1,9 +1,7 @@
 using System.Diagnostics;
-using IdentityService.Configuration;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
+using OrderService.Configuration;
 using OrderService.Data;
-using OrderService.Models;
 using OrderService.Services;
 using Scalar.AspNetCore;
 using Serilog;
