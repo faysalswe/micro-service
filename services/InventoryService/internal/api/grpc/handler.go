@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"inventory-service/internal/models"
 	"inventory-service/internal/service"
 	inventoryv1 "inventory-service/proto/inventory/v1"
 )
@@ -29,6 +30,38 @@ func (s *InventoryHandler) ReleaseStock(ctx context.Context, req *inventoryv1.Re
 		return nil, err
 	}
 	return &inventoryv1.ReleaseStockResponse{Success: success, Message: msg}, nil
+}
+
+func (s *InventoryHandler) BatchReserveStock(ctx context.Context, req *inventoryv1.BatchReserveStockRequest) (*inventoryv1.BatchReserveStockResponse, error) {
+	var items []models.BatchItem
+	for _, item := range req.Items {
+		items = append(items, models.BatchItem{
+			ProductID: item.ProductId,
+			Quantity:  item.Quantity,
+		})
+	}
+
+	success, msg, err := s.service.BatchReserve(ctx, req.OrderId, items)
+	if err != nil {
+		return nil, err
+	}
+	return &inventoryv1.BatchReserveStockResponse{Success: success, Message: msg}, nil
+}
+
+func (s *InventoryHandler) BatchReleaseStock(ctx context.Context, req *inventoryv1.BatchReleaseStockRequest) (*inventoryv1.BatchReleaseStockResponse, error) {
+	var items []models.BatchItem
+	for _, item := range req.Items {
+		items = append(items, models.BatchItem{
+			ProductID: item.ProductId,
+			Quantity:  item.Quantity,
+		})
+	}
+
+	success, msg, err := s.service.BatchRelease(ctx, req.OrderId, items)
+	if err != nil {
+		return nil, err
+	}
+	return &inventoryv1.BatchReleaseStockResponse{Success: success, Message: msg}, nil
 }
 
 func (s *InventoryHandler) GetStock(ctx context.Context, req *inventoryv1.GetStockRequest) (*inventoryv1.GetStockResponse, error) {

@@ -16,3 +16,8 @@ type IdempotencyRecord struct {
 	OrderID   string    `gorm:"primaryKey;size:255"`
 	CreatedAt time.Time
 }
+
+type BatchItem struct {
+	ProductID string
+	Quantity  int32
+}

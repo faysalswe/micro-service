@@ -10,6 +10,8 @@ import (
 type InventoryService interface {
 	Reserve(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error)
 	Release(ctx context.Context, orderID string, productID string, quantity int32) (bool, string, error)
+	BatchReserve(ctx context.Context, orderID string, items []models.BatchItem) (bool, string, error)
+	BatchRelease(ctx context.Context, orderID string, items []models.BatchItem) (bool, string, error)
 	GetStock(ctx context.Context, productID string) (int32, error)
 	GetProduct(ctx context.Context, productID string) (models.ProductStock, error)
 	ListProducts(ctx context.Context) ([]models.ProductStock, error)
@@ -100,6 +102,25 @@ func (s *inventoryService) Release(ctx context.Context, orderID string, productI
 		return false, err.Error(), nil
 	}
 	return true, "Stock released successfully", nil
+}
+
+func (s *inventoryService) BatchReserve(ctx context.Context, orderID string, items []models.BatchItem) (bool, string, error) {
+	slog.InfoContext(ctx, "Batch reserving stock", "order_id", orderID, "item_count", len(items))
+	err := s.repo.BatchReserveStock(ctx, orderID, items)
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed batch stock reservation", "error", err, "order_id", orderID)
+		return false, err.Error(), nil
+	}
+	return true, "Batch stock reserved successfully", nil
+}
+
+func (s *inventoryService) BatchRelease(ctx context.Context, orderID string, items []models.BatchItem) (bool, string, error) {
+	slog.InfoContext(ctx, "Batch releasing stock", "order_id", orderID, "item_count", len(items))
+	err := s.repo.BatchReleaseStock(ctx, orderID, items)
+	if err != nil {
+		return false, err.Error(), nil
+	}
+	return true, "Batch stock released successfully", nil
 }
 
 func (s *inventoryService) GetProduct(ctx context.Context, productID string) (models.ProductStock, error) {

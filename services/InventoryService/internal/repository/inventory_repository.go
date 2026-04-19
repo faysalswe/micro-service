@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"inventory-service/internal/models"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -12,6 +13,8 @@ import (
 type InventoryRepository interface {
 	ReserveStock(ctx context.Context, orderID string, productID string, quantity int32) error
 	ReleaseStock(ctx context.Context, orderID string, productID string, quantity int32) error
+	BatchReserveStock(ctx context.Context, orderID string, items []models.BatchItem) error
+	BatchReleaseStock(ctx context.Context, orderID string, items []models.BatchItem) error
 	GetStock(ctx context.Context, productID string) (int32, error)
 	GetProduct(ctx context.Context, productID string) (models.ProductStock, error)
 	ListProducts(ctx context.Context) ([]models.ProductStock, error)
@@ -125,6 +128,75 @@ func (r *postgresRepository) ReleaseStock(ctx context.Context, orderID string, p
 		}
 
 		// 3. Remove Idempotency record (so it can be re-reserved if needed, or mark as cancelled)
+		return tx.Delete(&record).Error
+	})
+}
+
+func (r *postgresRepository) BatchReserveStock(ctx context.Context, orderID string, items []models.BatchItem) error {
+	ctx, span := r.tracer.Start(ctx, "BatchReserveStock")
+	defer span.End()
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. Check Idempotency
+		var record models.IdempotencyRecord
+		if err := tx.Where("order_id = ?", orderID).First(&record).Error; err == nil {
+			return nil // Already processed
+		}
+
+		for _, item := range items {
+			// 2. Lock and Check Availability
+			var stock models.ProductStock
+			if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("product_id = ?", item.ProductID).First(&stock).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return fmt.Errorf("product %s not found", item.ProductID)
+				}
+				return err
+			}
+
+			if stock.Quantity < item.Quantity {
+				return fmt.Errorf("insufficient stock for product %s", item.ProductID)
+			}
+
+			// 3. Deduct
+			stock.Quantity -= item.Quantity
+			if err := tx.Save(&stock).Error; err != nil {
+				return err
+			}
+		}
+
+		// 4. Record Idempotency
+		return tx.Create(&models.IdempotencyRecord{OrderID: orderID}).Error
+	})
+}
+
+func (r *postgresRepository) BatchReleaseStock(ctx context.Context, orderID string, items []models.BatchItem) error {
+	ctx, span := r.tracer.Start(ctx, "BatchReleaseStock")
+	defer span.End()
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. Check Idempotency
+		var record models.IdempotencyRecord
+		if err := tx.Where("order_id = ?", orderID).First(&record).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil // Nothing to release
+			}
+			return err
+		}
+
+		for _, item := range items {
+			// 2. Lock and Update
+			var stock models.ProductStock
+			if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("product_id = ?", item.ProductID).First(&stock).Error; err != nil {
+				return err
+			}
+
+			stock.Quantity += item.Quantity
+			if err := tx.Save(&stock).Error; err != nil {
+				return err
+			}
+		}
+
+		// 3. Remove Idempotency record
 		return tx.Delete(&record).Error
 	})
 }
