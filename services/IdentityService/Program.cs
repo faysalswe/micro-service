@@ -43,6 +43,7 @@ try
     builder.Host.UseSerilog();
 
     // Add services to the container.
+    builder.Services.AddServiceTracing(builder.Configuration);
     builder.Services.AddOpenApi();
 
     // Add SQLite database
