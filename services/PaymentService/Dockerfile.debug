@@ -4,28 +4,25 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy package files and install all dependencies
-COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile --ignore-scripts
+# Copy package files (we will allow pnpm to update the lockfile during build)
+COPY services/PaymentService/package*.json ./
+RUN npm install -g pnpm && pnpm install --ignore-scripts
 
-# Copy the entire service source including generated files
+# Copy the entire service source
 COPY services/PaymentService/ ./
 
-# Compile TypeScript (with source maps for debugging)
+# Compile TypeScript
 RUN pnpm run build
 
-# Debug runtime (single stage - keeps devDependencies for ts-node if needed)
+# Debug runtime
 FROM node:20-alpine AS runtime
 WORKDIR /app
 
-# Copy package files and install all dependencies
-COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile --ignore-scripts
+COPY services/PaymentService/package*.json ./
+RUN npm install -g pnpm && pnpm install --ignore-scripts
 
-# Copy compiled JavaScript with source maps
+# Copy compiled JavaScript
 COPY --from=build /app/dist ./dist
-
-# Copy everything for source map resolution and debugging
 COPY services/PaymentService/ ./
 
 # Expose ports

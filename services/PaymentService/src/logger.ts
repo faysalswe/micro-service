@@ -1,48 +1,53 @@
-// logger.ts - Winston Configuration for PaymentService with Loki
+// logger.ts - Winston to OpenTelemetry Bridge
 import winston from 'winston';
-import LokiTransport from 'winston-loki';
+import { logs, SeverityNumber } from '@opentelemetry/api-logs';
 import { trace, context } from '@opentelemetry/api';
 
-const lokiHost = process.env.LOKI_URL!;
+const serviceName = process.env.SERVICE_NAME || 'PaymentService';
 
 // Create logger instance
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' }),
-    winston.format.errors({ stack: true }),
-    winston.format.splat(),
     winston.format.json()
   ),
-  defaultMeta: {
-    service_name: process.env.SERVICE_NAME || 'PaymentService',
-    service_version: process.env.SERVICE_VERSION || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-  },
   transports: [
-    // Console output (colorized for local dev)
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.printf(({ timestamp, level, message, service_name, service_version, environment, trace_id, span_id, ...meta }) => {
-          const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
-          return `${timestamp} [${level}]: ${message}${metaStr}`;
-        })
+        winston.format.simple()
       ),
     }),
-    // Loki transport
-    new LokiTransport({
-      host: lokiHost,
-      labels: {
-        service: process.env.SERVICE_NAME || 'PaymentService',
-        environment: process.env.NODE_ENV || 'development',
-      },
-      json: true,
-      format: winston.format.json(),
-      replaceTimestamp: true,
-      onConnectionError: (err) => console.error('Loki connection error:', err),
-    }),
   ],
+});
+
+// Bridge Winston to OTel
+const otelLogger = logs.getLogger(serviceName);
+
+const levelToSeverity = (level: string): SeverityNumber => {
+  switch (level.toLowerCase()) {
+    case 'error': return SeverityNumber.ERROR;
+    case 'warn': return SeverityNumber.WARN;
+    case 'info': return SeverityNumber.INFO;
+    case 'debug': return SeverityNumber.DEBUG;
+    default: return SeverityNumber.INFO;
+  }
+};
+
+logger.on('data', (info) => {
+  const { level, message, timestamp, ...meta } = info;
+  
+  otelLogger.emit({
+    severityNumber: levelToSeverity(level),
+    severityText: level.toUpperCase(),
+    body: message,
+    attributes: {
+      ...meta,
+      service_name: serviceName,
+      environment: process.env.NODE_ENV || 'development'
+    }
+  });
 });
 
 // Helper function to add correlation ID to logs
