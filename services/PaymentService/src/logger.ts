@@ -2,9 +2,9 @@
 import winston from 'winston';
 import { logs, SeverityNumber } from '@opentelemetry/api-logs';
 import { trace, context } from '@opentelemetry/api';
-import { CONFIG } from './constants/config';
+import { CONFIG, INTERNAL_CONSTANTS } from './constants/config';
 
-const serviceName = CONFIG.METADATA.NAME;
+const serviceName = CONFIG.SERVICE_NAME;
 
 // Create logger instance
 export const logger = winston.createLogger({
@@ -46,7 +46,7 @@ logger.on('data', (info) => {
     attributes: {
       ...meta,
       service_name: serviceName,
-      service_version: CONFIG.METADATA.VERSION
+      service_version: INTERNAL_CONSTANTS.VERSION
     }
   });
 });
