@@ -1,6 +1,7 @@
 import { Card, Image, Text, Badge, Button, Group, Stack } from '@mantine/core';
 import { IconShoppingCart, IconPackage } from '@tabler/icons-react';
-import { Link } from 'react-router';
+import { useCart } from '~/hooks/useCart';
+import { useAuth } from '~/contexts/auth-context';
 
 interface ProductCardProps {
   product: {
@@ -12,6 +13,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { user } = useAuth();
+  const { addToCart, loading } = useCart(user?.id);
   const isOutOfStock = product.quantity <= 0;
   const isLowStock = product.quantity > 0 && product.quantity < 10;
 
@@ -54,11 +57,11 @@ export function ProductCard({ product }: ProductCardProps) {
           mt="md"
           variant={isOutOfStock ? 'light' : 'filled'}
           disabled={isOutOfStock}
-          component={Link}
-          to={isOutOfStock ? '#' : `/orders/new?productId=${product.productId}`}
+          loading={loading}
+          onClick={() => addToCart(product.productId, 1)}
           leftSection={<IconShoppingCart size={16} />}
         >
-          {isOutOfStock ? 'Unavailable' : 'Buy Now'}
+          {isOutOfStock ? 'Unavailable' : 'Add to Cart'}
         </Button>
       </Stack>
     </Card>

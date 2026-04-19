@@ -318,6 +318,27 @@ export class ApiClient {
   async refundPayment(id: string, reason?: string) {
     return this.post(API_ENDPOINTS.PAYMENTS.REFUND(id), { reason });
   }
+
+  // Cart endpoints
+  async getCart(userId: string) {
+    return this.get<{ user_id: string; items: Record<string, string> }>(API_ENDPOINTS.CART.GET(userId));
+  }
+
+  async addToCart(userId: string, productId: string, quantity: number) {
+    return this.post(
+      `${API_ENDPOINTS.CART.ADD_ITEM(userId)}?product_id=${productId}&quantity=${quantity}`
+    );
+  }
+
+  async clearCart(userId: string) {
+    return this.delete(API_ENDPOINTS.CART.CLEAR(userId));
+  }
+
+  async checkout(userId: string) {
+    return this.post<{ message: string; order_id: string; status: string }>(
+      API_ENDPOINTS.CART.CHECKOUT(userId)
+    );
+  }
 }
 
 // Export singleton instance

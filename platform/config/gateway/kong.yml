@@ -105,9 +105,37 @@ services:
           - grpc
           - grpcs
 
-# ============================================
-# Global Plugins
-# ============================================
+  # Cart Service (Python REST API) - PROTECTED
+  - name: cart-service
+    url: http://host.docker.internal:5014
+    routes:
+      - name: cart-api
+        paths:
+          - /api/cart
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              secret_is_base64: false
+              run_on_preflight: true
+
+  # PDF Service (Python REST API) - PROTECTED (Internal or Public download)
+  - name: pdf-service
+    url: http://host.docker.internal:5015
+    routes:
+      - name: pdf-api
+        paths:
+          - /api/pdf
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              secret_is_base64: false
+              run_on_preflight: true
+
+  # OpenTelemetry Collector
 plugins:
   # CORS - Allow browser requests
   - name: cors

@@ -70,6 +70,15 @@ export const API_ENDPOINTS = {
     LIST: '/api/inventory',
     DETAIL: (id: string) => `/api/inventory/${id}`,
   },
+  CART: {
+    GET: (userId: string) => `/api/cart/${userId}`,
+    ADD_ITEM: (userId: string) => `/api/cart/${userId}/items`,
+    CLEAR: (userId: string) => `/api/cart/${userId}`,
+    CHECKOUT: (userId: string) => `/api/cart/${userId}/checkout`,
+  },
+  PDF: {
+    GENERATE_INVOICE: '/api/pdf/generate/invoice',
+  },
 } as const;
 
 /**

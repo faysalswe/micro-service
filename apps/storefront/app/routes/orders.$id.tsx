@@ -5,8 +5,8 @@
 
 import type { MetaFunction, LoaderFunctionArgs } from 'react-router';
 import { data as json, useParams } from 'react-router';
-import { Container, Title, Text, Card, Button, Group, Stack, Loader, Alert, Badge, Grid } from '@mantine/core';
-import { IconAlertCircle, IconCheck, IconClock, IconX, IconArrowLeft } from '@tabler/icons-react';
+import { Container, Title, Text, Card, Button, Group, Stack, Loader, Alert, Badge, Grid, Table, Box } from '@mantine/core';
+import { IconAlertCircle, IconCheck, IconClock, IconX, IconArrowLeft, IconFileDownload } from '@tabler/icons-react';
 import { getThemeFromRequest, getLanguageFromRequest } from '~/utils/theme.server';
 import { ProtectedRoute } from '~/components/auth/protected-route';
 import { useOrder } from '~/hooks';
@@ -162,11 +162,57 @@ export default function OrderDetailsPage() {
           {/* Order Details Card */}
           <Card withBorder padding="xl" radius="md">
             <Stack gap="lg">
-              {/* Status */}
-              <div>
-                <Text size="sm" c="dimmed" mb="xs">Status</Text>
-                {getStatusBadge(order.status)}
-              </div>
+              <Group justify="space-between" align="flex-start">
+                <div>
+                  <Text size="sm" c="dimmed" mb="xs">Status</Text>
+                  {getStatusBadge(order.status)}
+                </div>
+                
+                {order.status.toLowerCase() === 'completed' && (
+                  <Button 
+                    variant="outline" 
+                    color="blue" 
+                    leftSection={<IconFileDownload size={16} />}
+                    onClick={() => window.open(`http://localhost:9000/invoices/invoice_${order.id}.pdf`, '_blank')}
+                  >
+                    Download Invoice
+                  </Button>
+                )}
+              </Group>
+
+              {/* Items Table */}
+              <Box>
+                <Text fw={700} mb="sm">Order Items</Text>
+                <Table withBorder withColumnBorders verticalSpacing="sm">
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Product ID</Table.Th>
+                      <Table.Th>Quantity</Table.Th>
+                      <Table.Th>Unit Price</Table.Th>
+                      <Table.Th>Subtotal</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {order.items && order.items.length > 0 ? (
+                      order.items.map((item: any, index: number) => (
+                        <Table.Tr key={index}>
+                          <Table.Td className="font-mono text-xs">{item.productId}</Table.Td>
+                          <Table.Td>{item.quantity}</Table.Td>
+                          <Table.Td>${item.unitPrice.toFixed(2)}</Table.Td>
+                          <Table.Td fw={500}>${(item.quantity * item.unitPrice).toFixed(2)}</Table.Td>
+                        </Table.Tr>
+                      ))
+                    ) : (
+                      <Table.Tr>
+                        <Table.Td className="font-mono text-xs">{order.productId}</Table.Td>
+                        <Table.Td>1</Table.Td>
+                        <Table.Td>${order.amount.toFixed(2)}</Table.Td>
+                        <Table.Td fw={500}>${order.amount.toFixed(2)}</Table.Td>
+                      </Table.Tr>
+                    )}
+                  </Table.Tbody>
+                </Table>
+              </Box>
 
               {/* Order Information */}
               <Grid gutter="xl">

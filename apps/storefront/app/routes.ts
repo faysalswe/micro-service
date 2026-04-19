@@ -17,4 +17,5 @@ export default [
   route('orders/:id', 'routes/orders.$id.tsx'),
   route('payments', 'routes/payments.tsx'),
   route('payments/:id', 'routes/payments.$id.tsx'),
+  route('cart', 'routes/cart.tsx'),
 ] satisfies RouteConfig;

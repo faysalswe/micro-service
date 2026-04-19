@@ -6,10 +6,11 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Group, Button, Text, Box, Menu, Avatar, Burger, ActionIcon } from '@mantine/core';
-import { IconLanguage, IconSun, IconMoon } from '@tabler/icons-react';
+import { IconLanguage, IconSun, IconMoon, IconShoppingCart } from '@tabler/icons-react';
 import { useAuth } from '~/contexts/auth-context';
 import { useTheme } from '~/hooks/useTheme';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useCart } from '~/hooks/useCart';
 
 /**
  * Navigation props
@@ -26,6 +27,7 @@ export function Navigation({ opened, toggle }: NavigationProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const { language, setLanguage } = useTranslation();
+  const { itemCount } = useCart(user?.id);
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -109,6 +111,40 @@ export function Navigation({ opened, toggle }: NavigationProps) {
             >
               {isDarkMode ? <IconSun size={20} /> : <IconMoon size={20} />}
             </ActionIcon>
+
+            {/* Shopping Cart */}
+            {isAuthenticated && (
+              <ActionIcon 
+                variant="subtle" 
+                size="lg" 
+                color="gray" 
+                component={Link}
+                to="/cart"
+                title="View cart"
+                style={{ position: 'relative' }}
+              >
+                <IconShoppingCart size={20} />
+                {itemCount > 0 && (
+                  <span style={{ 
+                    position: 'absolute', 
+                    top: -4, 
+                    right: -4, 
+                    backgroundColor: '#228be6', 
+                    color: 'white', 
+                    fontSize: 10, 
+                    fontWeight: 'bold', 
+                    borderRadius: '50%', 
+                    width: 16, 
+                    height: 16, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center' 
+                  }}>
+                    {itemCount}
+                  </span>
+                )}
+              </ActionIcon>
+            )}
 
             {isAuthenticated ? (
               <Menu shadow="md" width={200}>
