@@ -9,8 +9,8 @@ public static class OpenTelemetryConfiguration
 {
     public static void AddServiceTracing(this IServiceCollection services, IConfiguration configuration)
     {
-        var serviceName = configuration["Service:Name"] ?? "OrderService";
-        var serviceVersion = configuration["Service:Version"] ?? "1.0.0";
+        var serviceName = configuration["Service:Name"]!;
+        var serviceVersion = configuration["Service:Version"]!;
 
         // Check for the standard OTel environment variable
         var endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");

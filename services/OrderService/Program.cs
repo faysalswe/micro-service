@@ -30,12 +30,12 @@ try
     // Register gRPC Clients
     builder.Services.AddGrpcClient<Payments.V1.PaymentService.PaymentServiceClient>(o =>
     {
-        o.Address = new Uri(builder.Configuration["GrpcSettings:PaymentServiceUrl"] ?? "http://localhost:50012");
+        o.Address = new Uri(builder.Configuration["GrpcSettings:PaymentServiceUrl"]!);
     });
 
     builder.Services.AddGrpcClient<Inventory.V1.InventoryService.InventoryServiceClient>(o =>
     {
-        o.Address = new Uri(builder.Configuration["GrpcSettings:InventoryServiceUrl"] ?? "http://localhost:50013");
+        o.Address = new Uri(builder.Configuration["GrpcSettings:InventoryServiceUrl"]!);
     });
 
     // Use Serilog for logging
@@ -107,7 +107,7 @@ try
     // HTTP health endpoints for compatibility with HTTP-based probes
     app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
-    var appVersion = builder.Configuration["APP_VERSION"] ?? "1.0.0-dev";
+    var appVersion = builder.Configuration["Service:Version"]!;
     app.MapHealthEndpoints(appVersion);
 
     app.Run();

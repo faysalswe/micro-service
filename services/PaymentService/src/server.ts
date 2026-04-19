@@ -9,6 +9,7 @@ import { logger } from './logger';
 import { HealthImplementation, ServingStatusMap } from 'grpc-health-check';
 import { createRestApi } from './rest-api';
 import { seedDatabase } from './data/seeder';
+import { CONFIG } from './constants/config';
 
 // Static gRPC Imports
 import { connectNodeAdapter } from "@connectrpc/connect-node";
@@ -30,8 +31,8 @@ if (missingEnvVars.length > 0) {
 
 // Initialize OpenTelemetry tracing
 initializeTracing();
-const mongoUri = process.env.MONGO_URI || 'mongodb://admin:password123@localhost:27017';
-const dbName = process.env.MONGO_DB_NAME || 'payments_db';
+const mongoUri = CONFIG.DB.URI || 'mongodb://admin:password123@localhost:27017';
+const dbName = CONFIG.DB.NAME;
 let db: Db;
 
 // Health Status Tracking
@@ -46,9 +47,9 @@ const healthImpl = new HealthImplementation(healthStatusMap);
 
 // Circuit Breaker Options
 const breakerOptions = {
-  timeout: 3000, 
-  errorThresholdPercentage: 50, 
-  resetTimeout: 30000 
+  timeout: CONFIG.BREAKER.TIMEOUT, 
+  errorThresholdPercentage: CONFIG.BREAKER.ERROR_THRESHOLD, 
+  resetTimeout: CONFIG.BREAKER.RESET_TIMEOUT 
 };
 
 const insertPayment = async (paymentRecord: any) => {
@@ -117,7 +118,7 @@ async function main() {
     setInterval(async () => {
       const isHealthy = await checkDatabaseHealth();
       setHealthStatus(isHealthy ? 'SERVING' : 'NOT_SERVING');
-    }, 30000);
+    }, CONFIG.HEALTH.CHECK_INTERVAL);
   } catch (err: any) {
     logger.error('Failed to connect to MongoDB', { error: err.message });
     process.exit(1);
@@ -128,14 +129,14 @@ async function main() {
   const handler = connectNodeAdapter({ routes });
   const grpcServer = http2.createServer(handler);
   
-  const grpcPort = process.env.PORT || '50012';
+  const grpcPort = CONFIG.SERVER.GRPC_PORT;
   grpcServer.listen(parseInt(grpcPort, 10), '0.0.0.0', () => {
     logger.info(`Configured Endpoint: Grpc (Static) -> http://0.0.0.0:${grpcPort} (Http2)`);
   });
 
   // Start REST API server
   const restApp = createRestApi(db);
-  const restPort = parseInt(process.env.REST_PORT!, 10);
+  const restPort = parseInt(CONFIG.SERVER.REST_PORT, 10);
 
   restApp.listen(restPort, '0.0.0.0', () => {
     logger.info(`Configured Endpoint: Http -> http://0.0.0.0:${restPort} (Http1)`);
@@ -149,7 +150,7 @@ main();
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received - initiating graceful shutdown');
   setHealthStatus('NOT_SERVING');
-  setTimeout(() => process.exit(0), 5000);
+  setTimeout(() => process.exit(0), CONFIG.HEALTH.SHUTDOWN_DELAY);
 });
 
 process.on('SIGINT', () => {

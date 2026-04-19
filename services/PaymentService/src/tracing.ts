@@ -11,6 +11,7 @@ import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-grpc';
 import { logs } from '@opentelemetry/api-logs';
+import { CONFIG } from './constants/config';
 
 export function initializeTracing() {
   const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
@@ -23,8 +24,8 @@ export function initializeTracing() {
   console.log(`[OBSERVABILITY] ✅ Unified OTLP Enabled (Traces & Logs). Exporting to: ${endpoint} (Auto-Config)`);
 
   const resource = new Resource({
-    [ATTR_SERVICE_NAME]: process.env.SERVICE_NAME || 'PaymentService',
-    [ATTR_SERVICE_VERSION]: process.env.SERVICE_VERSION || '1.0.0',
+    [ATTR_SERVICE_NAME]: CONFIG.METADATA.NAME,
+    [ATTR_SERVICE_VERSION]: CONFIG.METADATA.VERSION,
   });
 
   // Trace Setup

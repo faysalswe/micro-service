@@ -77,7 +77,7 @@ try
     }
 
     // Map Endpoints
-    var appVersion = builder.Configuration["APP_VERSION"] ?? "1.0.0-dev";
+    var appVersion = builder.Configuration["Service:Version"]!;
     app.MapHealthEndpoints(appVersion);
     app.MapUserEndpoints();
 

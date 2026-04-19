@@ -48,6 +48,14 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
+func requireEnv(key string) string {
+	value, ok := os.LookupEnv(key)
+	if !ok {
+		log.Fatalf("CRITICAL: Missing required environment variable: %s", key)
+	}
+	return value
+}
+
 func main() {
 	// 0. Load .env file for local development
 	if err := godotenv.Load(); err != nil {
@@ -66,13 +74,13 @@ func main() {
 	}()
 
 	// 2. Load Config
-	dbHost := getEnv("DB_HOST", "localhost")
-	dbUser := getEnv("DB_USER", "postgres")
-	dbPassword := getEnv("DB_PASSWORD", "password123")
-	dbName := getEnv("DB_NAME", "inventory_db")
-	dbPort := getEnv("DB_PORT", "5432")
-	grpcPort := getEnv("GRPC_PORT", "50013")
-	restPort := getEnv("REST_PORT", "5013")
+	dbHost := requireEnv("DB_HOST")
+	dbUser := requireEnv("DB_USER")
+	dbPassword := requireEnv("DB_PASSWORD")
+	dbName := requireEnv("DB_NAME")
+	dbPort := requireEnv("DB_PORT")
+	grpcPort := requireEnv("GRPC_PORT")
+	restPort := requireEnv("REST_PORT")
 
 	// 3. Init DB
 	db := database.InitDB(dbHost, dbUser, dbPassword, dbName, dbPort)
