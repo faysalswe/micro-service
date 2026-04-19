@@ -22,6 +22,7 @@ try
     builder.Services.AddGrpcHealthChecks();
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
+    builder.Services.AddHttpClient();
 
     // Register local services
     builder.Services.AddScoped<ISagaService, SagaService>();

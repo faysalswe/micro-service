@@ -14,6 +14,8 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
     private readonly OrderDbContext _dbContext;
     private readonly ISagaService _sagaService;
     private readonly IIdempotencyService _idempotencyService;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
 
     public OrderProcessingService(
         ILogger<OrderProcessingService> logger, 
@@ -21,7 +23,9 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
         Inventory.V1.InventoryService.InventoryServiceClient inventoryClient,
         OrderDbContext dbContext,
         ISagaService sagaService,
-        IIdempotencyService idempotencyService)
+        IIdempotencyService idempotencyService,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration)
     {
         _logger = logger;
         _paymentClient = paymentClient;
@@ -29,6 +33,8 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
         _dbContext = dbContext;
         _sagaService = sagaService;
         _idempotencyService = idempotencyService;
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
     }
 
     public override async Task<CreateOrderResponse> CreateOrder(CreateOrderRequest request, ServerCallContext context)
@@ -70,7 +76,7 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
 
         // For now, we take the first item as the primary order data
         // (Maintaining backward compatibility with the current DB schema)
-        var firstItem = request.Items.FirstOrDefault() ?? new OrderItem { ProductId = "unknown", Quantity = 1 };
+        var firstItem = request.Items.FirstOrDefault() ?? new Orders.V1.OrderItem { ProductId = "unknown", Quantity = 1 };
         string productId = firstItem.ProductId;
         int quantity = firstItem.Quantity > 0 ? firstItem.Quantity : 1;
         double amount = request.TotalAmount; 
@@ -83,12 +89,18 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
         var order = new Order
         {
             UserId = request.UserId,
-            ProductId = productId,
-            Amount = amount,
-            Quantity = quantity,
             Status = "PENDING",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Items = request.Items.Select(i => new Data.OrderItem
+            {
+                ProductId = i.ProductId,
+                Quantity = i.Quantity,
+                UnitPrice = 0 // Would normally fetch from catalog
+            }).ToList()
         };
+
+        // Calculate total amount if not provided
+        order.Amount = request.TotalAmount > 0 ? request.TotalAmount : order.Items.Sum(i => i.Quantity * i.UnitPrice);
 
         _dbContext.Orders.Add(order);
         await _dbContext.SaveChangesAsync();
@@ -96,23 +108,25 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
         // Start saga and log first step
         await _sagaService.StartSagaAsync(order.Id, "CreateOrder", correlationId);
         await _sagaService.LogStepAsync(order.Id, "OrderCreated", "Completed",
-            new { order.Id, order.UserId, order.ProductId, order.Amount, order.Quantity });
+            new { order.Id, order.UserId, order.Amount, ItemCount = order.Items.Count });
 
-        _logger.LogInformation("Order persisted to database with ID: {OrderId}", order.Id);
+        _logger.LogInformation("Order persisted with {Count} items, ID: {OrderId}", order.Items.Count, order.Id);
 
         try 
         {
-            // SAGA STEP 1: RESERVE INVENTORY
-            _logger.LogInformation("SAGA STEP 1: Reserving stock for Order {OrderId}", order.Id);
+            // SAGA STEP 1: RESERVE INVENTORY (BATCH)
+            _logger.LogInformation("SAGA STEP 1: Reserving batch stock for Order {OrderId}", order.Id);
             await _sagaService.LogStepAsync(order.Id, "InventoryReservationRequested", "Pending",
-                new { order.Id, order.ProductId, order.Quantity });
+                new { order.Id, Items = order.Items.Select(i => new { i.ProductId, i.Quantity }) });
 
-            var inventoryResponse = await _inventoryClient.ReserveStockAsync(new ReserveStockRequest
-            {
-                OrderId = order.Id.ToString(),
-                ProductId = order.ProductId,
-                Quantity = order.Quantity
-            }, metadata);
+            var batchRequest = new BatchReserveStockRequest { OrderId = order.Id.ToString() };
+            batchRequest.Items.AddRange(order.Items.Select(i => new BatchItem 
+            { 
+                ProductId = i.ProductId, 
+                Quantity = i.Quantity 
+            }));
+
+            var inventoryResponse = await _inventoryClient.BatchReserveStockAsync(batchRequest, metadata);
 
             if (!inventoryResponse.Success)
             {
@@ -137,7 +151,7 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
             }
 
             await _sagaService.LogStepAsync(order.Id, "InventoryReservationCompleted", "Completed");
-            _logger.LogInformation("SAGA STEP 1 SUCCESS: Stock reserved for Order {OrderId}", order.Id);
+            _logger.LogInformation("SAGA STEP 1 SUCCESS: Batch stock reserved for Order {OrderId}", order.Id);
 
             // SAGA STEP 2: PROCESS PAYMENT
             _logger.LogInformation("SAGA STEP 2: Calling PaymentService for Order {OrderId}", order.Id);
@@ -158,15 +172,17 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
                     new { paymentResponse.StatusMessage });
                 
                 // COMPENSATION FOR STEP 1
-                _logger.LogInformation("TRIGGERING COMPENSATION: Releasing stock for Order {OrderId}", order.Id);
+                _logger.LogInformation("TRIGGERING COMPENSATION: Releasing batch stock for Order {OrderId}", order.Id);
                 await _sagaService.LogStepAsync(order.Id, "StockReleaseRequested", "Pending");
 
-                await _inventoryClient.ReleaseStockAsync(new ReleaseStockRequest
-                {
-                    OrderId = order.Id.ToString(),
-                    ProductId = order.ProductId,
-                    Quantity = order.Quantity
-                }, metadata);
+                var releaseRequest = new BatchReleaseStockRequest { OrderId = order.Id.ToString() };
+                releaseRequest.Items.AddRange(order.Items.Select(i => new BatchItem 
+                { 
+                    ProductId = i.ProductId, 
+                    Quantity = i.Quantity 
+                }));
+
+                await _inventoryClient.BatchReleaseStockAsync(releaseRequest, metadata);
 
                 await _sagaService.LogStepAsync(order.Id, "StockReleaseCompleted", "Completed");
                 await _sagaService.LogStepAsync(order.Id, "SagaCompensated", "Completed");
@@ -196,6 +212,10 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
             order.Status = "COMPLETED";
             await _dbContext.SaveChangesAsync();
             await _sagaService.LogStepAsync(order.Id, "OrderCompleted", "Completed");
+
+            // FIRE AND FORGET PDF GENERATION
+            _ = TriggerPdfGeneration(order, correlationId);
+
             await _sagaService.LogStepAsync(order.Id, "SagaCompleted", "Completed");
             _logger.LogInformation("SAGA COMPLETED SUCCESSFULLY for Order {OrderId}", order.Id);
 
@@ -227,6 +247,48 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
             _logger.LogError(ex, "Unexpected error during Saga orchestration");
             await _sagaService.FailStepAsync(order.Id, "SagaOrchestration", ex.Message);
             return await ErrorResponse(order, "An unexpected error occurred.", idempotencyKey);
+        }
+    }
+
+    private async Task TriggerPdfGeneration(Order order, string correlationId)
+    {
+        try
+        {
+            var pdfServiceUrl = _configuration["ExternalServices:PdfServiceUrl"];
+            if (string.IsNullOrEmpty(pdfServiceUrl)) return;
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("X-Correlation-ID", correlationId);
+
+            var payload = new
+            {
+                order_id = order.Id.ToString(),
+                user_id = order.UserId,
+                customer_name = $"User {order.UserId}", // In reality, fetch from Identity
+                total_amount = order.Amount,
+                items = order.Items.Select(i => new 
+                {
+                    product_id = i.ProductId,
+                    quantity = i.Quantity,
+                    price = i.UnitPrice,
+                    subtotal = i.Quantity * i.UnitPrice
+                }).ToList()
+            };
+
+            var response = await client.PostAsJsonAsync($"{pdfServiceUrl}/api/pdf/generate/invoice", payload);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("PDF Invoice generation triggered for Order {OrderId}", order.Id);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to trigger PDF for Order {OrderId}: {Status}", order.Id, response.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error triggering PDF generation for Order {OrderId}", order.Id);
         }
     }
 

@@ -53,20 +53,27 @@ public class OrdersController : ControllerBase
         }
 
         var orders = await query
+            .Include(o => o.Items)
             .OrderByDescending(o => o.CreatedAt)
-            .Select(o => new OrderDto
-            {
-                Id = o.Id,
-                UserId = o.UserId,
-                ProductId = o.ProductId,
-                Amount = o.Amount,
-                Status = o.Status,
-                PaymentId = o.PaymentId,
-                CreatedAt = o.CreatedAt
-            })
             .ToListAsync();
 
-        return Ok(orders);
+        var result = orders.Select(o => new OrderDto
+        {
+            Id = o.Id,
+            UserId = o.UserId,
+            Amount = o.Amount,
+            Status = o.Status,
+            PaymentId = o.PaymentId,
+            CreatedAt = o.CreatedAt,
+            Items = o.Items.Select(i => new OrderItemDto
+            {
+                ProductId = i.ProductId,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice
+            }).ToList()
+        });
+
+        return Ok(result);
     }
 
     /// <summary>
@@ -77,7 +84,9 @@ public class OrdersController : ControllerBase
     {
         _logger.LogInformation("REST: Getting order {OrderId}", id);
 
-        var order = await _dbContext.Orders.FindAsync(id);
+        var order = await _dbContext.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order == null)
         {
@@ -88,11 +97,16 @@ public class OrdersController : ControllerBase
         {
             Id = order.Id,
             UserId = order.UserId,
-            ProductId = order.ProductId,
             Amount = order.Amount,
             Status = order.Status,
             PaymentId = order.PaymentId,
-            CreatedAt = order.CreatedAt
+            CreatedAt = order.CreatedAt,
+            Items = order.Items.Select(i => new OrderItemDto
+            {
+                ProductId = i.ProductId,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice
+            }).ToList()
         });
     }
 
@@ -132,18 +146,22 @@ public class OrdersController : ControllerBase
         }
 
         _logger.LogInformation(
-            "REST: Creating order for user {UserId}, Product: {ProductId}, Amount: {Amount}",
-            request.UserId, request.ProductId, request.Amount);
+            "REST: Creating order for user {UserId}, Items: {Count}, Amount: {Amount}",
+            request.UserId, request.Items.Count, request.Amount);
 
         // SAGA STEP 1: Create and persist order
         var order = new Order
         {
             UserId = request.UserId,
-            ProductId = request.ProductId,
             Amount = request.Amount,
-            Quantity = request.Quantity,
             Status = "PENDING",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Items = request.Items.Select(i => new Data.OrderItem
+            {
+                ProductId = i.ProductId,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice
+            }).ToList()
         };
 
         _dbContext.Orders.Add(order);
@@ -152,7 +170,7 @@ public class OrdersController : ControllerBase
         // Start saga and log first step
         await _sagaService.StartSagaAsync(order.Id, "CreateOrder", correlationId);
         await _sagaService.LogStepAsync(order.Id, "OrderCreated", "Completed",
-            new { order.Id, order.UserId, order.ProductId, order.Amount, order.Quantity });
+            new { order.Id, order.UserId, order.Amount, ItemCount = order.Items.Count });
 
         _logger.LogInformation("Order persisted with ID: {OrderId}", order.Id);
 
@@ -281,7 +299,9 @@ public class OrdersController : ControllerBase
     {
         _logger.LogInformation("REST: Cancelling order {OrderId}", id);
 
-        var order = await _dbContext.Orders.FindAsync(id);
+        var order = await _dbContext.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order == null)
         {
@@ -345,12 +365,6 @@ public class OrdersController : ControllerBase
             _logger.LogInformation("Saga: Restocking items for order {OrderId}", id);
             await _sagaService.LogStepAsync(sagaId, "RestockItems", "Started");
 
-            var restockRequest = new RestockItemsRequest 
-            { 
-                ProductId = order.ProductId,
-                Quantity = order.Quantity 
-            };
-
             // Define Polly retry policy for restock
             var restockPolicy = Policy
                 .Handle<RpcException>()
@@ -361,34 +375,33 @@ public class OrdersController : ControllerBase
 
             try
             {
-                var restockResult = await restockPolicy.ExecuteAsync(async () => 
+                foreach (var item in order.Items)
                 {
-                    return await _inventoryClient.RestockItemsAsync(restockRequest);
-                });
+                    var restockRequest = new RestockItemsRequest 
+                    { 
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity 
+                    };
 
-                if (restockResult.Success)
-                {
-                    await _sagaService.LogStepAsync(sagaId, "RestockItems", "Completed");
-                    order.Status = "CANCELLED";
-                    await _dbContext.SaveChangesAsync();
-                    return Ok(new { message = "Order cancelled and restocked", orderId = id });
+                    await restockPolicy.ExecuteAsync(async () => 
+                    {
+                        return await _inventoryClient.RestockItemsAsync(restockRequest);
+                    });
                 }
-                else
-                {
-                    await _sagaService.LogStepAsync(sagaId, "RestockItems", "Failed", null, restockResult.Message);
-                    order.Status = "CANCELLATION_PENDING";
-                    await _dbContext.SaveChangesAsync();
-                    return Accepted(new { message = "Order cancellation in progress, restock pending", orderId = id });
-                }
+
+                await _sagaService.LogStepAsync(sagaId, "RestockItems", "Completed");
+                order.Status = "CANCELLED";
+                await _dbContext.SaveChangesAsync();
+                return Ok(new { message = "Order cancelled and items restocked", orderId = id });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Saga: Inventory Restock failed after retries for order {OrderId}", id);
+                _logger.LogError(ex, "Saga: Inventory Restock failed for order {OrderId}", id);
                 await _sagaService.LogStepAsync(sagaId, "RestockItems", "Failed", null, ex.Message);
                 
                 order.Status = "CANCELLATION_PENDING";
                 await _dbContext.SaveChangesAsync();
-                return Accepted(new { message = "Order cancellation in progress, restock failed after retries", orderId = id });
+                return Accepted(new { message = "Order cancellation in progress, restock failed", orderId = id });
             }
         }
         catch (Exception ex)
@@ -403,16 +416,22 @@ public class OrdersController : ControllerBase
 public record CreateOrderDto
 {
     public required string UserId { get; init; }
+    public List<OrderItemDto> Items { get; init; } = new();
+    public double Amount { get; init; }
+}
+
+public record OrderItemDto
+{
     public required string ProductId { get; init; }
-    public required double Amount { get; init; }
     public required int Quantity { get; init; }
+    public double UnitPrice { get; init; }
 }
 
 public record OrderDto
 {
     public Guid Id { get; init; }
     public string UserId { get; init; } = string.Empty;
-    public string ProductId { get; init; } = string.Empty;
+    public List<OrderItemDto> Items { get; init; } = new();
     public double Amount { get; init; }
     public string Status { get; init; } = string.Empty;
     public string? PaymentId { get; init; }

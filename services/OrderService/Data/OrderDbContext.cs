@@ -9,12 +9,20 @@ public class OrderDbContext : DbContext
     }
 
     public DbSet<Order> Orders { get; set; } = null!;
+    public DbSet<OrderItem> OrderItems { get; set; } = null!;
     public DbSet<SagaLog> SagaLogs { get; set; } = null!;
     public DbSet<IdempotencyRecord> IdempotencyRecords { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Configure One-to-Many relationship
+        modelBuilder.Entity<Order>()
+            .HasMany(o => o.Items)
+            .WithOne()
+            .HasForeignKey(i => i.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Ensure the ID is generated if not provided
         modelBuilder.Entity<Order>()
