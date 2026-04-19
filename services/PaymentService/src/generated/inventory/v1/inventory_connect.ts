@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateProductRequest, CreateProductResponse, DeleteProductRequest, DeleteProductResponse, GetStockRequest, GetStockResponse, ListProductsRequest, ListProductsResponse, ReleaseStockRequest, ReleaseStockResponse, ReserveStockRequest, ReserveStockResponse, RestockItemsRequest, RestockItemsResponse, UpdateProductRequest, UpdateProductResponse } from "./inventory_pb.js";
+import { BatchReleaseStockRequest, BatchReleaseStockResponse, BatchReserveStockRequest, BatchReserveStockResponse, CreateProductRequest, CreateProductResponse, DeleteProductRequest, DeleteProductResponse, GetStockRequest, GetStockResponse, ListProductsRequest, ListProductsResponse, ReleaseStockRequest, ReleaseStockResponse, ReserveStockRequest, ReserveStockResponse, RestockItemsRequest, RestockItemsResponse, UpdateProductRequest, UpdateProductResponse } from "./inventory_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -28,6 +28,24 @@ export const InventoryService = {
       name: "ReleaseStock",
       I: ReleaseStockRequest,
       O: ReleaseStockResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc inventory.v1.InventoryService.BatchReserveStock
+     */
+    batchReserveStock: {
+      name: "BatchReserveStock",
+      I: BatchReserveStockRequest,
+      O: BatchReserveStockResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc inventory.v1.InventoryService.BatchReleaseStock
+     */
+    batchReleaseStock: {
+      name: "BatchReleaseStock",
+      I: BatchReleaseStockRequest,
+      O: BatchReleaseStockResponse,
       kind: MethodKind.Unary,
     },
     /**

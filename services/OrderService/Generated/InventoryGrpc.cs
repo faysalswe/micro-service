@@ -54,6 +54,14 @@ namespace Inventory.V1 {
     [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
     static readonly grpc::Marshaller<global::Inventory.V1.ReleaseStockResponse> __Marshaller_inventory_v1_ReleaseStockResponse = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Inventory.V1.ReleaseStockResponse.Parser));
     [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+    static readonly grpc::Marshaller<global::Inventory.V1.BatchReserveStockRequest> __Marshaller_inventory_v1_BatchReserveStockRequest = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Inventory.V1.BatchReserveStockRequest.Parser));
+    [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+    static readonly grpc::Marshaller<global::Inventory.V1.BatchReserveStockResponse> __Marshaller_inventory_v1_BatchReserveStockResponse = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Inventory.V1.BatchReserveStockResponse.Parser));
+    [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+    static readonly grpc::Marshaller<global::Inventory.V1.BatchReleaseStockRequest> __Marshaller_inventory_v1_BatchReleaseStockRequest = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Inventory.V1.BatchReleaseStockRequest.Parser));
+    [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+    static readonly grpc::Marshaller<global::Inventory.V1.BatchReleaseStockResponse> __Marshaller_inventory_v1_BatchReleaseStockResponse = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Inventory.V1.BatchReleaseStockResponse.Parser));
+    [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
     static readonly grpc::Marshaller<global::Inventory.V1.GetStockRequest> __Marshaller_inventory_v1_GetStockRequest = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Inventory.V1.GetStockRequest.Parser));
     [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
     static readonly grpc::Marshaller<global::Inventory.V1.GetStockResponse> __Marshaller_inventory_v1_GetStockResponse = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Inventory.V1.GetStockResponse.Parser));
@@ -93,6 +101,22 @@ namespace Inventory.V1 {
         "ReleaseStock",
         __Marshaller_inventory_v1_ReleaseStockRequest,
         __Marshaller_inventory_v1_ReleaseStockResponse);
+
+    [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+    static readonly grpc::Method<global::Inventory.V1.BatchReserveStockRequest, global::Inventory.V1.BatchReserveStockResponse> __Method_BatchReserveStock = new grpc::Method<global::Inventory.V1.BatchReserveStockRequest, global::Inventory.V1.BatchReserveStockResponse>(
+        grpc::MethodType.Unary,
+        __ServiceName,
+        "BatchReserveStock",
+        __Marshaller_inventory_v1_BatchReserveStockRequest,
+        __Marshaller_inventory_v1_BatchReserveStockResponse);
+
+    [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+    static readonly grpc::Method<global::Inventory.V1.BatchReleaseStockRequest, global::Inventory.V1.BatchReleaseStockResponse> __Method_BatchReleaseStock = new grpc::Method<global::Inventory.V1.BatchReleaseStockRequest, global::Inventory.V1.BatchReleaseStockResponse>(
+        grpc::MethodType.Unary,
+        __ServiceName,
+        "BatchReleaseStock",
+        __Marshaller_inventory_v1_BatchReleaseStockRequest,
+        __Marshaller_inventory_v1_BatchReleaseStockResponse);
 
     [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
     static readonly grpc::Method<global::Inventory.V1.GetStockRequest, global::Inventory.V1.GetStockResponse> __Method_GetStock = new grpc::Method<global::Inventory.V1.GetStockRequest, global::Inventory.V1.GetStockResponse>(
@@ -160,6 +184,18 @@ namespace Inventory.V1 {
 
       [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
       public virtual global::System.Threading.Tasks.Task<global::Inventory.V1.ReleaseStockResponse> ReleaseStock(global::Inventory.V1.ReleaseStockRequest request, grpc::ServerCallContext context)
+      {
+        throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+      }
+
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual global::System.Threading.Tasks.Task<global::Inventory.V1.BatchReserveStockResponse> BatchReserveStock(global::Inventory.V1.BatchReserveStockRequest request, grpc::ServerCallContext context)
+      {
+        throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+      }
+
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual global::System.Threading.Tasks.Task<global::Inventory.V1.BatchReleaseStockResponse> BatchReleaseStock(global::Inventory.V1.BatchReleaseStockRequest request, grpc::ServerCallContext context)
       {
         throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
       }
@@ -268,6 +304,46 @@ namespace Inventory.V1 {
       public virtual grpc::AsyncUnaryCall<global::Inventory.V1.ReleaseStockResponse> ReleaseStockAsync(global::Inventory.V1.ReleaseStockRequest request, grpc::CallOptions options)
       {
         return CallInvoker.AsyncUnaryCall(__Method_ReleaseStock, null, options, request);
+      }
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual global::Inventory.V1.BatchReserveStockResponse BatchReserveStock(global::Inventory.V1.BatchReserveStockRequest request, grpc::Metadata headers = null, global::System.DateTime? deadline = null, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
+      {
+        return BatchReserveStock(request, new grpc::CallOptions(headers, deadline, cancellationToken));
+      }
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual global::Inventory.V1.BatchReserveStockResponse BatchReserveStock(global::Inventory.V1.BatchReserveStockRequest request, grpc::CallOptions options)
+      {
+        return CallInvoker.BlockingUnaryCall(__Method_BatchReserveStock, null, options, request);
+      }
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual grpc::AsyncUnaryCall<global::Inventory.V1.BatchReserveStockResponse> BatchReserveStockAsync(global::Inventory.V1.BatchReserveStockRequest request, grpc::Metadata headers = null, global::System.DateTime? deadline = null, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
+      {
+        return BatchReserveStockAsync(request, new grpc::CallOptions(headers, deadline, cancellationToken));
+      }
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual grpc::AsyncUnaryCall<global::Inventory.V1.BatchReserveStockResponse> BatchReserveStockAsync(global::Inventory.V1.BatchReserveStockRequest request, grpc::CallOptions options)
+      {
+        return CallInvoker.AsyncUnaryCall(__Method_BatchReserveStock, null, options, request);
+      }
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual global::Inventory.V1.BatchReleaseStockResponse BatchReleaseStock(global::Inventory.V1.BatchReleaseStockRequest request, grpc::Metadata headers = null, global::System.DateTime? deadline = null, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
+      {
+        return BatchReleaseStock(request, new grpc::CallOptions(headers, deadline, cancellationToken));
+      }
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual global::Inventory.V1.BatchReleaseStockResponse BatchReleaseStock(global::Inventory.V1.BatchReleaseStockRequest request, grpc::CallOptions options)
+      {
+        return CallInvoker.BlockingUnaryCall(__Method_BatchReleaseStock, null, options, request);
+      }
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual grpc::AsyncUnaryCall<global::Inventory.V1.BatchReleaseStockResponse> BatchReleaseStockAsync(global::Inventory.V1.BatchReleaseStockRequest request, grpc::Metadata headers = null, global::System.DateTime? deadline = null, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
+      {
+        return BatchReleaseStockAsync(request, new grpc::CallOptions(headers, deadline, cancellationToken));
+      }
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual grpc::AsyncUnaryCall<global::Inventory.V1.BatchReleaseStockResponse> BatchReleaseStockAsync(global::Inventory.V1.BatchReleaseStockRequest request, grpc::CallOptions options)
+      {
+        return CallInvoker.AsyncUnaryCall(__Method_BatchReleaseStock, null, options, request);
       }
       [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
       public virtual global::Inventory.V1.GetStockResponse GetStock(global::Inventory.V1.GetStockRequest request, grpc::Metadata headers = null, global::System.DateTime? deadline = null, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
@@ -405,6 +481,8 @@ namespace Inventory.V1 {
       return grpc::ServerServiceDefinition.CreateBuilder()
           .AddMethod(__Method_ReserveStock, serviceImpl.ReserveStock)
           .AddMethod(__Method_ReleaseStock, serviceImpl.ReleaseStock)
+          .AddMethod(__Method_BatchReserveStock, serviceImpl.BatchReserveStock)
+          .AddMethod(__Method_BatchReleaseStock, serviceImpl.BatchReleaseStock)
           .AddMethod(__Method_GetStock, serviceImpl.GetStock)
           .AddMethod(__Method_ListProducts, serviceImpl.ListProducts)
           .AddMethod(__Method_CreateProduct, serviceImpl.CreateProduct)
@@ -422,6 +500,8 @@ namespace Inventory.V1 {
     {
       serviceBinder.AddMethod(__Method_ReserveStock, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::Inventory.V1.ReserveStockRequest, global::Inventory.V1.ReserveStockResponse>(serviceImpl.ReserveStock));
       serviceBinder.AddMethod(__Method_ReleaseStock, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::Inventory.V1.ReleaseStockRequest, global::Inventory.V1.ReleaseStockResponse>(serviceImpl.ReleaseStock));
+      serviceBinder.AddMethod(__Method_BatchReserveStock, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::Inventory.V1.BatchReserveStockRequest, global::Inventory.V1.BatchReserveStockResponse>(serviceImpl.BatchReserveStock));
+      serviceBinder.AddMethod(__Method_BatchReleaseStock, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::Inventory.V1.BatchReleaseStockRequest, global::Inventory.V1.BatchReleaseStockResponse>(serviceImpl.BatchReleaseStock));
       serviceBinder.AddMethod(__Method_GetStock, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::Inventory.V1.GetStockRequest, global::Inventory.V1.GetStockResponse>(serviceImpl.GetStock));
       serviceBinder.AddMethod(__Method_ListProducts, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::Inventory.V1.ListProductsRequest, global::Inventory.V1.ListProductsResponse>(serviceImpl.ListProducts));
       serviceBinder.AddMethod(__Method_CreateProduct, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::Inventory.V1.CreateProductRequest, global::Inventory.V1.CreateProductResponse>(serviceImpl.CreateProduct));

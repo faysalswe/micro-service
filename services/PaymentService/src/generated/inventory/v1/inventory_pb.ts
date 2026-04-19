@@ -7,6 +7,221 @@ import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialM
 import { Message, proto3 } from "@bufbuild/protobuf";
 
 /**
+ * @generated from message inventory.v1.BatchReserveStockRequest
+ */
+export class BatchReserveStockRequest extends Message<BatchReserveStockRequest> {
+  /**
+   * @generated from field: string order_id = 1;
+   */
+  orderId = "";
+
+  /**
+   * @generated from field: repeated inventory.v1.BatchItem items = 2;
+   */
+  items: BatchItem[] = [];
+
+  constructor(data?: PartialMessage<BatchReserveStockRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "inventory.v1.BatchReserveStockRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "order_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "items", kind: "message", T: BatchItem, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BatchReserveStockRequest {
+    return new BatchReserveStockRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BatchReserveStockRequest {
+    return new BatchReserveStockRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BatchReserveStockRequest {
+    return new BatchReserveStockRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BatchReserveStockRequest | PlainMessage<BatchReserveStockRequest> | undefined, b: BatchReserveStockRequest | PlainMessage<BatchReserveStockRequest> | undefined): boolean {
+    return proto3.util.equals(BatchReserveStockRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message inventory.v1.BatchReserveStockResponse
+ */
+export class BatchReserveStockResponse extends Message<BatchReserveStockResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  constructor(data?: PartialMessage<BatchReserveStockResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "inventory.v1.BatchReserveStockResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BatchReserveStockResponse {
+    return new BatchReserveStockResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BatchReserveStockResponse {
+    return new BatchReserveStockResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BatchReserveStockResponse {
+    return new BatchReserveStockResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BatchReserveStockResponse | PlainMessage<BatchReserveStockResponse> | undefined, b: BatchReserveStockResponse | PlainMessage<BatchReserveStockResponse> | undefined): boolean {
+    return proto3.util.equals(BatchReserveStockResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message inventory.v1.BatchReleaseStockRequest
+ */
+export class BatchReleaseStockRequest extends Message<BatchReleaseStockRequest> {
+  /**
+   * @generated from field: string order_id = 1;
+   */
+  orderId = "";
+
+  /**
+   * @generated from field: repeated inventory.v1.BatchItem items = 2;
+   */
+  items: BatchItem[] = [];
+
+  constructor(data?: PartialMessage<BatchReleaseStockRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "inventory.v1.BatchReleaseStockRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "order_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "items", kind: "message", T: BatchItem, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BatchReleaseStockRequest {
+    return new BatchReleaseStockRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BatchReleaseStockRequest {
+    return new BatchReleaseStockRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BatchReleaseStockRequest {
+    return new BatchReleaseStockRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BatchReleaseStockRequest | PlainMessage<BatchReleaseStockRequest> | undefined, b: BatchReleaseStockRequest | PlainMessage<BatchReleaseStockRequest> | undefined): boolean {
+    return proto3.util.equals(BatchReleaseStockRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message inventory.v1.BatchReleaseStockResponse
+ */
+export class BatchReleaseStockResponse extends Message<BatchReleaseStockResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  constructor(data?: PartialMessage<BatchReleaseStockResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "inventory.v1.BatchReleaseStockResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BatchReleaseStockResponse {
+    return new BatchReleaseStockResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BatchReleaseStockResponse {
+    return new BatchReleaseStockResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BatchReleaseStockResponse {
+    return new BatchReleaseStockResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BatchReleaseStockResponse | PlainMessage<BatchReleaseStockResponse> | undefined, b: BatchReleaseStockResponse | PlainMessage<BatchReleaseStockResponse> | undefined): boolean {
+    return proto3.util.equals(BatchReleaseStockResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message inventory.v1.BatchItem
+ */
+export class BatchItem extends Message<BatchItem> {
+  /**
+   * @generated from field: string product_id = 1;
+   */
+  productId = "";
+
+  /**
+   * @generated from field: int32 quantity = 2;
+   */
+  quantity = 0;
+
+  constructor(data?: PartialMessage<BatchItem>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "inventory.v1.BatchItem";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "product_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "quantity", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BatchItem {
+    return new BatchItem().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BatchItem {
+    return new BatchItem().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BatchItem {
+    return new BatchItem().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BatchItem | PlainMessage<BatchItem> | undefined, b: BatchItem | PlainMessage<BatchItem> | undefined): boolean {
+    return proto3.util.equals(BatchItem, a, b);
+  }
+}
+
+/**
  * @generated from message inventory.v1.ReserveStockRequest
  */
 export class ReserveStockRequest extends Message<ReserveStockRequest> {
