@@ -33,6 +33,10 @@ exporters:
   prometheus:
     endpoint: "0.0.0.0:8889"
 
+  # Export to Loki
+  loki:
+    endpoint: "http://loki:3100/loki/api/v1/push"
+
 service:
   pipelines:
     traces:
@@ -44,6 +48,11 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [prometheus, debug]
+
+    logs:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [loki, debug]
 
   telemetry:
     logs:

@@ -109,8 +109,11 @@ services:
     container_name: otel-collector
     restart: unless-stopped
     command: ["--config=/etc/otel-collector-config.yaml"]
+    user: "0:0" # Run as root to read docker logs
     volumes:
       - ../charts/observability/config/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "4317:4317"     # OTLP gRPC receiver
       - "4318:4318"     # OTLP HTTP receiver

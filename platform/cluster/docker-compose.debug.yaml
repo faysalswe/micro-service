@@ -40,7 +40,7 @@ services:
       - Redis__Configuration=redis:${PORT_REDIS:-6379}
       - GrpcSettings__PaymentServiceUrl=${URL_PAYMENT_SERVICE_GRPC:-http://payment-service:50012}
       - GrpcSettings__InventoryServiceUrl=${URL_INVENTORY_SERVICE_GRPC:-http://inventory-service:50013}
-      - OpenTelemetry__Endpoint=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
       - LOKI_URL=${LOKI_URL:-http://loki:3100}
 
   payment-service:
