@@ -84,3 +84,35 @@ services:
       - REST_PORT=${INTERNAL_PORT_INVENTORY:-5013}
       - GRPC_PORT=${INTERNAL_PORT_GRPC_INVENTORY:-50013}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+
+  # Python Cart Service
+  cart-service:
+    networks:
+      - infra-network
+    build:
+      context: ../../services/CartService
+      dockerfile: Dockerfile
+    container_name: cart-service
+    ports:
+      - "5014:5014"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - SERVICE_NAME=CartService
+
+  # Python PDF Generation Service
+  pdf-service:
+    networks:
+      - infra-network
+    build:
+      context: ../../services/PdfService
+      dockerfile: Dockerfile
+    container_name: pdf-service
+    ports:
+      - "5015:5015"
+    environment:
+      - S3_ENDPOINT=http://minio:9000
+      - S3_ACCESS_KEY=admin
+      - S3_SECRET_KEY=password123
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - SERVICE_NAME=PdfService
