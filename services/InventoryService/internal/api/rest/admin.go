@@ -18,10 +18,8 @@ func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
 		Tags:        []string{"Admin"},
 		Security:    []map[string][]string{{"bearerAuth": {}}},
 	}, func(ctx context.Context, input *CreateProductRequest) (*SuccessResponse, error) {
-		// Huma v2: The context can be cast to huma.Context if needed, 
-		// but Register handlers usually take huma.Context directly in some adapters.
-		// Let's use the most reliable way for humagin.
-		if err := ValidateAdminToken(ctx.(huma.Context)); err != nil {
+		hctx := ctx.(huma.Context)
+		if err := ValidateAdminToken(hctx); err != nil {
 			return nil, err
 		}
 		success, msg, err := svc.CreateProduct(ctx, input.Body.ProductID, input.Body.Name, input.Body.Price, input.Body.Quantity)
@@ -42,7 +40,8 @@ func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
 		Tags:        []string{"Admin"},
 		Security:    []map[string][]string{{"bearerAuth": {}}},
 	}, func(ctx context.Context, input *UpdateProductRequest) (*SuccessResponse, error) {
-		if err := ValidateAdminToken(ctx.(huma.Context)); err != nil {
+		hctx := ctx.(huma.Context)
+		if err := ValidateAdminToken(hctx); err != nil {
 			return nil, err
 		}
 		success, msg, err := svc.UpdateProduct(ctx, input.ID, input.Body.Name, input.Body.Price, input.Body.Quantity)
@@ -63,7 +62,8 @@ func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
 		Tags:        []string{"Admin"},
 		Security:    []map[string][]string{{"bearerAuth": {}}},
 	}, func(ctx context.Context, input *ProductIDParam) (*SuccessResponse, error) {
-		if err := ValidateAdminToken(ctx.(huma.Context)); err != nil {
+		hctx := ctx.(huma.Context)
+		if err := ValidateAdminToken(hctx); err != nil {
 			return nil, err
 		}
 		success, msg, err := svc.DeleteProduct(ctx, input.ID)
