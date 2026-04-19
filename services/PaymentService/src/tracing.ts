@@ -6,6 +6,8 @@ import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-grpc';
 import { logs } from '@opentelemetry/api-logs';
@@ -41,6 +43,8 @@ export function initializeTracing() {
 
   registerInstrumentations({
     instrumentations: [
+      new HttpInstrumentation(),
+      new ExpressInstrumentation(),
       new GrpcInstrumentation({
         enabled: true,
       }),
