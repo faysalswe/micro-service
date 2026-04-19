@@ -33,6 +33,10 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
 
     public override async Task<CreateOrderResponse> CreateOrder(CreateOrderRequest request, ServerCallContext context)
     {
+        // Metadata is optional for propagation because OpenTelemetry 
+        // will automatically inject the trace context into the call.
+        
+        // Check for existing correlation ID or create new one
         var correlationId = context.RequestHeaders.GetValue("x-correlation-id") ?? Guid.NewGuid().ToString();
         var metadata = new Metadata { { "x-correlation-id", correlationId } };
         

@@ -8,23 +8,16 @@ using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Context;
 
-// Build initial configuration for logging
-var initialConfig = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: true)
-    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
-    .AddEnvironmentVariables()
-    .Build();
-
-// Configure Serilog FIRST
-LoggingConfiguration.ConfigureLogging(initialConfig);
-
 try
 {
-    Log.Information("Starting OrderService");
-
     var builder = WebApplication.CreateBuilder(args);
 
+    // The .NET Way: Standard configuration automatically includes JSON and Env Vars
+    LoggingConfiguration.ConfigureLogging(builder.Configuration);
+    Log.Information("Starting OrderService");
+
     // Add services to the container.
+    builder.Services.AddServiceTracing(builder.Configuration);
     builder.Services.AddGrpc();
     builder.Services.AddGrpcHealthChecks();
     builder.Services.AddControllers();

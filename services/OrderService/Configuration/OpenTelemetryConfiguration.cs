@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -9,6 +11,17 @@ public static class OpenTelemetryConfiguration
     {
         var serviceName = configuration["Service:Name"] ?? "OrderService";
         var serviceVersion = configuration["Service:Version"] ?? "1.0.0";
+
+        // Check for the standard OTel environment variable
+        var endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
+
+        if (string.IsNullOrEmpty(endpoint))
+        {
+            Console.WriteLine("[OBSERVABILITY] ⚠️ OTEL_EXPORTER_OTLP_ENDPOINT not found. Tracing is DISABLED.");
+            return;
+        }
+
+        Console.WriteLine($"[OBSERVABILITY] ✅ Tracing ENABLED. Exporting to: {endpoint} (Auto-Config)");
 
         services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
@@ -26,9 +39,6 @@ public static class OpenTelemetryConfiguration
                 })
                 .AddHttpClientInstrumentation()
                 .AddEntityFrameworkCoreInstrumentation()
-                .AddOtlpExporter(options =>
-                {
-                    options.Endpoint = new Uri(configuration["OpenTelemetry:Endpoint"] ?? "http://localhost:4317");
-                }));
+                .AddOtlpExporter()); // Auto-detects OTEL_EXPORTER_OTLP_ENDPOINT
     }
 }
