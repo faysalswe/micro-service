@@ -28,7 +28,7 @@ namespace OrderService.Tests
             _pactBuilder
                 .UponReceiving("A request for product stock")
                     .Given("Product PROD-001 exists with 100 units")
-                    .WithRequest(HttpMethod.Get, "/api/inventory/PROD-001")
+                    .WithRequest(HttpMethod.Get, "/api/inventory/active-products/PROD-001")
                 .WillRespond()
                     .WithStatus(System.Net.HttpStatusCode.OK)
                     .WithHeader("Content-Type", "application/json")
@@ -42,7 +42,7 @@ namespace OrderService.Tests
             _pactBuilder.Verify(ctx =>
             {
                 var client = new HttpClient { BaseAddress = ctx.MockServerUri };
-                client.GetAsync("/api/inventory/PROD-001").GetAwaiter().GetResult().EnsureSuccessStatusCode();
+                client.GetAsync("/api/inventory/active-products/PROD-001").GetAwaiter().GetResult().EnsureSuccessStatusCode();
             });
         }
 
