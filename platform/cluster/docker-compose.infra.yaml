@@ -102,6 +102,8 @@ services:
       retries: 5
     networks:
       - infra-network
+    volumes:
+      - minio_data:/data
 
   # API Gateway (Kong)
   kong:
@@ -243,6 +245,7 @@ volumes:
   order_data:
   payment_data:
   inventory_data:
+  minio_data:
   loki_data:
   prometheus_data:
   grafana_data:
