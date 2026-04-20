@@ -42,6 +42,30 @@ func SeedDatabase(db *gorm.DB) {
 			Price:     449.99,
 			Quantity:  0, // Out of stock for testing
 		},
+		{
+			ProductID: "PROD-005",
+			Name:      "Basic USB Optical Mouse",
+			Price:     12.99, // Cheap (Offer)
+			Quantity:  200,
+		},
+		{
+			ProductID: "PROD-006",
+			Name:      "Professional Gaming Mouse",
+			Price:     89.00,
+			Quantity:  5, // Low stock (Offer)
+		},
+		{
+			ProductID: "PROD-007",
+			Name:      "Bluetooth Multi-Device Keyboard",
+			Price:     45.00, // Cheap (Offer)
+			Quantity:  8,  // Low stock (Offer)
+		},
+		{
+			ProductID: "PROD-008",
+			Name:      "USB-C Docking Station",
+			Price:     129.99,
+			Quantity:  40,
+		},
 	}
 
 	if err := db.Create(&products).Error; err != nil {
