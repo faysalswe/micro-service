@@ -13,7 +13,10 @@ from datetime import datetime
 import io
 import os
 
-from .constants.config import CONFIG, INTERNAL_CONSTANTS
+try:
+    from .constants.config import CONFIG, INTERNAL_CONSTANTS
+except ImportError:
+    from constants.config import CONFIG, INTERNAL_CONSTANTS
 
 app = FastAPI(title=CONFIG["SERVICE_NAME"], version=INTERNAL_CONSTANTS["VERSION"])
 
@@ -48,16 +51,6 @@ async def health():
 
 @app.post("/api/pdf/generate/invoice")
 async def generate_invoice(order_data: dict):
-    """
-    Expects order_data like:
-    {
-        "order_id": "123",
-        "user_id": "user_1",
-        "customer_name": "John Doe",
-        "total_amount": 150.00,
-        "items": [{"product_id": "p1", "quantity": 2, "price": 50, "subtotal": 100}, ...]
-    }
-    """
     try:
         # 1. Prepare data for template
         order_data["date"] = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -81,7 +74,6 @@ async def generate_invoice(order_data: dict):
         )
         
         # 5. Return the URL (signed URL or public URL)
-        # For simplicity, returning a generated URL string
         download_url = f"{CONFIG['S3_ENDPOINT']}/{INTERNAL_CONSTANTS['INVOICE_BUCKET']}/{file_name}"
         
         return {
@@ -93,4 +85,5 @@ async def generate_invoice(order_data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5015)
+    port = int(os.environ.get("PORT", os.environ.get("REST_PORT", 5015)))
+    uvicorn.run(app, host="0.0.0.0", port=port)
