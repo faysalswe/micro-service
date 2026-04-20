@@ -18,6 +18,12 @@ This project is a polyglot microservices architecture used as a testing ground f
   - `config/`: Gateway and monitoring configuration.
 - **`protos/`**: gRPC definitions.
 
+## 📚 Learning Resources
+
+- [SRE & Observability Master Guide](docs/OBSERVABILITY_SRE_MASTER_GUIDE.md) - Deep dive into metrics, traces, and logs.
+- [Networking & OS Internals Guide](docs/NETWORKING_OS_MASTER_GUIDE.md) - Understanding namespaces, veth, and CNI.
+- [Infrastructure Reference](docs/INFRASTRUCTURE_REFERENCE.md) - k3d/k3s setup and operations.
+
 ## Key Learning Milestones
 
 - ✅ **Security**: All containers run as non-root (UID 1001).

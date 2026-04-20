@@ -10,8 +10,10 @@ temp/
 # --- .NET ---
 bin/
 obj/
+publish/
 **/bin/
 **/obj/
+**/publish/
 *.user
 *.suo
 *.sln.docstates

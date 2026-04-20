@@ -17,6 +17,7 @@ COPY . .
 # Environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PORT=5014
+ENV PYTHONPATH=/app/src:/app/src/generated
 
 EXPOSE 5014
 
