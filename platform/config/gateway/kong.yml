@@ -22,7 +22,7 @@ jwt_secrets:
 services:
   # Identity Service (HTTP REST) - PUBLIC (no JWT required)
   - name: identity-service
-    url: http://host.docker.internal:5010
+    url: http://identity-service:5010
     routes:
       - name: auth-api
         paths:
@@ -31,7 +31,7 @@ services:
 
   # Order Service (REST API) - PROTECTED
   - name: order-service
-    url: http://host.docker.internal:5011
+    url: http://order-service:5011
     routes:
       - name: orders-api
         paths:
@@ -46,7 +46,7 @@ services:
 
   # Payment Service (REST API) - PROTECTED
   - name: payment-service
-    url: http://host.docker.internal:5012
+    url: http://payment-service:5012
     routes:
       - name: payments-api
         paths:
@@ -61,7 +61,7 @@ services:
 
   # Inventory Service (REST API)
   - name: inventory-service
-    url: http://host.docker.internal:5013
+    url: http://inventory-service:5013
     routes:
       # 1. PUBLIC: Exact match for the List API ONLY
       - name: inventory-list-public
@@ -85,7 +85,7 @@ services:
 
   # Inventory Service (gRPC)
   - name: inventory-grpc
-    url: grpc://host.docker.internal:50013
+    url: grpc://inventory-service:50013
     routes:
       - name: inventory-grpc-route
         paths:
@@ -96,7 +96,7 @@ services:
 
   # Payment Service (gRPC)
   - name: payment-grpc
-    url: grpc://host.docker.internal:50012
+    url: grpc://payment-service:50012
     routes:
       - name: payment-grpc-route
         paths:
@@ -107,7 +107,7 @@ services:
 
   # Cart Service (Python REST API) - PROTECTED
   - name: cart-service
-    url: http://host.docker.internal:5014
+    url: http://cart-service:5014
     routes:
       - name: cart-api
         paths:
@@ -122,7 +122,7 @@ services:
 
   # PDF Service (Python REST API) - PROTECTED (Internal or Public download)
   - name: pdf-service
-    url: http://host.docker.internal:5015
+    url: http://pdf-service:5015
     routes:
       - name: pdf-api
         paths:
@@ -141,8 +141,8 @@ plugins:
   - name: cors
     config:
       origins:
-        - http://localhost:5014
-        - http://localhost:5015
+        - http://localhost:5008
+        - http://localhost:5009
       methods:
         - GET
         - POST

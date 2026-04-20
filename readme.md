@@ -29,8 +29,8 @@ Ensure infrastructure is running first via Docker Compose.
 - **OrderService (.NET)**: `dotnet run --project OrderService/` (Port 5011)
 - **PaymentService (Node.js)**: `cd PaymentService && pnpm start` (Port 5012 / 50012)
 - **InventoryService (Go)**: `cd InventoryService && go run cmd/server/main.go` (Port 5013 / 50013)
-- **Storefront (React)**: `cd storefront && pnpm dev` (Port 5014)
-- **Back Office (Angular)**: `cd back-office && pnpm start` (Port 5015)
+- **Storefront (React)**: `cd storefront && pnpm dev` (Port 5009)
+- **Back Office (Angular)**: `cd back-office && pnpm start` (Port 5008)
 
 ## Service Map
 
@@ -45,8 +45,8 @@ The project uses a unified port scheme where the last two digits identify the se
 | **OrderService** | 5011 | 50011 | 4011 | Orchestrator & Saga |
 | **PaymentService** | 5012 | 50012 | 4012 | Payment Processor |
 | **InventoryService** | 5013 | 50013 | 4013 | Catalog & Stock |
-| **Storefront** | 5014 | - | - | React Customer UI |
-| **Back Office** | 5015 | - | - | Angular 19 Admin |
+| **Back Office** | 5008 | - | - | Angular 19 Admin |
+| **Storefront** | 5009 | - | - | React Customer UI |
 | **Kong Gateway** | 8000 | 9080 | - | API Entry Point |
 
 ## Observability
