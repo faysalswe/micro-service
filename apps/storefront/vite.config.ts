@@ -8,7 +8,7 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   server: {
-    port: 5014,
+    port: 5009,
     strictPort: false,
     proxy: {
       '/auth': {
