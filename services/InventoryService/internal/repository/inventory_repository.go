@@ -18,6 +18,7 @@ type InventoryRepository interface {
 	GetStock(ctx context.Context, productID string) (int32, error)
 	GetProduct(ctx context.Context, productID string) (models.ProductStock, error)
 	ListProducts(ctx context.Context) ([]models.ProductStock, error)
+	GetOffers(ctx context.Context) ([]models.ProductStock, error)
 	CreateProduct(ctx context.Context, product models.ProductStock) error
 	UpdateProduct(ctx context.Context, product models.ProductStock) error
 	DeleteProduct(ctx context.Context, productID string) error
@@ -42,6 +43,16 @@ func (r *postgresRepository) ListProducts(ctx context.Context) ([]models.Product
 
 	var products []models.ProductStock
 	err := r.db.WithContext(ctx).Find(&products).Error
+	return products, err
+}
+
+func (r *postgresRepository) GetOffers(ctx context.Context) ([]models.ProductStock, error) {
+	ctx, span := r.tracer.Start(ctx, "GetOffers")
+	defer span.End()
+
+	var products []models.ProductStock
+	// Define "Offers" as products with price < 50 or quantity < 10
+	err := r.db.WithContext(ctx).Where("price < ? OR quantity < ?", 50.0, 10).Find(&products).Error
 	return products, err
 }
 

@@ -13,7 +13,7 @@ func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
 	huma.Register(api, huma.Operation{
 		OperationID: "create-product",
 		Method:      http.MethodPost,
-		Path:        "/api/inventory",
+		Path:        "/api/inventory/active-products",
 		Summary:     "Create new product",
 		Tags:        []string{"Admin"},
 		Security:    []map[string][]string{{"bearerAuth": {}}},
@@ -35,7 +35,7 @@ func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
 	huma.Register(api, huma.Operation{
 		OperationID: "update-product",
 		Method:      http.MethodPut,
-		Path:        "/api/inventory/{id}",
+		Path:        "/api/inventory/active-products/{id}",
 		Summary:     "Update product",
 		Tags:        []string{"Admin"},
 		Security:    []map[string][]string{{"bearerAuth": {}}},
@@ -57,7 +57,7 @@ func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
 	huma.Register(api, huma.Operation{
 		OperationID: "delete-product",
 		Method:      http.MethodDelete,
-		Path:        "/api/inventory/{id}",
+		Path:        "/api/inventory/active-products/{id}",
 		Summary:     "Delete product",
 		Tags:        []string{"Admin"},
 		Security:    []map[string][]string{{"bearerAuth": {}}},

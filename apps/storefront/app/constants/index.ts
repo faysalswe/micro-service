@@ -67,10 +67,11 @@ export const API_ENDPOINTS = {
     REFUND: (id: string) => `/api/payments/${id}/refund`,
   },
   INVENTORY: {
-    LIST: '/api/inventory',
-    DETAIL: (id: string) => `/api/inventory/${id}`,
-  },
-  CART: {
+    LIST: '/api/inventory/active-products',
+    OFFERS: '/api/inventory/offer',
+    STOCK_OUT: '/api/inventory/stock-out',
+    DETAIL: (id: string) => `/api/inventory/active-products/${id}`,
+  },  CART: {
     GET: (userId: string) => `/api/cart/${userId}`,
     ADD_ITEM: (userId: string) => `/api/cart/${userId}/items`,
     CLEAR: (userId: string) => `/api/cart/${userId}`,

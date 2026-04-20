@@ -15,6 +15,7 @@ type InventoryService interface {
 	GetStock(ctx context.Context, productID string) (int32, error)
 	GetProduct(ctx context.Context, productID string) (models.ProductStock, error)
 	ListProducts(ctx context.Context) ([]models.ProductStock, error)
+	GetOffers(ctx context.Context) ([]models.ProductStock, error)
 	CreateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error)
 	UpdateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error)
 	DeleteProduct(ctx context.Context, productID string) (bool, string, error)
@@ -32,6 +33,11 @@ func NewInventoryService(repo repository.InventoryRepository) InventoryService {
 func (s *inventoryService) ListProducts(ctx context.Context) ([]models.ProductStock, error) {
 	slog.InfoContext(ctx, "Listing all products")
 	return s.repo.ListProducts(ctx)
+}
+
+func (s *inventoryService) GetOffers(ctx context.Context) ([]models.ProductStock, error) {
+	slog.InfoContext(ctx, "Listing product offers")
+	return s.repo.GetOffers(ctx)
 }
 
 func (s *inventoryService) CreateProduct(ctx context.Context, productID string, name string, price float64, quantity int32) (bool, string, error) {
