@@ -6,8 +6,8 @@ import { apiClient } from '~/services/api-client';
 import { ProductCard } from '~/components/store/ProductCard';
 
 export const meta: MetaFunction = () => [
-  { title: 'Browse Products - WebApp Store' },
-  { name: 'description', content: 'Explore our wide range of products available in stock.' },
+  { title: 'Special Offers - WebApp Store' },
+  { name: 'description', content: 'Explore our special offers and discounted items.' },
 ];
 
 interface Product {
@@ -17,7 +17,7 @@ interface Product {
   quantity: number;
 }
 
-export default function ProductsPage() {
+export default function OffersPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +26,11 @@ export default function ProductsPage() {
     async function fetchProducts() {
       try {
         setLoading(true);
-        const response = await apiClient.getInventory();
+        const response = await apiClient.getOffers();
         if (response.success && response.data) {
           setProducts(response.data);
         } else {
-          setError('Failed to load products. Please try again later.');
+          setError('Failed to load offers. Please try again later.');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
@@ -47,7 +47,7 @@ export default function ProductsPage() {
       <Container size="lg" className="py-24">
         <Stack align="center" gap="md">
           <Loader size="xl" />
-          <Text size="lg" c="dimmed">Loading amazing products for you...</Text>
+          <Text size="lg" c="dimmed">Loading special offers for you...</Text>
         </Stack>
       </Container>
     );
@@ -68,10 +68,10 @@ export default function ProductsPage() {
       <Stack gap="xl">
         <Box>
           <Title order={1} className="text-3xl font-bold mb-xs">
-            Our Products
+            Special Offers
           </Title>
           <Text size="lg" c="dimmed">
-            Discover our collection of high-quality items.
+            Discover our best deals and low-stock items.
           </Text>
         </Box>
 

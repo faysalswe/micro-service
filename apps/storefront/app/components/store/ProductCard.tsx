@@ -51,18 +51,20 @@ export function ProductCard({ product }: ProductCardProps) {
           </Text>
         </div>
 
-        <Button 
-          fullWidth 
-          radius="md" 
-          mt="md"
-          variant={isOutOfStock ? 'light' : 'filled'}
-          disabled={isOutOfStock}
-          loading={loading}
-          onClick={() => addToCart(product.productId, 1)}
-          leftSection={<IconShoppingCart size={16} />}
-        >
-          {isOutOfStock ? 'Unavailable' : 'Add to Cart'}
-        </Button>
+        {user && (
+          <Button 
+            fullWidth 
+            radius="md" 
+            mt="md"
+            variant={isOutOfStock ? 'light' : 'filled'}
+            disabled={isOutOfStock}
+            loading={loading}
+            onClick={() => addToCart(product.productId, 1)}
+            leftSection={<IconShoppingCart size={16} />}
+          >
+            {isOutOfStock ? 'Unavailable' : 'Add to Cart'}
+          </Button>
+        )}
       </Stack>
     </Card>
   );

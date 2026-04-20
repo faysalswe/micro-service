@@ -315,6 +315,13 @@ export class ApiClient {
     );
   }
 
+  async getOffers() {
+    return this.get<Array<{ productId: string; name: string; price: number; quantity: number }>>(
+      API_ENDPOINTS.INVENTORY.OFFERS,
+      { skipAuth: true }
+    );
+  }
+
   async refundPayment(id: string, reason?: string) {
     return this.post(API_ENDPOINTS.PAYMENTS.REFUND(id), { reason });
   }

@@ -33,14 +33,16 @@ export function Navigation({ opened, toggle }: NavigationProps) {
 
   const navLinks = [
     { label: 'Home', href: '/' },
-    { label: 'Products', href: '/products' },
-    { label: 'Orders', href: '/orders', auth: true },
-    { label: 'Payments', href: '/payments', auth: true },
-    { label: 'Dashboard', href: '/dashboard', auth: true },
-    { label: 'Profile', href: '/profile', auth: true },
+    { label: 'Offers', href: '/offers' },
+    { label: 'About', href: '/about' },
   ];
 
-  const filteredLinks = navLinks.filter(link => !link.auth || isAuthenticated);
+  const userLinks = [
+    { label: 'Profile', href: '/profile' },
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Orders', href: '/orders' },
+    { label: 'Payments', href: '/payments' },
+  ];
 
   const handleToggle = toggle || (() => setMobileMenuOpen(!mobileMenuOpen));
   const isOpen = opened !== undefined ? opened : mobileMenuOpen;
@@ -62,7 +64,7 @@ export function Navigation({ opened, toggle }: NavigationProps) {
             </Text>
             {/* Desktop navigation */}
             <nav className="hidden sm:flex items-center gap-4">
-              {filteredLinks.map((link) => (
+              {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
@@ -164,12 +166,11 @@ export function Navigation({ opened, toggle }: NavigationProps) {
                 </Menu.Target>
 
                 <Menu.Dropdown>
-                  <Menu.Item component={Link} to="/profile">
-                    Profile
-                  </Menu.Item>
-                  <Menu.Item component={Link} to="/dashboard">
-                    Dashboard
-                  </Menu.Item>
+                  {userLinks.map((link) => (
+                    <Menu.Item key={link.href} component={Link} to={link.href}>
+                      {link.label}
+                    </Menu.Item>
+                  ))}
                   <Menu.Divider />
                   <Menu.Item color="red" onClick={logout}>
                     Logout
@@ -203,7 +204,7 @@ export function Navigation({ opened, toggle }: NavigationProps) {
         {isOpen && (
           <div className="sm:hidden border-t border-gray-200 dark:border-gray-800 py-4">
             <nav className="flex flex-col gap-2">
-              {filteredLinks.map((link) => (
+              {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
@@ -217,6 +218,39 @@ export function Navigation({ opened, toggle }: NavigationProps) {
                   {link.label}
                 </Link>
               ))}
+
+              {isAuthenticated && (
+                <>
+                  <div className="border-t border-gray-100 dark:border-gray-800 my-2" />
+                  <Text size="xs" fw={700} c="dimmed" px="xs" mb="xs" tt="uppercase">
+                    Account
+                  </Text>
+                  {userLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      to={link.href}
+                      className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
+                        location.pathname === link.href
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                  <Link
+                    to="#"
+                    className="px-3 py-2 rounded-md text-sm font-medium no-underline text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    Logout
+                  </Link>
+                </>
+              )}
               
               <div className="pt-4 mt-2 border-t border-gray-200 dark:border-gray-800">
                 <Text size="xs" fw={700} c="dimmed" px="xs" mb="xs" tt="uppercase">

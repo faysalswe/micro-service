@@ -1,86 +1,93 @@
-/**
- * Home Route - Landing page
- */
-
+import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';
-import { Container, Title, Text, Button, Card, Stack } from '@mantine/core';
-import { useTranslation } from '~/hooks';
+import { Container, Title, Text, SimpleGrid, Loader, Alert, Stack, Box } from '@mantine/core';
+import { IconAlertCircle, IconPackageOff } from '@tabler/icons-react';
+import { apiClient } from '~/services/api-client';
+import { ProductCard } from '~/components/store/ProductCard';
 
-/**
- * Meta tags for home page
- */
 export const meta: MetaFunction = () => [
-  { title: 'Home - WebApp' },
-  { name: 'description', content: 'Welcome to WebApp - A modern web application' },
+  { title: 'Home - WebApp Store' },
+  { name: 'description', content: 'Explore our wide range of products available in stock.' },
 ];
 
-/**
- * Home page component
- */
+interface Product {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 export default function Index() {
-  const { t } = useTranslation();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setLoading(true);
+        const response = await apiClient.getInventory();
+        if (response.success && response.data) {
+          setProducts(response.data);
+        } else {
+          setError('Failed to load products. Please try again later.');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <Container size="lg" className="py-24">
+        <Stack align="center" gap="md">
+          <Loader size="xl" />
+          <Text size="lg" c="dimmed">Loading amazing products for you...</Text>
+        </Stack>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container size="lg" className="py-24">
+        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red" radius="md">
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container size="lg" className="py-xl">
       <Stack gap="xl">
-        {/* Header */}
-        <div className="text-center">
-          <Title order={1} className="text-4xl font-bold mb-md">
-            {t('common.welcome')}
+        <Box>
+          <Title order={1} className="text-3xl font-bold mb-xs">
+            Welcome to WebApp Store
           </Title>
           <Text size="lg" c="dimmed">
-            {t('common.app_name')} - Modern Web Application
+            Discover our collection of high-quality items.
           </Text>
-        </div>
+        </Box>
 
-        {/* Feature Cards */}
-        <div className="grid-auto">
-          <Card shadow="md" padding="lg" radius="md">
-            <Title order={3} className="mb-sm">
-              🎨 Design System
-            </Title>
-            <Text size="sm" c="dimmed">
-              Centralized design tokens with Mantine and Tailwind CSS
-            </Text>
-          </Card>
-
-          <Card shadow="md" padding="lg" radius="md">
-            <Title order={3} className="mb-sm">
-              🌍 i18n Support
-            </Title>
-            <Text size="sm" c="dimmed">
-              Multi-language support with 3 languages out of the box
-            </Text>
-          </Card>
-
-          <Card shadow="md" padding="lg" radius="md">
-            <Title order={3} className="mb-sm">
-              🌓 Dark Mode
-            </Title>
-            <Text size="sm" c="dimmed">
-              Automatic theme switching with system preference detection
-            </Text>
-          </Card>
-
-          <Card shadow="md" padding="lg" radius="md">
-            <Title order={3} className="mb-sm">
-              ⚡ Performance
-            </Title>
-            <Text size="sm" c="dimmed">
-              Server-side rendering with React Router for optimal performance
-            </Text>
-          </Card>
-        </div>
-
-        {/* Call to Action */}
-        <div className="text-center">
-          <Text className="mb-md">
-            Welcome to our modern web application platform.
-          </Text>
-          <Button size="lg" variant="gradient" gradient={{ from: 'blue', to: 'cyan' }}>
-            Get Started
-          </Button>
-        </div>
+        {products.length === 0 ? (
+          <Stack align="center" className="py-24" gap="md">
+            <IconPackageOff size={64} className="text-gray-300" stroke={1.5} />
+            <Text size="xl" fw={500} c="dimmed">No products found</Text>
+            <Text c="dimmed">We couldn't find any products in our inventory right now.</Text>
+          </Stack>
+        ) : (
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4 }} spacing="lg">
+            {products.map((product) => (
+              <ProductCard key={product.productId} product={product} />
+            ))}
+          </SimpleGrid>
+        )}
       </Stack>
     </Container>
   );
