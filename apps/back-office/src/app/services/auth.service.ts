@@ -16,7 +16,7 @@ interface DecodedToken {
 })
 export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
-  private readonly authUrl = `${environment.apiUrl}/auth/login`;
+  private readonly authUrl = `${environment.apiUrl}/identity/login`;
   private http = inject(HttpClient);
   
   currentUserRole = signal<string | null>(null);

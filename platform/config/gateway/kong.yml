@@ -20,13 +20,13 @@ jwt_secrets:
 # Services
 # ============================================
 services:
-  # Identity Service (HTTP REST) - PUBLIC
+  # Identity Service (HTTP REST) - PUBLIC/PROTECTED
   - name: identity-service
     url: http://identity-service:5010
     routes:
-      - name: auth-api
+      - name: identity-api
         paths:
-          - /auth
+          - /identity
         strip_path: true
 
   # Public Inventory Service (No Plugins)
