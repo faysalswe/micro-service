@@ -59,7 +59,7 @@ export function ProductCard({ product }: ProductCardProps) {
             variant={isOutOfStock ? 'light' : 'filled'}
             disabled={isOutOfStock}
             loading={loading}
-            onClick={() => addToCart(product.productId, 1)}
+            onClick={() => addToCart(product.productId, 1, product.price)}
             leftSection={<IconShoppingCart size={16} />}
           >
             {isOutOfStock ? 'Unavailable' : 'Add to Cart'}

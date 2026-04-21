@@ -331,9 +331,9 @@ export class ApiClient {
     return this.get<{ user_id: string; items: Record<string, string> }>(API_ENDPOINTS.CART.GET(userId));
   }
 
-  async addToCart(userId: string, productId: string, quantity: number) {
+  async addToCart(userId: string, productId: string, quantity: number, price: number) {
     return this.post(
-      `${API_ENDPOINTS.CART.ADD_ITEM(userId)}?product_id=${productId}&quantity=${quantity}`
+      `${API_ENDPOINTS.CART.ADD_ITEM(userId)}?product_id=${productId}&quantity=${quantity}&price=${price}`
     );
   }
 

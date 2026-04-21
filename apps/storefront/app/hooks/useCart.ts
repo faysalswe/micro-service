@@ -31,14 +31,14 @@ export function useCart(userId?: string) {
     fetchCart();
   }, [fetchCart]);
 
-  const addToCart = async (productId: string, quantity: number = 1) => {
+  const addToCart = async (productId: string, quantity: number = 1, price: number) => {
     if (!userId) {
       showError('Please login to add items to cart');
       return;
     }
     try {
       setLoading(true);
-      await apiClient.addToCart(userId, productId, quantity);
+      await apiClient.addToCart(userId, productId, quantity, price);
       await fetchCart();
       showSuccess('Item added to cart');
     } catch (err) {
