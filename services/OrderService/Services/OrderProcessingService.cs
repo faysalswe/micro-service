@@ -95,7 +95,7 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
             {
                 ProductId = i.ProductId,
                 Quantity = i.Quantity,
-                UnitPrice = 0 // Would normally fetch from catalog
+                UnitPrice = i.UnitPrice
             }).ToList()
         };
 

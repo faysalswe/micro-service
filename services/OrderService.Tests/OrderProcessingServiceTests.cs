@@ -10,6 +10,9 @@ using Microsoft.Extensions.Logging;
 using FluentAssertions;
 using Xunit;
 
+using Microsoft.Extensions.Configuration;
+using System.Net.Http;
+
 namespace OrderService.Tests;
 
 public class OrderProcessingServiceTests
@@ -19,6 +22,8 @@ public class OrderProcessingServiceTests
     private readonly Mock<Inventory.V1.InventoryService.InventoryServiceClient> _inventoryClientMock;
     private readonly Mock<ISagaService> _sagaServiceMock;
     private readonly Mock<IIdempotencyService> _idempotencyServiceMock;
+    private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
+    private readonly Mock<IConfiguration> _configurationMock;
     private readonly OrderDbContext _dbContext;
     private readonly OrderProcessingService _service;
 
@@ -29,6 +34,10 @@ public class OrderProcessingServiceTests
         _inventoryClientMock = new Mock<Inventory.V1.InventoryService.InventoryServiceClient>();
         _sagaServiceMock = new Mock<ISagaService>();
         _idempotencyServiceMock = new Mock<IIdempotencyService>();
+        _httpClientFactoryMock = new Mock<IHttpClientFactory>();
+        _configurationMock = new Mock<IConfiguration>();
+
+        _httpClientFactoryMock.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(new HttpClient());
 
         var options = new DbContextOptionsBuilder<OrderDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -41,7 +50,9 @@ public class OrderProcessingServiceTests
             _inventoryClientMock.Object,
             _dbContext,
             _sagaServiceMock.Object,
-            _idempotencyServiceMock.Object);
+            _idempotencyServiceMock.Object,
+            _httpClientFactoryMock.Object,
+            _configurationMock.Object);
     }
 
     [Fact]
@@ -51,9 +62,8 @@ public class OrderProcessingServiceTests
         var request = new CreateOrderRequest
         {
             UserId = "user-123",
-            // ProductId = "prod-456", // Checked proto: CreateOrderRequest has items, not productId directly
         };
-        request.Items.Add(new OrderItem { ProductId = "prod-456", Quantity = 1 });
+        request.Items.Add(new Orders.V1.OrderItem { ProductId = "prod-456", Quantity = 1, UnitPrice = 100.0 });
 
         var paymentResponse = new ProcessPaymentResponse
         {
@@ -62,7 +72,7 @@ public class OrderProcessingServiceTests
             StatusMessage = "Success"
         };
 
-        var inventoryResponse = new ReserveStockResponse
+        var inventoryResponse = new BatchReserveStockResponse
         {
             Success = true,
             Message = "Success"
@@ -72,7 +82,7 @@ public class OrderProcessingServiceTests
         var mockInventoryCall = TestCalls.AsyncUnaryCall(inventoryResponse, Task.FromResult(new Metadata()), () => Status.DefaultSuccess, () => new Metadata(), () => { });
 
         _inventoryClientMock
-            .Setup(c => c.ReserveStockAsync(It.IsAny<ReserveStockRequest>(), It.IsAny<Metadata>(), null, default))
+            .Setup(c => c.BatchReserveStockAsync(It.IsAny<BatchReserveStockRequest>(), It.IsAny<Metadata>(), null, default))
             .Returns(mockInventoryCall);
 
         _paymentClientMock
