@@ -30,13 +30,26 @@ import { AvatarModule } from 'primeng/avatar';
           </a>
           
           <div class="menu-category">Inventory</div>
+          <a routerLink="/products" routerLinkActive="is-active" class="menu-item">
+            <i class="pi pi-box"></i><span>Products</span>
+          </a>
           <a routerLink="/products/new" routerLinkActive="is-active" class="menu-item">
             <i class="pi pi-plus-circle"></i><span>Add New SKU</span>
           </a>
           <a class="menu-item is-disabled"><i class="pi pi-tags"></i><span>Categories</span></a>
 
           <div class="menu-category">Operations</div>
-          <a class="menu-item is-disabled"><i class="pi pi-shopping-cart"></i><span>Active Orders</span></a>
+          <a routerLink="/orders" routerLinkActive="is-active" class="menu-item">
+            <i class="pi pi-shopping-cart"></i><span>Orders</span>
+          </a>
+          <a routerLink="/payments" routerLinkActive="is-active" class="menu-item">
+            <i class="pi pi-wallet"></i><span>Payments</span>
+          </a>
+
+          <div class="menu-category">Administration</div>
+          <a routerLink="/users" routerLinkActive="is-active" class="menu-item">
+            <i class="pi pi-users"></i><span>Users</span>
+          </a>
         </nav>
 
         <div class="sidebar-status" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); text-align: center;">
