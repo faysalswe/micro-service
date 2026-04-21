@@ -1,0 +1,13 @@
+:host { display: block; background-color: #f8fafc; min-height: 100vh; }
+.card { border: 1px solid #e2e8f0; }
+.p-datatable .p-datatable-thead > tr > th {
+    background: #fdfdfd;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    padding: 1rem;
+}
+.p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.75rem 1rem;
+}

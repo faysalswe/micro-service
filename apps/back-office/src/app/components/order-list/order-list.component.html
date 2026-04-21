@@ -1,0 +1,79 @@
+<div class="p-4">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Order Management</h1>
+            <p class="text-slate-500">Monitor and manage customer orders across all services.</p>
+        </div>
+        <p-button label="Refresh Data" icon="pi pi-refresh" [outlined]="true" (onClick)="loadOrders()"></p-button>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-xl overflow-hidden">
+        <p-table 
+            [value]="orders" 
+            [loading]="loading" 
+            [paginator]="true" 
+            [rows]="10"
+            [showCurrentPageReport]="true"
+            responsiveLayout="scroll"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} orders"
+            [rowsPerPageOptions]="[10, 25, 50]"
+            styleClass="p-datatable-sm">
+            
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="id">Order ID <p-sortIcon field="id"></p-sortIcon></th>
+                    <th pSortableColumn="userId">Customer <p-sortIcon field="userId"></p-sortIcon></th>
+                    <th pSortableColumn="amount">Revenue <p-sortIcon field="amount"></p-sortIcon></th>
+                    <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+                    <th pSortableColumn="createdAt">Date <p-sortIcon field="createdAt"></p-sortIcon></th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-order>
+                <tr>
+                    <td>
+                        <span class="font-mono text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">{{ order.id.substring(0,8) }}...</span>
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-user text-slate-400"></i>
+                            <span class="font-medium">{{ order.userId }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="font-bold text-slate-700">{{ order.amount | currency }}</span>
+                    </td>
+                    <td>
+                        <p-tag [value]="order.status" [severity]="getStatusSeverity(order.status)"></p-tag>
+                    </td>
+                    <td>
+                        <span class="text-slate-500 text-sm">{{ order.createdAt | date:'medium' }}</span>
+                    </td>
+                    <td>
+                        <div class="flex justify-center gap-2">
+                            <p-button icon="pi pi-eye" [text]="true" [routerLink]="['/orders', order.id]" pTooltip="View Saga History"></p-button>
+                            <p-button 
+                                icon="pi pi-times" 
+                                severity="danger" 
+                                [text]="true" 
+                                *ngIf="order.status === 'COMPLETED' || order.status === 'PENDING'"
+                                (onClick)="cancelOrder(order.id)"
+                                pTooltip="Cancel Order">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6" class="text-center p-8">
+                        <i class="pi pi-inbox text-4xl text-slate-300 mb-3 block"></i>
+                        <span class="text-slate-500">No orders found in the system.</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>

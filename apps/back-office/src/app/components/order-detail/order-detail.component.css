@@ -1,0 +1,4 @@
+.list-group-item { border-left: 4px solid transparent; }
+.list-group-item:hover { background-color: #f8f9fa; }
+code { display: block; padding: 5px; background: #eee; border-radius: 4px; overflow-wrap: break-word; }
+.bi { margin-right: 8px; font-size: 1.1rem; }

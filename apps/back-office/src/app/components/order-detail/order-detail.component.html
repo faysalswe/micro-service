@@ -1,0 +1,60 @@
+<div class="container mt-4">
+  <div class="mb-3">
+    <a routerLink="/orders" class="text-decoration-none">&larr; Back to Orders</a>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <div *ngIf="!loading && order" class="row">
+    <div class="col-md-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Order Info</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>ID:</strong> {{ order.id }}</p>
+          <p><strong>Status:</strong> <span class="badge bg-secondary">{{ order.status }}</span></p>
+          <p><strong>Total:</strong> {{ order.amount | currency }}</p>
+          <p><strong>Date:</strong> {{ order.createdAt | date:'medium' }}</p>
+          <hr>
+          <h6>Items</h6>
+          <ul class="list-unstyled">
+            <li *ngFor="let item of order.items">
+              {{ item.quantity }}x {{ item.productId }} 
+              <span class="text-muted">({{ item.unitPrice | currency }})</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between">
+          <h5 class="mb-0">Distributed Tracing: Saga Steps</h5>
+          <span class="badge bg-info">Observability Mode</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <div *ngFor="let step of sagaHistory" class="list-group-item">
+              <div class="d-flex w-100 justify-content-between align-items-center">
+                <h6 class="mb-1">
+                  <i [class]="getStepIcon(step.status)"></i> {{ step.step }}
+                </h6>
+                <small class="text-muted">{{ step.createdAt | date:'mediumTime' }}</small>
+              </div>
+              <p class="mb-1 small" *ngIf="step.payload">
+                <code>{{ step.payload }}</code>
+              </p>
+              <div *ngIf="step.errorMessage" class="alert alert-danger py-1 px-2 mt-2 mb-0 small">
+                {{ step.errorMessage }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

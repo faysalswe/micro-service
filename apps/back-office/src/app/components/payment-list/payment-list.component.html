@@ -1,0 +1,64 @@
+<div class="p-4">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 italic">Financial Ledger</h1>
+            <p class="text-slate-500">Audit trail of all financial transactions across microservices.</p>
+        </div>
+        <p-button label="Audit Refresh" icon="pi pi-shield" severity="contrast" [outlined]="true" (onClick)="loadPayments()"></p-button>
+    </div>
+
+    <div class="card shadow-md border-0 rounded-xl overflow-hidden bg-white">
+        <p-table 
+            [value]="payments" 
+            [loading]="loading" 
+            [paginator]="true" 
+            [rows]="10"
+            styleClass="p-datatable-gridlines">
+            
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Txn ID</th>
+                    <th>Order Relation</th>
+                    <th>Payee</th>
+                    <th>Amount</th>
+                    <th>Ledger Status</th>
+                    <th>Processed</th>
+                    <th class="text-center">Audit Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-payment>
+                <tr>
+                    <td><code class="text-xs text-slate-400">{{ payment.id }}</code></td>
+                    <td><code class="text-xs text-blue-500">{{ payment.orderId }}</code></td>
+                    <td><span class="font-medium text-slate-700">{{ payment.userId }}</span></td>
+                    <td>
+                        <span class="text-lg font-mono font-bold" [class.text-red-500]="payment.status === 'FAILED'">
+                            {{ payment.amount | currency }}
+                        </span>
+                    </td>
+                    <td>
+                        <p-tag [value]="payment.status" [severity]="getStatusSeverity(payment.status)"></p-tag>
+                    </td>
+                    <td><span class="text-sm text-slate-500">{{ payment.createdAt | date:'short' }}</span></td>
+                    <td>
+                        <div class="flex justify-center gap-2">
+                            <p-button 
+                                label="Process Refund" 
+                                icon="pi pi-backward" 
+                                size="small"
+                                severity="warn" 
+                                [outlined]="true"
+                                *ngIf="payment.status === 'COMPLETED'"
+                                (onClick)="refund(payment.id)">
+                            </p-button>
+                            <span *ngIf="payment.status === 'REFUNDED'" class="text-xs italic text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                <i class="pi pi-info-circle mr-1"></i>Refunded
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>
