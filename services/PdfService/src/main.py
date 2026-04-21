@@ -1,5 +1,6 @@
 import uvicorn
 import boto3
+import json
 from fastapi import FastAPI, HTTPException
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
@@ -36,11 +37,30 @@ s3_client = boto3.client(
     aws_secret_access_key=CONFIG["S3_SECRET_KEY"]
 )
 
-# Ensure bucket exists
+def set_bucket_public_policy(bucket_name):
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"AWS": ["*"]},
+                "Action": ["s3:GetObject"],
+                "Resource": [f"arn:aws:s3:::{bucket_name}/*"]
+            }
+        ]
+    }
+    s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(policy))
+
+# Ensure bucket exists and is public
 try:
     s3_client.create_bucket(Bucket=INTERNAL_CONSTANTS["INVOICE_BUCKET"])
+    set_bucket_public_policy(INTERNAL_CONSTANTS["INVOICE_BUCKET"])
 except Exception:
-    pass # Bucket might already exist
+    # Try to set policy even if bucket creation fails (already exists)
+    try:
+        set_bucket_public_policy(INTERNAL_CONSTANTS["INVOICE_BUCKET"])
+    except Exception:
+        pass 
 
 # --- PDF Generation Logic ---
 template_env = Environment(loader=FileSystemLoader("src/templates"))
