@@ -1,7 +1,12 @@
 import uvicorn
 import boto3
 import json
+import logging
 from fastapi import FastAPI, HTTPException
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 from opentelemetry import trace
@@ -38,24 +43,29 @@ s3_client = boto3.client(
 )
 
 def set_bucket_public_policy(bucket_name):
-    policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": {"AWS": ["*"]},
-                "Action": ["s3:GetObject"],
-                "Resource": [f"arn:aws:s3:::{bucket_name}/*"]
-            }
-        ]
-    }
-    s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(policy))
+    try:
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": ["*"]},
+                    "Action": ["s3:GetObject"],
+                    "Resource": [f"arn:aws:s3:::{bucket_name}/*"]
+                }
+            ]
+        }
+        s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(policy))
+        logger.info(f"Public read policy set for bucket: {bucket_name}")
+    except Exception as e:
+        logger.error(f"Failed to set bucket policy: {e}")
 
 # Ensure bucket exists and is public
 try:
     s3_client.create_bucket(Bucket=INTERNAL_CONSTANTS["INVOICE_BUCKET"])
+    logger.info(f"Bucket created: {INTERNAL_CONSTANTS['INVOICE_BUCKET']}")
     set_bucket_public_policy(INTERNAL_CONSTANTS["INVOICE_BUCKET"])
-except Exception:
+except Exception as e:
     # Try to set policy even if bucket creation fails (already exists)
     try:
         set_bucket_public_policy(INTERNAL_CONSTANTS["INVOICE_BUCKET"])
@@ -71,6 +81,7 @@ async def health():
 
 @app.post("/api/pdf/generate/invoice")
 async def generate_invoice(order_data: dict):
+    logger.info(f"Generating invoice for Order ID: {order_data.get('order_id')}")
     try:
         # 1. Prepare data for template
         order_data["date"] = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -92,6 +103,7 @@ async def generate_invoice(order_data: dict):
             file_name,
             ExtraArgs={'ContentType': 'application/pdf'}
         )
+        logger.info(f"Invoice uploaded successfully: {file_name}")
         
         # 5. Return the URL (signed URL or public URL)
         download_url = f"{CONFIG['S3_ENDPOINT']}/{INTERNAL_CONSTANTS['INVOICE_BUCKET']}/{file_name}"
@@ -102,6 +114,7 @@ async def generate_invoice(order_data: dict):
             "download_url": download_url
         }
     except Exception as e:
+        logger.error(f"Error generating/uploading PDF for Order {order_data.get('order_id')}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
