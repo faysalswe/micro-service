@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class OrderService {
-  private apiUrl = `${environment.apiUrl}/api/orders`; // Proxied through Kong to OrderService
+  private apiUrl = `${environment.apiUrl}/orders`; // Proxied through Kong to OrderService
   private http = inject(HttpClient);
 
   getOrders(userId?: string): Observable<Order[]> {

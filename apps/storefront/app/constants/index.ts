@@ -45,40 +45,40 @@ export const Z_INDEX = {
  */
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
+    LOGIN: '/identity/login',
+    REGISTER: '/identity/register',
     // Note: Other auth endpoints not implemented in backend
   },
   USERS: {
-    GET_ALL: '/auth/users',
-    GET_BY_ID: (id: string) => `/auth/users/${id}`,
+    GET_ALL: '/identity/users',
+    GET_BY_ID: (id: string) => `/identity/users/${id}`,
     // CREATE, UPDATE, DELETE not implemented in backend
   },
   ORDERS: {
-    LIST: '/api/orders',
-    DETAIL: (id: string) => `/api/orders/${id}`,
-    CREATE: '/api/orders',
-    CANCEL: (id: string) => `/api/orders/${id}`,
-    SAGA: (id: string) => `/api/orders/${id}/saga`,
+    LIST: '/orders',
+    DETAIL: (id: string) => `/orders/${id}`,
+    CREATE: '/orders',
+    CANCEL: (id: string) => `/orders/${id}`,
+    SAGA: (id: string) => `/orders/${id}/saga`,
   },
   PAYMENTS: {
-    LIST: '/api/payments',
-    DETAIL: (id: string) => `/api/payments/${id}`,
-    REFUND: (id: string) => `/api/payments/${id}/refund`,
+    LIST: '/payments',
+    DETAIL: (id: string) => `/payments/${id}`,
+    REFUND: (id: string) => `/payments/${id}/refund`,
   },
   INVENTORY: {
-    LIST: '/api/inventory/active-products',
-    OFFERS: '/api/inventory/offer',
-    STOCK_OUT: '/api/inventory/stock-out',
-    DETAIL: (id: string) => `/api/inventory/active-products/${id}`,
+    LIST: '/inventory/active-products',
+    OFFERS: '/inventory/offer',
+    STOCK_OUT: '/inventory/stock-out',
+    DETAIL: (id: string) => `/inventory/active-products/${id}`,
   },  CART: {
-    GET: (userId: string) => `/api/cart/${userId}`,
-    ADD_ITEM: (userId: string) => `/api/cart/${userId}/items`,
-    CLEAR: (userId: string) => `/api/cart/${userId}`,
-    CHECKOUT: (userId: string) => `/api/cart/${userId}/checkout`,
+    GET: (userId: string) => `/cart/${userId}`,
+    ADD_ITEM: (userId: string) => `/cart/${userId}/items`,
+    CLEAR: (userId: string) => `/cart/${userId}`,
+    CHECKOUT: (userId: string) => `/cart/${userId}/checkout`,
   },
   PDF: {
-    GENERATE_INVOICE: '/api/pdf/generate/invoice',
+    GENERATE_INVOICE: '/pdf/generate/invoice',
   },
 } as const;
 

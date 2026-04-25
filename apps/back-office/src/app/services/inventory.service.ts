@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class InventoryService {
-  private apiUrl = `${environment.apiUrl}/api/inventory/active-products`; // Proxied through Kong
+  private apiUrl = `${environment.apiUrl}/inventory/active-products`; // Proxied through Kong
   private http = inject(HttpClient);
 
   getProducts(): Observable<Product[]> {

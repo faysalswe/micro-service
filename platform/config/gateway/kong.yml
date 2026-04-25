@@ -26,7 +26,7 @@ services:
     routes:
       - name: identity-api
         paths:
-          - /identity
+          - /api/identity
         strip_path: true
 
   # Public Inventory Service (No Plugins)

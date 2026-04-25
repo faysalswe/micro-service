@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class PaymentService {
-  private apiUrl = `${environment.apiUrl}/api/payments`; // Proxied through Kong to PaymentService
+  private apiUrl = `${environment.apiUrl}/payments`; // Proxied through Kong to PaymentService
   private http = inject(HttpClient);
 
   getPayments(userId?: string, orderId?: string): Observable<Payment[]> {
