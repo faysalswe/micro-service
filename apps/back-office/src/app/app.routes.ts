@@ -21,6 +21,14 @@ export const routes: Routes = [
         loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent) 
       },
       { 
+        path: 'products/new', 
+        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent) 
+      },
+      { 
+        path: 'products/edit/:id', 
+        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent) 
+      },
+      { 
         path: 'products', 
         loadComponent: () => import('./components/product-list/product-list.component').then(m => m.ProductListComponent) 
       },
@@ -40,14 +48,6 @@ export const routes: Routes = [
         path: 'payments', 
         loadComponent: () => import('./components/payment-list/payment-list.component').then(m => m.PaymentListComponent) 
       },
-      { 
-        path: 'products/new', 
-        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent) 
-      },
-      { 
-        path: 'products/edit/:id', 
-        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent) 
-      }
     ]
   },
 
