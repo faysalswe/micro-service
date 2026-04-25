@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "./.github/hooks/pre-tool-use.sh",
+        "cwd": ".",
+        "timeout": 10,
+        "osx": "./.github/hooks/pre-tool-use.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "./.github/hooks/post-tool-use.sh",
+        "cwd": ".",
+        "timeout": 15
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "./.github/hooks/validate-intent.sh",
+        "cwd": ".",
+        "timeout": 5
+      }
+    ]
+  }
+}
