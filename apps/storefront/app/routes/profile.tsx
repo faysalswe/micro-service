@@ -99,15 +99,25 @@ export default function ProfilePage() {
                     <Text>{user.role}</Text>
                   </Group>
                   <Group justify="space-between">
-                    <Text fw={500}>User ID</Text>
-                    <Text>{user.id}</Text>
+                  <Text fw={500}>User ID</Text>
+                  <Text>{user.id}</Text>
                   </Group>
-                </Stack>
-              </Card>
+                  </Stack>
+                  </Card>
 
-              {/* Actions */}
-              <Card withBorder padding="md" radius="md">
-                <Title order={3} className="mb-sm">Actions</Title>
+                  {/* Loyalty Points */}
+                  <Card withBorder padding="md" radius="md">
+                  <Title order={3} className="mb-sm">Loyalty Program</Title>
+                  <Stack gap="xs">
+                  <Group justify="space-between">
+                  <Text fw={500}>Loyalty Points</Text>
+                  <Text>{user.loyaltyPoints ?? 'N/A'}</Text>
+                  </Group>
+                  </Stack>
+                  </Card>
+
+                  {/* Actions */}
+                  <Card withBorder padding="md" radius="md">                <Title order={3} className="mb-sm">Actions</Title>
                 <Stack gap="sm">
                   <Button variant="outline" fullWidth>
                     Change Password

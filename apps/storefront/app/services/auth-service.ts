@@ -32,6 +32,7 @@ export interface AuthUser {
   id: string;
   username: string;
   role: string;
+  loyaltyPoints?: number; // Added loyalty points
   exp?: number;
   iat?: number;
 }
@@ -110,6 +111,7 @@ export class AuthService {
         id: decoded.user_id || decoded.sub,
         username: decoded.sub,
         role: Array.isArray(role) ? role[0] : role,
+        loyaltyPoints: decoded.loyaltyPoints, // Extract loyalty points
         exp: decoded.exp,
         iat: decoded.iat,
       };

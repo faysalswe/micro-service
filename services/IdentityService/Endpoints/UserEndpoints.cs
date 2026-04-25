@@ -86,7 +86,7 @@ public static class UserEndpoints
         app.MapGet("/users", async (IdentityDbContext db) =>
         {
             var users = await db.Users
-                .Select(u => new { u.Id, u.Username, u.Role, u.CreatedAt, u.LastLoginAt })
+                .Select(u => new { u.Id, u.Username, u.Role, u.LoyaltyPoints, u.CreatedAt, u.LastLoginAt })
                 .ToListAsync();
             return Results.Ok(users);
         });
@@ -96,7 +96,7 @@ public static class UserEndpoints
         {
             var user = await db.Users
                 .Where(u => u.Id == id)
-                .Select(u => new { u.Id, u.Username, u.Role, u.CreatedAt, u.LastLoginAt })
+                .Select(u => new { u.Id, u.Username, u.Role, u.LoyaltyPoints, u.CreatedAt, u.LastLoginAt })
                 .FirstOrDefaultAsync();
 
             return user is not null ? Results.Ok(user) : Results.NotFound();

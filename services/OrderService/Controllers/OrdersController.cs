@@ -70,7 +70,9 @@ public class OrdersController : ControllerBase
                 ProductId = i.ProductId,
                 Quantity = i.Quantity,
                 UnitPrice = i.UnitPrice
-            }).ToList()
+            }).ToList(),
+            LoyaltyPointsSpent = o.LoyaltyPointsSpent,
+            LoyaltyPointsEarned = o.LoyaltyPointsEarned
         });
 
         return Ok(result);
@@ -106,7 +108,9 @@ public class OrdersController : ControllerBase
                 ProductId = i.ProductId,
                 Quantity = i.Quantity,
                 UnitPrice = i.UnitPrice
-            }).ToList()
+            }).ToList(),
+            LoyaltyPointsSpent = order.LoyaltyPointsSpent,
+            LoyaltyPointsEarned = order.LoyaltyPointsEarned
         });
     }
 
@@ -435,6 +439,8 @@ public record OrderDto
     public double Amount { get; init; }
     public string Status { get; init; } = string.Empty;
     public string? PaymentId { get; init; }
+    public int LoyaltyPointsSpent { get; init; }
+    public int LoyaltyPointsEarned { get; init; }
     public DateTime CreatedAt { get; init; }
 }
 
