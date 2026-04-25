@@ -48,6 +48,7 @@ public static class DbSeeder
                 Username = "john_doe",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"),
                 Role = SecurityRoles.User,
+                LoyaltyPoints = 500,
                 CreatedAt = DateTime.UtcNow
             },
             new User
@@ -55,6 +56,7 @@ public static class DbSeeder
                 Username = "jane_smith",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"),
                 Role = SecurityRoles.User,
+                LoyaltyPoints = 1000,
                 CreatedAt = DateTime.UtcNow
             },
             new User
@@ -62,6 +64,7 @@ public static class DbSeeder
                 Username = "customer_test",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"),
                 Role = SecurityRoles.User,
+                LoyaltyPoints = 250,
                 CreatedAt = DateTime.UtcNow
             }
         };

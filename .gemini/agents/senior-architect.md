@@ -4,7 +4,6 @@ description: Expert in system design, monorepo patterns, and architectural integ
 tools:
   - read_file
   - grep_search
-  - codebase_investigator
 max_turns: 15
 ---
 

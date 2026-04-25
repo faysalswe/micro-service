@@ -45,6 +45,18 @@ try
     // Add services to the container.
     builder.Services.AddServiceTracing(builder.Configuration);
     builder.Services.AddOpenApi();
+    builder.Services.AddGrpc();
+
+    // Configure CORS for Storefront
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("StorefrontPolicy", policy =>
+        {
+            policy.WithOrigins("http://localhost:5009")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+    });
 
     // Add SQLite database
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -52,6 +64,9 @@ try
         options.UseSqlite(connectionString));
 
     var app = builder.Build();
+
+    // Use CORS policy
+    app.UseCors("StorefrontPolicy");
 
     // Apply migrations and seed default admin user
     using (var scope = app.Services.CreateScope())
@@ -80,6 +95,7 @@ try
     var appVersion = builder.Configuration["Service:Version"]!;
     app.MapHealthEndpoints(appVersion);
     app.MapUserEndpoints();
+    app.MapGrpcService<IdentityService.Services.LoyaltyServiceImpl>();
 
     app.Run();
 }

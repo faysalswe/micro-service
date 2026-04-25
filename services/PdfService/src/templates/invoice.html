@@ -103,7 +103,20 @@
     </table>
 
     <div class="total-section">
+        {% if loyalty_spent > 0 %}
+        <div style="font-size: 12pt; color: #666;">
+            Points Used: {{ loyalty_spent }} (-${{ "%.2f"|format(loyalty_spent * 0.01) }})
+        </div>
+        <div style="font-size: 12pt; color: #27ae60; margin-bottom: 10px;">
+            Points Earned: {{ loyalty_earned }}
+        </div>
+        Total Paid: ${{ "%.2f"|format(net_amount) }}
+        {% else %}
+        <div style="font-size: 12pt; color: #27ae60; margin-bottom: 10px;">
+            Points Earned: {{ loyalty_earned }}
+        </div>
         Total Amount: ${{ total_amount }}
+        {% endif %}
     </div>
 
     <div class="footer">

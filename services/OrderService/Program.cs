@@ -39,6 +39,11 @@ try
         o.Address = new Uri(builder.Configuration["GrpcSettings:InventoryServiceUrl"]!);
     });
 
+    builder.Services.AddGrpcClient<Loyalty.V1.LoyaltyService.LoyaltyServiceClient>(o =>
+    {
+        o.Address = new Uri(builder.Configuration["GrpcSettings:IdentityServiceUrl"]!);
+    });
+
     // Use Serilog for logging
     builder.Host.UseSerilog();
 

@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package loyalty.v1;
+
+option go_package = "inventory-service/proto/loyalty/v1";
+
+service LoyaltyService {
+  rpc GetLoyaltyBalance(GetLoyaltyBalanceRequest) returns (GetLoyaltyBalanceResponse);
+  rpc DeductLoyaltyPoints(DeductLoyaltyPointsRequest) returns (DeductLoyaltyPointsResponse);
+  rpc RefundLoyaltyPoints(RefundLoyaltyPointsRequest) returns (RefundLoyaltyPointsResponse);
+  rpc AddLoyaltyPoints(AddLoyaltyPointsRequest) returns (AddLoyaltyPointsResponse);
+}
+
+message GetLoyaltyBalanceRequest {
+  string user_id = 1;
+}
+
+message GetLoyaltyBalanceResponse {
+  int32 balance = 1;
+}
+
+message DeductLoyaltyPointsRequest {
+  string user_id = 1;
+  int32 points = 2;
+  string order_id = 3;
+}
+
+message DeductLoyaltyPointsResponse {
+  bool success = 1;
+  string message = 2;
+  int32 remaining_balance = 3;
+}
+
+message RefundLoyaltyPointsRequest {
+  string user_id = 1;
+  int32 points = 2;
+  string order_id = 3;
+}
+
+message RefundLoyaltyPointsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message AddLoyaltyPointsRequest {
+  string user_id = 1;
+  int32 points = 2;
+  string order_id = 3;
+}
+
+message AddLoyaltyPointsResponse {
+  bool success = 1;
+  int32 new_balance = 2;
+}

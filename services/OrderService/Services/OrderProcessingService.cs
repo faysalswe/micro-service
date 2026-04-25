@@ -11,6 +11,7 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
     private readonly ILogger<OrderProcessingService> _logger;
     private readonly Payments.V1.PaymentService.PaymentServiceClient _paymentClient;
     private readonly Inventory.V1.InventoryService.InventoryServiceClient _inventoryClient;
+    private readonly Loyalty.V1.LoyaltyService.LoyaltyServiceClient _loyaltyClient;
     private readonly OrderDbContext _dbContext;
     private readonly ISagaService _sagaService;
     private readonly IIdempotencyService _idempotencyService;
@@ -21,6 +22,7 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
         ILogger<OrderProcessingService> logger, 
         Payments.V1.PaymentService.PaymentServiceClient paymentClient,
         Inventory.V1.InventoryService.InventoryServiceClient inventoryClient,
+        Loyalty.V1.LoyaltyService.LoyaltyServiceClient loyaltyClient,
         OrderDbContext dbContext,
         ISagaService sagaService,
         IIdempotencyService idempotencyService,
@@ -30,6 +32,7 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
         _logger = logger;
         _paymentClient = paymentClient;
         _inventoryClient = inventoryClient;
+        _loyaltyClient = loyaltyClient;
         _dbContext = dbContext;
         _sagaService = sagaService;
         _idempotencyService = idempotencyService;
@@ -91,6 +94,7 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
             UserId = request.UserId,
             Status = "PENDING",
             CreatedAt = DateTime.UtcNow,
+            LoyaltyPointsSpent = request.LoyaltyPointsToSpend,
             Items = request.Items.Select(i => new Data.OrderItem
             {
                 ProductId = i.ProductId,
@@ -153,41 +157,76 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
             await _sagaService.LogStepAsync(order.Id, "InventoryReservationCompleted", "Completed");
             _logger.LogInformation("SAGA STEP 1 SUCCESS: Batch stock reserved for Order {OrderId}", order.Id);
 
-            // SAGA STEP 2: PROCESS PAYMENT
-            _logger.LogInformation("SAGA STEP 2: Calling PaymentService for Order {OrderId}", order.Id);
+            // SAGA STEP 2: DEDUCT LOYALTY POINTS (IF REQUESTED)
+            if (order.LoyaltyPointsSpent > 0)
+            {
+                _logger.LogInformation("SAGA STEP 2: Deducting {Points} points for Order {OrderId}", order.LoyaltyPointsSpent, order.Id);
+                await _sagaService.LogStepAsync(order.Id, "LoyaltyDeductionRequested", "Pending", new { order.LoyaltyPointsSpent });
+
+                var loyaltyResponse = await _loyaltyClient.DeductLoyaltyPointsAsync(new Loyalty.V1.DeductLoyaltyPointsRequest
+                {
+                    UserId = order.UserId,
+                    Points = order.LoyaltyPointsSpent,
+                    OrderId = order.Id.ToString()
+                }, metadata);
+
+                if (!loyaltyResponse.Success)
+                {
+                    _logger.LogWarning("SAGA STEP 2 FAILED: {Message}", loyaltyResponse.Message);
+                    await _sagaService.LogStepAsync(order.Id, "LoyaltyDeductionFailed", "Failed", new { loyaltyResponse.Message });
+
+                    // COMPENSATION FOR STEP 1
+                    await ReleaseStockAsync(order, metadata);
+                    
+                    order.Status = "LOYALTY_DEDUCTION_FAILED";
+                    await _dbContext.SaveChangesAsync();
+                    return await ErrorResponse(order, $"Loyalty error: {loyaltyResponse.Message}", idempotencyKey);
+                }
+
+                await _sagaService.LogStepAsync(order.Id, "LoyaltyDeductionCompleted", "Completed");
+            }
+
+            // SAGA STEP 3: PROCESS PAYMENT
+            var amountToPay = order.Amount - (order.LoyaltyPointsSpent * 0.01); // 100 points = $1
+            if (amountToPay < 0) amountToPay = 0;
+
+            _logger.LogInformation("SAGA STEP 3: Calling PaymentService for Order {OrderId}. Net Amount: {Amount}", order.Id, amountToPay);
             await _sagaService.LogStepAsync(order.Id, "PaymentRequested", "Pending",
-                new { order.Id, order.Amount });
+                new { order.Id, amountToPay });
             
             var paymentResponse = await _paymentClient.ProcessPaymentAsync(new ProcessPaymentRequest
             {
                 OrderId = order.Id.ToString(),
-                Amount = order.Amount,
+                Amount = amountToPay,
                 UserId = order.UserId
             }, metadata);
 
             if (!paymentResponse.Success)
             {
-                _logger.LogWarning("SAGA STEP 2 FAILED: {Message}", paymentResponse.StatusMessage);
+                _logger.LogWarning("SAGA STEP 3 FAILED: {Message}", paymentResponse.StatusMessage);
                 await _sagaService.LogStepAsync(order.Id, "PaymentFailed", "Failed",
                     new { paymentResponse.StatusMessage });
                 
-                // COMPENSATION FOR STEP 1
-                _logger.LogInformation("TRIGGERING COMPENSATION: Releasing batch stock for Order {OrderId}", order.Id);
-                await _sagaService.LogStepAsync(order.Id, "StockReleaseRequested", "Pending");
+                // COMPENSATION FOR STEP 2 (LOYALTY REFUND)
+                if (order.LoyaltyPointsSpent > 0)
+                {
+                    _logger.LogInformation("TRIGGERING COMPENSATION: Refunding points for Order {OrderId}", order.Id);
+                    await _sagaService.LogStepAsync(order.Id, "LoyaltyRefundRequested", "Pending");
+                    await _loyaltyClient.RefundLoyaltyPointsAsync(new Loyalty.V1.RefundLoyaltyPointsRequest
+                    {
+                        UserId = order.UserId,
+                        Points = order.LoyaltyPointsSpent,
+                        OrderId = order.Id.ToString()
+                    }, metadata);
+                    await _sagaService.LogStepAsync(order.Id, "LoyaltyRefundCompleted", "Completed");
+                }
 
-                var releaseRequest = new BatchReleaseStockRequest { OrderId = order.Id.ToString() };
-                releaseRequest.Items.AddRange(order.Items.Select(i => new BatchItem 
-                { 
-                    ProductId = i.ProductId, 
-                    Quantity = i.Quantity 
-                }));
+                // COMPENSATION FOR STEP 1 (STOCK RELEASE)
+                await ReleaseStockAsync(order, metadata);
 
-                await _inventoryClient.BatchReleaseStockAsync(releaseRequest, metadata);
-
-                await _sagaService.LogStepAsync(order.Id, "StockReleaseCompleted", "Completed");
                 await _sagaService.LogStepAsync(order.Id, "SagaCompensated", "Completed");
 
-                order.Status = "PAYMENT_FAILED_STOCK_RELEASED";
+                order.Status = "PAYMENT_FAILED_SAGA_REVERSED";
                 await _dbContext.SaveChangesAsync();
 
                 var response = new CreateOrderResponse
@@ -204,8 +243,23 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
 
             await _sagaService.LogStepAsync(order.Id, "PaymentCompleted", "Completed",
                 new { paymentResponse.PaymentId });
-            _logger.LogInformation("SAGA STEP 2 SUCCESS: Payment processed for Order {OrderId}", order.Id);
+            _logger.LogInformation("SAGA STEP 3 SUCCESS: Payment processed for Order {OrderId}", order.Id);
             order.PaymentId = paymentResponse.PaymentId;
+
+            // SAGA STEP 4: ADD EARNED POINTS (10% OF ORDER AMOUNT)
+            order.LoyaltyPointsEarned = (int)(order.Amount * 10);
+            _logger.LogInformation("SAGA STEP 4: Adding {Points} earned points for Order {OrderId}", order.LoyaltyPointsEarned, order.Id);
+            await _sagaService.LogStepAsync(order.Id, "LoyaltyEarningRequested", "Pending", new { order.LoyaltyPointsEarned });
+            
+            await _loyaltyClient.AddLoyaltyPointsAsync(new Loyalty.V1.AddLoyaltyPointsRequest
+            {
+                UserId = order.UserId,
+                Points = order.LoyaltyPointsEarned,
+                OrderId = order.Id.ToString()
+            }, metadata);
+            
+            await _sagaService.LogStepAsync(order.Id, "LoyaltyEarningCompleted", "Completed");
+
             await _dbContext.SaveChangesAsync();
 
             // SUCCESS
@@ -250,6 +304,22 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
         }
     }
 
+    private async Task ReleaseStockAsync(Order order, Metadata metadata)
+    {
+        _logger.LogInformation("TRIGGERING COMPENSATION: Releasing batch stock for Order {OrderId}", order.Id);
+        await _sagaService.LogStepAsync(order.Id, "StockReleaseRequested", "Pending");
+
+        var releaseRequest = new BatchReleaseStockRequest { OrderId = order.Id.ToString() };
+        releaseRequest.Items.AddRange(order.Items.Select(i => new BatchItem 
+        { 
+            ProductId = i.ProductId, 
+            Quantity = i.Quantity 
+        }));
+
+        await _inventoryClient.BatchReleaseStockAsync(releaseRequest, metadata);
+        await _sagaService.LogStepAsync(order.Id, "StockReleaseCompleted", "Completed");
+    }
+
     private async Task TriggerPdfGeneration(Order order, string correlationId)
     {
         try
@@ -266,6 +336,9 @@ public class OrderProcessingService : Orders.V1.OrderService.OrderServiceBase
                 user_id = order.UserId,
                 customer_name = $"User {order.UserId}", // In reality, fetch from Identity
                 total_amount = order.Amount,
+                loyalty_spent = order.LoyaltyPointsSpent,
+                loyalty_earned = order.LoyaltyPointsEarned,
+                net_amount = order.Amount - (order.LoyaltyPointsSpent * 0.01),
                 items = order.Items.Select(i => new 
                 {
                     product_id = i.ProductId,

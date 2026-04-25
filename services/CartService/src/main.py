@@ -117,7 +117,7 @@ async def clear_cart(user_id: str):
     return {"message": "Cart cleared", "user_id": user_id}
 
 @app.post("/api/cart/{user_id}/checkout")
-async def checkout(user_id: str):
+async def checkout(user_id: str, loyalty_points: int = Query(0)):
     if not redis_client:
         raise HTTPException(status_code=503, detail="Redis client not initialized")
 
@@ -157,7 +157,8 @@ async def checkout(user_id: str):
             request = orders_pb2.CreateOrderRequest(
                 user_id=user_id,
                 items=order_items,
-                total_amount=total_amount
+                total_amount=total_amount,
+                loyalty_points_to_spend=loyalty_points
             )
             
             response = await stub.CreateOrder(request)

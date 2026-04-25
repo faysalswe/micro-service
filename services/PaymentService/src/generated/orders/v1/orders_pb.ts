@@ -25,6 +25,11 @@ export class CreateOrderRequest extends Message<CreateOrderRequest> {
    */
   totalAmount = 0;
 
+  /**
+   * @generated from field: int32 loyalty_points_to_spend = 4;
+   */
+  loyaltyPointsToSpend = 0;
+
   constructor(data?: PartialMessage<CreateOrderRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -36,6 +41,7 @@ export class CreateOrderRequest extends Message<CreateOrderRequest> {
     { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "items", kind: "message", T: OrderItem, repeated: true },
     { no: 3, name: "total_amount", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 4, name: "loyalty_points_to_spend", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateOrderRequest {
@@ -69,6 +75,11 @@ export class OrderItem extends Message<OrderItem> {
    */
   quantity = 0;
 
+  /**
+   * @generated from field: double unit_price = 3;
+   */
+  unitPrice = 0;
+
   constructor(data?: PartialMessage<OrderItem>) {
     super();
     proto3.util.initPartial(data, this);
@@ -79,6 +90,7 @@ export class OrderItem extends Message<OrderItem> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "product_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "quantity", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "unit_price", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrderItem {

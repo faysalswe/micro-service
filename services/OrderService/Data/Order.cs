@@ -21,6 +21,9 @@ public class Order
 
     public string? PaymentId { get; set; }
 
+    public int LoyaltyPointsSpent { get; set; }
+    public int LoyaltyPointsEarned { get; set; }
+
     // Multi-product support
     public List<OrderItem> Items { get; set; } = new();
 }
