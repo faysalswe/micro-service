@@ -19,6 +19,7 @@ publish/
 *.sln.docstates
 TestResults/
 nupkg/
+*.csproj.lscache
 
 # --- Node.js / Frontend ---
 node_modules/
