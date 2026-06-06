@@ -1,45 +1,84 @@
 #!/bin/bash
+# Full k3d cluster setup: creates cluster, registry (with mirror), and installs Kong.
+# Run from the repo root: ./platform/cluster/setup-k3d.sh
 set -e
 
-# Configuration
 CLUSTER_NAME="micro-cluster"
 CONFIG_FILE="platform/cluster/k3d-cluster.yaml"
 
-# Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-echo -e "${BLUE}🔍 Checking environment for k3d cluster setup...${NC}"
+# --- Prerequisites ---
+echo -e "${BLUE}Checking prerequisites...${NC}"
 
-# Check if docker is running
 if ! docker info > /dev/null 2>&1; then
-    echo -e "${RED}❌ Docker is not running. Please start Docker and try again.${NC}"
-    exit 1
+    echo -e "${RED}ERROR: Docker is not running.${NC}"; exit 1
 fi
-
-# Check if k3d is installed
-if ! command -v k3d > /dev/null 2>&1; then
-    echo -e "${RED}❌ k3d is not installed. Please install it (brew install k3d) and try again.${NC}"
-    exit 1
-fi
-
-# Check if cluster already exists
-if k3d cluster list | grep -q "$CLUSTER_NAME"; then
-    echo -e "${GREEN}✅ Cluster '$CLUSTER_NAME' already exists.${NC}"
-else
-    echo -e "${BLUE}🚀 Creating k3d cluster '$CLUSTER_NAME' from config...${NC}"
-    if [ ! -f "$CONFIG_FILE" ]; then
-        echo -e "${RED}❌ Config file not found at $CONFIG_FILE${NC}"
-        exit 1
+for cmd in k3d helm kubectl; do
+    if ! command -v $cmd > /dev/null 2>&1; then
+        echo -e "${RED}ERROR: $cmd is not installed. Run: brew install $cmd${NC}"; exit 1
     fi
-    k3d cluster create --config "$CONFIG_FILE" --wait
-    echo -e "${GREEN}✨ Cluster '$CLUSTER_NAME' created successfully!${NC}"
+done
+
+# --- Delete existing cluster ---
+if k3d cluster list 2>/dev/null | grep -q "${CLUSTER_NAME}"; then
+    echo -e "${BLUE}Deleting existing cluster '${CLUSTER_NAME}'...${NC}"
+    k3d cluster delete "${CLUSTER_NAME}"
 fi
 
-# Ensure kubeconfig is updated and we are in the right context
-echo -e "${BLUE}🔧 Updating kubeconfig context...${NC}"
-k3d kubeconfig merge "$CLUSTER_NAME" --kubeconfig-switch-context
+# --- Create cluster ---
+# k3d-cluster.yaml creates the registry and configures the mirror inside each node
+# so that localhost:5001 resolves correctly from within the cluster
+echo -e "${BLUE}Creating k3d cluster '${CLUSTER_NAME}'...${NC}"
+k3d cluster create --config "${CONFIG_FILE}"
+kubectl config use-context "k3d-${CLUSTER_NAME}"
+echo -e "${GREEN}Cluster ready.${NC}"
 
-echo -e "${GREEN}🎉 Environment is ready for deployment.${NC}"
+# --- Install MetalLB ---
+# Added: replaces k3d's built-in HAProxy LB so both k3d and kind use the same approach
+echo -e "${BLUE}Installing MetalLB...${NC}"
+helm repo add metallb https://metallb.github.io/metallb 2>/dev/null || true
+helm repo update
+helm install metallb metallb/metallb --namespace metallb-system --create-namespace
+
+echo -e "${BLUE}Waiting for MetalLB to be ready...${NC}"
+kubectl rollout status deployment/metallb-controller --namespace metallb-system --timeout=90s
+
+# Detect k3d Docker network subnet and assign last 50 IPs to MetalLB
+SUBNET=$(docker network inspect k3d-${CLUSTER_NAME} --format '{{(index .IPAM.Config 0).Subnet}}' | cut -d'.' -f1-3)
+kubectl apply -f - <<EOF
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: local-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - ${SUBNET}.200-${SUBNET}.250
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: local-advert
+  namespace: metallb-system
+EOF
+echo -e "${GREEN}MetalLB configured with pool ${SUBNET}.200-${SUBNET}.250${NC}"
+
+# --- Install Kong ---
+echo -e "${BLUE}Installing Kong ingress controller...${NC}"
+helm repo add kong https://charts.konghq.com 2>/dev/null || true
+helm repo update
+helm install kong kong/ingress \
+    --namespace kong \
+    --create-namespace \
+    --set controller.ingressClass=kong
+
+echo -e "${BLUE}Waiting for Kong to be ready...${NC}"
+kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-controller --timeout=120s
+kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-gateway --timeout=120s
+
+echo -e "${GREEN}Setup complete.${NC}"
+echo -e "${BLUE}Next step: run ./platform/cluster/deploy-services.sh${NC}"

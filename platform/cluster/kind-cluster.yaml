@@ -1,0 +1,30 @@
+apiVersion: kind.x-k8s.io/v1alpha4
+kind: Cluster
+name: micro-cluster
+nodes:
+  # 3 control-plane nodes for etcd quorum — 1 can die, 2 remain for HA.
+  # kind auto-creates an HAProxy container when there are multiple control-planes.
+  # extraPortMappings move to control-plane-1 only — HAProxy forwards app traffic here.
+  - role: control-plane
+    image: kindest/node:v1.32.2
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 8100
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 8543
+        protocol: TCP
+  - role: control-plane
+    image: kindest/node:v1.32.2
+  - role: control-plane
+    image: kindest/node:v1.32.2
+  - role: worker
+    image: kindest/node:v1.32.2
+  - role: worker
+    image: kindest/node:v1.32.2
+  - role: worker
+    image: kindest/node:v1.32.2
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
+      endpoint = ["http://localhost:5001"]

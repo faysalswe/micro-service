@@ -2,8 +2,8 @@ apiVersion: k3d.io/v1alpha5
 kind: Simple
 metadata:
   name: micro-cluster
-servers: 1
-agents: 0
+servers: 3
+agents: 3
 ports:
   - port: 8100:80
     nodeFilters:
@@ -16,9 +16,17 @@ registries:
     name: micro-registry
     host: 0.0.0.0
     hostPort: "5001"
+  config: |
+    mirrors:
+      "localhost:5001":
+        endpoint:
+          - "http://micro-registry:5000"
 options:
   k3s:
     extraArgs:
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*
       - arg: --tls-san=127.0.0.1
         nodeFilters:
           - server:*

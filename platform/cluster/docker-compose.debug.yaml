@@ -60,7 +60,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - REST_PORT=${INTERNAL_PORT_PAYMENT:-5012}
-      - PORT=${INTERNAL_PORT_GRPC_PAYMENT:-50012}
+      - GRPC_PORT=${INTERNAL_PORT_GRPC_PAYMENT:-50012}
       - MONGO_URI=mongodb://${DB_USER:-admin}:${DB_PASSWORD:-password123}@payment-db:27017
       - MONGO_DB_NAME=payments_db
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
