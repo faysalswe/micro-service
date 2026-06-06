@@ -5,7 +5,10 @@ postgresql:
   auth:
     database: micro_service_db
     username: admin
-    password: password123
+    existingSecret: "db-credentials"
+    secretKeys:
+      adminPasswordKey: "POSTGRES_ADMIN_PASSWORD"
+      userPasswordKey: "DB_PASSWORD"
   persistence:
     enabled: true
     size: 1Gi
@@ -16,15 +19,17 @@ postgresql:
       requests:
         memory: 256Mi
 
+
 mongodb:
   image:
     tag: latest
     pullPolicy: IfNotPresent
   auth:
-    rootPassword: password123
-    database: payment_db
+    rootUser: root
+    database: payments_db
     usernames: ["admin"]
-    databases: ["payment_db"]
+    databases: ["payments_db"]
+    existingSecret: "db-credentials"
   persistence:
     enabled: true
     size: 1Gi
