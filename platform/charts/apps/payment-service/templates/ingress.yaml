@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "payment-service.fullname" . }}
+  labels:
+    {{- include "payment-service.labels" . | nindent 4 }}
+spec:
+  ingressClassName: kong
+  rules:
+  - http:
+      paths:
+      - path: /api/payments
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "payment-service.fullname" . }}
+            port:
+              number: 5012

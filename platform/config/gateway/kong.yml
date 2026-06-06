@@ -150,7 +150,24 @@ services:
           - /api/storage
         strip_path: true
 
-  # OpenTelemetry Collector
+  # Storefront (React SSR) - catch-all, must be last
+  - name: storefront
+    url: http://storefront:3000
+    routes:
+      - name: storefront-ui
+        paths:
+          - /
+        strip_path: false
+
+  # Back-office (Angular SPA via Nginx)
+  - name: back-office
+    url: http://back-office:80
+    routes:
+      - name: back-office-ui
+        paths:
+          - /admin
+        strip_path: true
+
 plugins:
   # CORS - Allow browser requests
   - name: cors
@@ -158,6 +175,7 @@ plugins:
       origins:
         - http://localhost:5008
         - http://localhost:5009
+        - http://localhost:8100
       methods:
         - GET
         - POST

@@ -1,6 +1,7 @@
 replicaCount: 1
 
 image:
+  registry: ""
   repository: back-office
   tag: "latest"
   pullPolicy: IfNotPresent
@@ -11,7 +12,7 @@ service:
   targetPort: 80
 
 config:
-  apiUrl: "http://localhost:8000"
+  apiUrl: "http://localhost:8100"
 
 resources:
   limits:
