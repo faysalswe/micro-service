@@ -1,0 +1,31 @@
+replicaCount: 1
+
+image:
+  registry: ""
+  repository: pdf-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 5015
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+config:
+  s3Endpoint: "http://infrastructure-minio:9000"
+  otelEndpoint: "http://otel-collector:4317"
+  serviceName: "PdfService"
+
+minio:
+  existingSecret: "minio-credentials"
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

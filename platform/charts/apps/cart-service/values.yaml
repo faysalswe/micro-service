@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  registry: ""
+  repository: cart-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 5014
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+config:
+  redisUrl: "redis://infrastructure-redis-master:6379/0"
+  orderServiceUrl: "order-service:50011"
+  otelEndpoint: "http://otel-collector:4317"
+  serviceName: "CartService"
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
