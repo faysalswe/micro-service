@@ -7,7 +7,7 @@ RUN npm install -g pnpm
 
 # Copy package files and install all dependencies (including devDependencies for build)
 COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
 
 # Copy the entire service source including generated files
 COPY services/PaymentService/ ./
@@ -24,7 +24,7 @@ RUN npm install -g pnpm
 
 # Copy package files and install only production dependencies
 COPY services/PaymentService/package*.json services/PaymentService/pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+RUN pnpm install --prod --no-frozen-lockfile --ignore-scripts
 
 # Stage 3: Runtime
 FROM node:20-alpine AS runtime

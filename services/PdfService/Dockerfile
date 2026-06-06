@@ -22,6 +22,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY . .
 
+# Create non-root user (UID 1001)
+RUN groupadd -r appgroup && useradd -r -u 1001 -g appgroup appuser \
+    && chown -R appuser:appgroup /app
+USER 1001
+
 # Environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PORT=5015
