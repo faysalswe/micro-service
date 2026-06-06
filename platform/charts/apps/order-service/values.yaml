@@ -1,6 +1,7 @@
 replicaCount: 2
 
 image:
+  registry: ""
   repository: order-service
   tag: "latest"
   pullPolicy: IfNotPresent

@@ -1,7 +1,8 @@
 replicaCount: 2
 
 image:
-  repository: microservices/identity-service
+  registry: ""
+  repository: identity-service
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -25,6 +26,8 @@ autoscaling:
 
 config:
   aspnetcoreEnvironment: "Production"
+  otelEndpoint: "http://otel-collector:4317"
+  lokiUrl: "http://loki:3100"
 
 jwt:
   existingSecret: "jwt-secret"

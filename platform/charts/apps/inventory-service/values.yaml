@@ -1,6 +1,7 @@
 replicaCount: 1
 
 image:
+  registry: ""
   repository: inventory-service
   pullPolicy: IfNotPresent
   tag: "latest"
@@ -8,7 +9,7 @@ image:
 service:
   type: ClusterIP
   port: 5013
-  metricsPort: 50013
+  grpcPort: 50013
 
 resources:
   limits:
@@ -17,6 +18,13 @@ resources:
   requests:
     cpu: 50m
     memory: 64Mi
+
+config:
+  otelEndpoint: "http://otel-collector:4317"
+  serviceName: "InventoryService"
+
+database:
+  existingSecret: "db-credentials"
 
 nodeSelector: {}
 tolerations: []

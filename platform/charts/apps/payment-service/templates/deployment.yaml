@@ -23,7 +23,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ if .Values.image.registry }}{{ .Values.image.registry }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: grpc
@@ -34,10 +34,10 @@ spec:
               protocol: TCP
           env:
             - name: APP_VERSION
-              value: {{ .Values.env.APP_VERSION | default "1.0.0-dev" | quote }}
+              value: {{ ((.Values.env).APP_VERSION) | default "1.0.0-dev" | quote }}
             - name: NODE_ENV
               value: {{ .Values.config.nodeEnv | quote }}
-            - name: PORT
+            - name: GRPC_PORT
               value: {{ .Values.service.port | quote }}
             - name: REST_PORT
               value: {{ .Values.service.restPort | quote }}
@@ -76,6 +76,8 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           securityContext:
             runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
             allowPrivilegeEscalation: false
       {{- with .Values.nodeSelector }}
       nodeSelector:

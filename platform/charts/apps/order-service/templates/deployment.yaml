@@ -25,7 +25,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ if .Values.image.registry }}{{ .Values.image.registry }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: grpc
@@ -36,7 +36,7 @@ spec:
               protocol: TCP
           env:
             - name: APP_VERSION
-              value: {{ .Values.env.APP_VERSION | default "1.0.0-dev" | quote }}
+              value: {{ ((.Values.env).APP_VERSION) | default "1.0.0-dev" | quote }}
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.config.aspnetcoreEnvironment | quote }}
             - name: Kestrel__Endpoints__Http__Url

@@ -1,7 +1,8 @@
 replicaCount: 2
 
 image:
-  repository: microservices/payment-service
+  registry: ""
+  repository: payment-service
   tag: "latest"
   pullPolicy: IfNotPresent
 

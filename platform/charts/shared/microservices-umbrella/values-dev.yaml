@@ -1,8 +1,10 @@
-# Development environment - single replicas, reduced resources
+# Development environment - single replicas, reduced resources, local registry
 global:
   namespace: microservices
 
 order-service:
+  image:
+    registry: localhost:5001
   replicaCount: 1
   config:
     aspnetcoreEnvironment: "Development"
@@ -15,6 +17,8 @@ order-service:
       memory: 128Mi
 
 payment-service:
+  image:
+    registry: localhost:5001
   replicaCount: 1
   config:
     nodeEnv: "development"
@@ -25,6 +29,18 @@ payment-service:
       memory: 128Mi
     requests:
       cpu: 50m
+      memory: 64Mi
+
+inventory-service:
+  image:
+    registry: localhost:5001
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
       memory: 64Mi
 
 identity-service:
