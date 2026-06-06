@@ -6,15 +6,18 @@ import { MongoClient, Db } from 'mongodb';
 import CircuitBreaker from 'opossum';
 import { initializeTracing } from './tracing';
 import { logger } from './logger';
-import { HealthImplementation, ServingStatusMap } from 'grpc-health-check';
+import { setStatus } from './health-status';
+import { HealthCheckResponse_ServingStatus } from './generated/grpc/health/v1/health_pb';
 import { createRestApi } from './rest-api';
 import { seedDatabase } from './data/seeder';
 import { CONFIG, INTERNAL_CONSTANTS } from './constants/config';
 
 // Static gRPC Imports
+import { ConnectRouter } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
 import * as http2 from "http2";
 import { createPaymentHandler } from "./api/grpc/payment-handler";
+import { createHealthHandler } from "./api/grpc/health-handler";
 
 // Validate required environment variables
 const requiredEnvVars = ['REST_PORT', 'LOKI_URL'];
@@ -35,15 +38,6 @@ const mongoUri = CONFIG.DB.URI || 'mongodb://admin:password123@localhost:27017';
 const dbName = CONFIG.DB.NAME;
 let db: Db;
 
-// Health Status Tracking
-let currentHealthStatus: 'SERVING' | 'NOT_SERVING' = 'SERVING';
-
-// gRPC Health Check Setup (for the REST API to report)
-const healthStatusMap: ServingStatusMap = {
-  '': 'SERVING',
-  'payments.PaymentService': 'SERVING'
-};
-const healthImpl = new HealthImplementation(healthStatusMap);
 
 // Circuit Breaker Options
 const breakerOptions = {
@@ -76,9 +70,11 @@ updateBreaker.fallback(() => {
 });
 
 const setHealthStatus = (status: 'SERVING' | 'NOT_SERVING') => {
-  currentHealthStatus = status;
-  healthImpl.setStatus('', status);
-  healthImpl.setStatus('payments.PaymentService', status);
+  const servingStatus = status === 'SERVING'
+    ? HealthCheckResponse_ServingStatus.SERVING
+    : HealthCheckResponse_ServingStatus.NOT_SERVING;
+  setStatus('', servingStatus);
+  setStatus('payments.v1.PaymentService', servingStatus);
 };
 
 // Update health status based on circuit breaker state
@@ -125,7 +121,10 @@ async function main() {
   }
 
   // Create gRPC Server using Connect Node Adapter
-  const routes = createPaymentHandler(db, dbBreaker, updateBreaker);
+  const routes = (router: ConnectRouter) => {
+    createPaymentHandler(db, dbBreaker, updateBreaker)(router);
+    createHealthHandler()(router);
+  };
   const handler = connectNodeAdapter({ routes });
   const grpcServer = http2.createServer(handler);
   

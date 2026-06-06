@@ -23,7 +23,7 @@ export const CONFIG = {
     NAME: process.env.MONGO_DB_NAME || 'payments_db',
   },
   SERVER: {
-    PORT: process.env.PORT || '50012',
+    PORT: process.env.GRPC_PORT || '50012',
     REST_PORT: process.env.REST_PORT || '5012',
   },
 
