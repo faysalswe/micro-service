@@ -2,7 +2,8 @@
 .DS_Store
 .env
 .env.*
-!.env.template
+!.env.example
+!**/.env.example
 *.log
 tmp/
 temp/
