@@ -14,7 +14,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER:-admin}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
-      POSTGRES_DB: orders_db
+      POSTGRES_DB: ${DB_NAME_ORDER:-orders_db}
     ports:
       - "${PORT_POSTGRES_ORDER:-5432}:5432"
     volumes:
@@ -22,7 +22,7 @@ services:
     networks:
       - infra-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d orders_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME_ORDER:-orders_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -55,7 +55,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER:-admin}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
-      POSTGRES_DB: inventory_db
+      POSTGRES_DB: ${DB_NAME_INVENTORY:-inventory_db}
     ports:
       - "${PORT_POSTGRES_INVENTORY:-5433}:5432"
     volumes:
@@ -63,7 +63,7 @@ services:
     networks:
       - infra-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d inventory_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME_INVENTORY:-inventory_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -92,8 +92,8 @@ services:
       - "9000:9000" # API
       - "9001:9001" # Web Console
     environment:
-      MINIO_ROOT_USER: "admin"
-      MINIO_ROOT_PASSWORD: "password123"
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]

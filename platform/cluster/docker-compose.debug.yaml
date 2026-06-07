@@ -14,15 +14,18 @@ services:
       dockerfile: services/IdentityService/Dockerfile.debug
     container_name: identity-service
     ports:
-      - "${PORT_IDENTITY_SERVICE:-5010}:5010"
+      - "${PORT_IDENTITY_SERVICE}:5010"
+      - "${INTERNAL_PORT_GRPC_IDENTITY}:50010"
       - "2223:2222"
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+      - LOKI_URL=${LOKI_URL}
       - Service__Name=IdentityService
-      - Service__Version=1.0.0
-      - Jwt__Key=${DB_PASSWORD:-ThisIsAVerySecretKeyForDevelopmentOnly123!}
+      - Service__Version=${SERVICE_VERSION}
+      - Jwt__Key=${JWT_SECRET}
       - Jwt__Issuer=IdentityService
+      - Cors__AllowedOrigins=${CORS_ALLOWED_ORIGINS}
 
   order-service:
     networks:
@@ -32,19 +35,20 @@ services:
       dockerfile: services/OrderService/Dockerfile.debug
     container_name: order-service
     ports:
-      - "${PORT_ORDER_SERVICE:-5011}:5011"
-      - "${INTERNAL_PORT_GRPC_ORDER:-50011}:50011"
+      - "${PORT_ORDER_SERVICE}:5011"
+      - "${INTERNAL_PORT_GRPC_ORDER}:50011"
       - "2224:2222"
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ConnectionStrings__DefaultConnection=Host=order-db;Database=orders_db;Username=${DB_USER:-admin};Password=${DB_PASSWORD:-password123}
-      - Redis__Configuration=redis:6379
-      - GrpcSettings__PaymentServiceUrl=http://payment-service:50012
-      - GrpcSettings__InventoryServiceUrl=http://inventory-service:50013
-      - ExternalServices__PdfServiceUrl=http://pdf-service:5015
-      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionStrings__DefaultConnection=Host=order-db;Database=${DB_NAME_ORDER};Username=${DB_USER};Password=${DB_PASSWORD}
+      - GrpcSettings__PaymentServiceUrl=${GRPC_URL_PAYMENT}
+      - GrpcSettings__InventoryServiceUrl=${GRPC_URL_INVENTORY}
+      - GrpcSettings__IdentityServiceUrl=${GRPC_URL_IDENTITY}
+      - ExternalServices__PdfServiceUrl=${HTTP_URL_PDF}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+      - LOKI_URL=${LOKI_URL}
       - Service__Name=OrderService
-      - Service__Version=1.0.0
+      - Service__Version=${SERVICE_VERSION}
 
   payment-service:
     networks:
@@ -54,17 +58,19 @@ services:
       dockerfile: services/PaymentService/Dockerfile.debug
     container_name: payment-service
     ports:
-      - "${PORT_PAYMENT_SERVICE:-5012}:${INTERNAL_PORT_PAYMENT:-5012}"
-      - "${INTERNAL_PORT_GRPC_PAYMENT:-50012}:${INTERNAL_PORT_GRPC_PAYMENT:-50012}"
+      - "${PORT_PAYMENT_SERVICE}:${INTERNAL_PORT_PAYMENT}"
+      - "${INTERNAL_PORT_GRPC_PAYMENT}:${INTERNAL_PORT_GRPC_PAYMENT}"
       - "9229:9229"
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - REST_PORT=${INTERNAL_PORT_PAYMENT:-5012}
-      - GRPC_PORT=${INTERNAL_PORT_GRPC_PAYMENT:-50012}
-      - MONGO_URI=mongodb://${DB_USER:-admin}:${DB_PASSWORD:-password123}@payment-db:27017
-      - MONGO_DB_NAME=payments_db
-      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      - NODE_ENV=${NODE_ENV}
+      - REST_PORT=${INTERNAL_PORT_PAYMENT}
+      - GRPC_PORT=${INTERNAL_PORT_GRPC_PAYMENT}
+      - MONGO_URI=mongodb://${DB_USER}:${DB_PASSWORD}@payment-db:27017
+      - MONGO_DB_NAME=${DB_NAME_PAYMENT}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+      - LOKI_URL=${LOKI_URL}
       - SERVICE_NAME=PaymentService
+      - CIRCUIT_BREAKER_TIMEOUT=${CIRCUIT_BREAKER_TIMEOUT}
 
   inventory-service:
     networks:
@@ -74,19 +80,20 @@ services:
       dockerfile: services/InventoryService/Dockerfile.debug
     container_name: inventory-service
     ports:
-      - "${PORT_INVENTORY_SERVICE:-5013}:${INTERNAL_PORT_INVENTORY:-5013}"
-      - "${INTERNAL_PORT_GRPC_INVENTORY:-50013}:${INTERNAL_PORT_GRPC_INVENTORY:-50013}"
+      - "${PORT_INVENTORY_SERVICE}:${INTERNAL_PORT_INVENTORY}"
+      - "${INTERNAL_PORT_GRPC_INVENTORY}:${INTERNAL_PORT_GRPC_INVENTORY}"
       - "4013:4013"
     environment:
       - SERVICE_NAME=InventoryService
       - DB_HOST=inventory-db
       - DB_PORT=5432
-      - DB_USER=${DB_USER:-admin}
-      - DB_PASSWORD=${DB_PASSWORD:-password123}
-      - DB_NAME=inventory_db
-      - REST_PORT=${INTERNAL_PORT_INVENTORY:-5013}
-      - GRPC_PORT=${INTERNAL_PORT_GRPC_INVENTORY:-50013}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME_INVENTORY}
+      - REST_PORT=${INTERNAL_PORT_INVENTORY}
+      - GRPC_PORT=${INTERNAL_PORT_GRPC_INVENTORY}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+      - LOKI_URL=${LOKI_URL}
 
   # Python Cart Service
   cart-service:
@@ -97,13 +104,13 @@ services:
       dockerfile: Dockerfile
     container_name: cart-service
     ports:
-      - "5014:5014"
+      - "${PORT_CART_SERVICE}:${INTERNAL_PORT_CART}"
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - ORDER_SERVICE_URL=order-service:50011
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - REDIS_URL=${REDIS_URL}
+      - ORDER_SERVICE_URL=${ORDER_SERVICE_URL}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
       - SERVICE_NAME=CartService
-      - REST_PORT=5014
+      - REST_PORT=${INTERNAL_PORT_CART}
 
   # Python PDF Generation Service
   pdf-service:
@@ -114,10 +121,11 @@ services:
       dockerfile: Dockerfile
     container_name: pdf-service
     ports:
-      - "5015:5015"
+      - "${PORT_PDF_SERVICE}:${INTERNAL_PORT_PDF}"
     environment:
-      - S3_ENDPOINT=http://minio:9000
-      - S3_ACCESS_KEY=admin
-      - S3_SECRET_KEY=password123
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_ACCESS_KEY=${MINIO_ROOT_USER}
+      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
       - SERVICE_NAME=PdfService
+      - REST_PORT=${INTERNAL_PORT_PDF}
