@@ -41,16 +41,9 @@ func startRESTServer(svc service.InventoryService, port string) {
 	}
 }
 
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
-
 func requireEnv(key string) string {
 	value, ok := os.LookupEnv(key)
-	if !ok {
+	if !ok || value == "" {
 		log.Fatalf("CRITICAL: Missing required environment variable: %s", key)
 	}
 	return value

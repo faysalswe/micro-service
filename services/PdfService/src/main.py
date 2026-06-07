@@ -18,6 +18,7 @@ from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from datetime import datetime
 import io
 import os
+import sys
 
 try:
     from .constants.config import CONFIG, INTERNAL_CONSTANTS
@@ -118,5 +119,8 @@ async def generate_invoice(order_data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", os.environ.get("REST_PORT", 5015)))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    _port_str = os.environ.get("REST_PORT")
+    if not _port_str:
+        logger.critical("Required environment variable 'REST_PORT' is not set")
+        sys.exit(1)
+    uvicorn.run(app, host="0.0.0.0", port=int(_port_str))

@@ -1,6 +1,4 @@
-// Load environment variables FIRST before any other imports
-import * as dotenv from 'dotenv';
-dotenv.config();
+import './loadenv';
 
 import { MongoClient, Db } from 'mongodb';
 import CircuitBreaker from 'opossum';
@@ -19,22 +17,9 @@ import * as http2 from "http2";
 import { createPaymentHandler } from "./api/grpc/payment-handler";
 import { createHealthHandler } from "./api/grpc/health-handler";
 
-// Validate required environment variables
-const requiredEnvVars = ['REST_PORT', 'LOKI_URL'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-if (missingEnvVars.length > 0) {
-  console.error('\x1b[31m%s\x1b[0m', '❌ Missing required environment variables:');
-  missingEnvVars.forEach(varName => {
-    console.error('\x1b[31m%s\x1b[0m', `   - ${varName}`);
-  });
-  console.error('\x1b[33m%s\x1b[0m', '\n💡 Please set these variables in your .env file or environment.');
-  process.exit(1);
-}
-
 // Initialize OpenTelemetry tracing
 initializeTracing();
-const mongoUri = CONFIG.DB.URI || 'mongodb://admin:password123@localhost:27017';
+const mongoUri = CONFIG.DB.URI;
 const dbName = CONFIG.DB.NAME;
 let db: Db;
 

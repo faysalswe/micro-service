@@ -1,4 +1,15 @@
 import os
+import sys
+import logging
+
+_logger = logging.getLogger(__name__)
+
+def _require_env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        _logger.critical("Required environment variable '%s' is not set", name)
+        sys.exit(1)
+    return value
 
 # Internal Business Logic Constants
 INTERNAL_CONSTANTS = {
@@ -6,11 +17,10 @@ INTERNAL_CONSTANTS = {
     "INVOICE_BUCKET": "invoices"
 }
 
-# Infrastructure Configuration
 CONFIG = {
-    "S3_ENDPOINT": os.environ.get("S3_ENDPOINT", "http://minio:9000"),
-    "S3_ACCESS_KEY": os.environ.get("S3_ACCESS_KEY", "admin"),
-    "S3_SECRET_KEY": os.environ.get("S3_SECRET_KEY", "password123"),
-    "OTEL_EXPORTER_OTLP_ENDPOINT": os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector:4317"),
-    "SERVICE_NAME": os.environ.get("SERVICE_NAME", "PdfService"),
+    "S3_ENDPOINT": _require_env("S3_ENDPOINT"),
+    "S3_ACCESS_KEY": _require_env("S3_ACCESS_KEY"),
+    "S3_SECRET_KEY": _require_env("S3_SECRET_KEY"),
+    "OTEL_EXPORTER_OTLP_ENDPOINT": _require_env("OTEL_EXPORTER_OTLP_ENDPOINT"),
+    "SERVICE_NAME": _require_env("SERVICE_NAME"),
 }

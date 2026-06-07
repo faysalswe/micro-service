@@ -1,15 +1,25 @@
 import os
+import sys
+import logging
+
+_logger = logging.getLogger(__name__)
+
+def _require_env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        _logger.critical("Required environment variable '%s' is not set", name)
+        sys.exit(1)
+    return value
 
 # Internal Business Logic Constants
 INTERNAL_CONSTANTS = {
-    "SESSION_TTL": 3600,  # 1 hour for cart life
+    "SESSION_TTL": 3600,
     "VERSION": "1.0.0"
 }
 
-# Infrastructure Configuration
 CONFIG = {
-    "REDIS_URL": os.environ.get("REDIS_URL", "redis://redis:6379/0"),
-    "ORDER_SERVICE_URL": os.environ.get("ORDER_SERVICE_URL", "order-service:50011"),
-    "OTEL_EXPORTER_OTLP_ENDPOINT": os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector:4317"),
-    "SERVICE_NAME": os.environ.get("SERVICE_NAME", "CartService"),
+    "REDIS_URL": _require_env("REDIS_URL"),
+    "ORDER_SERVICE_URL": _require_env("ORDER_SERVICE_URL"),
+    "OTEL_EXPORTER_OTLP_ENDPOINT": _require_env("OTEL_EXPORTER_OTLP_ENDPOINT"),
+    "SERVICE_NAME": _require_env("SERVICE_NAME"),
 }

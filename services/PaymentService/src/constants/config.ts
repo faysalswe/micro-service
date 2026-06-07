@@ -1,38 +1,48 @@
-/**
- * Internal Business Logic Constants (Not in env to avoid clutter)
- */
+// logger.ts imports CONFIG, so we cannot import logger here — circular dependency.
+// Missing env vars throw at module load time and surface in the startup crash trace.
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Required environment variable '${name}' is not set`);
+  }
+  return value;
+}
+
+function requireEnvInt(name: string): number {
+  const raw = requireEnv(name);
+  const parsed = parseInt(raw, 10);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Environment variable '${name}' must be a valid integer, got: '${raw}'`);
+  }
+  if (parsed <= 0) {
+    throw new Error(`Environment variable '${name}' must be a positive integer, got: ${parsed}`);
+  }
+  return parsed;
+}
+
 export const INTERNAL_CONSTANTS = {
   BREAKER: {
-    RESET_TIMEOUT: 30000, // 30 seconds is a standard internal default
-    ERROR_THRESHOLD: 50,  // 50% error rate threshold
+    RESET_TIMEOUT: 30000,
+    ERROR_THRESHOLD: 50,
   },
   HEALTH: {
-    CHECK_INTERVAL: 30000, // 30s internal heartbeat
-    SHUTDOWN_DELAY: 5000,  // 5s graceful wait
+    CHECK_INTERVAL: 30000,
+    SHUTDOWN_DELAY: 5000,
   },
   VERSION: '1.0.0'
 };
 
-/**
- * Infrastructure & Tuning Configuration (Relatable to Environment)
- */
 export const CONFIG = {
-  // Database & Connectivity
   DB: {
-    URI: process.env.MONGO_URI || 'mongodb://admin:password123@localhost:27017',
-    NAME: process.env.MONGO_DB_NAME || 'payments_db',
+    URI: requireEnv('MONGO_URI'),
+    NAME: requireEnv('MONGO_DB_NAME'),
   },
   SERVER: {
-    PORT: process.env.GRPC_PORT || '50012',
-    REST_PORT: process.env.REST_PORT || '5012',
+    PORT: requireEnv('GRPC_PORT'),
+    REST_PORT: requireEnv('REST_PORT'),
   },
-
-  // Critical Tuning (The "Ghost Latency" Fix)
-  // We keep this in env so we can debug latency without code changes.
   TUNING: {
-    CIRCUIT_BREAKER_TIMEOUT: parseInt(process.env.CIRCUIT_BREAKER_TIMEOUT || '3000', 10),
+    CIRCUIT_BREAKER_TIMEOUT: requireEnvInt('CIRCUIT_BREAKER_TIMEOUT'),
   },
-
-  // Observability
-  SERVICE_NAME: process.env.SERVICE_NAME || 'PaymentService',
+  SERVICE_NAME: requireEnv('SERVICE_NAME'),
 };
