@@ -48,11 +48,13 @@ try
     builder.Services.AddGrpc();
 
     // Configure CORS for Storefront
+    var corsOrigins = builder.Configuration["Cors:AllowedOrigins"]!
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("StorefrontPolicy", policy =>
         {
-            policy.WithOrigins("http://localhost:5009")
+            policy.WithOrigins(corsOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });

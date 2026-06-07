@@ -26,7 +26,7 @@ RUN apt-get update \
 COPY --from=build /app/publish .
 
 # Expose ports
-EXPOSE 5010 2222
+EXPOSE 5010 50010 2222
 
 # Set environment for debugging
 ENV ASPNETCORE_ENVIRONMENT=Development
@@ -34,5 +34,7 @@ ENV ASPNETCORE_ENVIRONMENT=Development
 # Set Kestrel endpoints for REST with explicit protocols
 ENV Kestrel__Endpoints__Http__Url=http://+:5010
 ENV Kestrel__Endpoints__Http__Protocols=Http1
+ENV Kestrel__Endpoints__Grpc__Url=http://+:50010
+ENV Kestrel__Endpoints__Grpc__Protocols=Http2
 
 ENTRYPOINT ["dotnet", "IdentityService.dll"]

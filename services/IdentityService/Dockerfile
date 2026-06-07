@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
-EXPOSE 5010
+EXPOSE 5010 50010
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
@@ -26,5 +26,7 @@ USER 1001
 # Set Kestrel endpoint configuration
 ENV Kestrel__Endpoints__Http__Url=http://+:5010
 ENV Kestrel__Endpoints__Http__Protocols=Http1
+ENV Kestrel__Endpoints__Grpc__Url=http://+:50010
+ENV Kestrel__Endpoints__Grpc__Protocols=Http2
 
 ENTRYPOINT ["dotnet", "IdentityService.dll"]
