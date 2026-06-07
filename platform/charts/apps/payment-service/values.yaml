@@ -33,6 +33,7 @@ config:
   logLevel: "info"
   serviceName: "PaymentService"
   serviceVersion: "1.0.0"
+  circuitBreakerTimeout: "3000"
 
 database:
   existingSecret: "db-credentials"

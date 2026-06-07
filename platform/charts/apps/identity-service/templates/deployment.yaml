@@ -29,17 +29,28 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+            - name: grpc
+              containerPort: {{ .Values.service.grpcPort }}
+              protocol: TCP
           env:
             - name: APP_VERSION
               value: {{ ((.Values.env).APP_VERSION) | default "1.0.0-dev" | quote }}
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.config.aspnetcoreEnvironment | quote }}
-            - name: ASPNETCORE_URLS
+            - name: Kestrel__Endpoints__Http__Url
               value: "http://+:{{ .Values.service.port }}"
+            - name: Kestrel__Endpoints__Http__Protocols
+              value: "Http1"
+            - name: Kestrel__Endpoints__Grpc__Url
+              value: "http://+:{{ .Values.service.grpcPort }}"
+            - name: Kestrel__Endpoints__Grpc__Protocols
+              value: "Http2"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.config.otelEndpoint | quote }}
             - name: LOKI_URL
               value: {{ .Values.config.lokiUrl | quote }}
+            - name: Cors__AllowedOrigins
+              value: {{ .Values.config.corsAllowedOrigins | quote }}
           envFrom:
             - secretRef:
                 name: {{ .Values.jwt.existingSecret }}

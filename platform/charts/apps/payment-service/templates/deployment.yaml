@@ -53,6 +53,8 @@ spec:
               value: {{ .Values.config.serviceName | quote }}
             - name: SERVICE_VERSION
               value: {{ .Values.config.serviceVersion | quote }}
+            - name: CIRCUIT_BREAKER_TIMEOUT
+              value: {{ .Values.config.circuitBreakerTimeout | quote }}
             - name: MONGO_URI
               valueFrom:
                 secretKeyRef:

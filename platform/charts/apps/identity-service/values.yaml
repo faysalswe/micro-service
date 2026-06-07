@@ -9,6 +9,7 @@ image:
 service:
   type: ClusterIP
   port: 5010
+  grpcPort: 50010
 
 resources:
   limits:
@@ -28,6 +29,7 @@ config:
   aspnetcoreEnvironment: "Production"
   otelEndpoint: "http://otel-collector:4317"
   lokiUrl: "http://loki:3100"
+  corsAllowedOrigins: ""
 
 jwt:
   existingSecret: "jwt-secret"

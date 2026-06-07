@@ -51,6 +51,10 @@ spec:
               value: {{ .Values.config.paymentServiceUrl | quote }}
             - name: GrpcSettings__InventoryServiceUrl
               value: {{ .Values.config.inventoryServiceUrl | quote }}
+            - name: GrpcSettings__IdentityServiceUrl
+              value: {{ .Values.config.identityServiceUrl | quote }}
+            - name: ExternalServices__PdfServiceUrl
+              value: {{ .Values.config.pdfServiceUrl | quote }}
             - name: OpenTelemetry__Endpoint
               value: {{ .Values.config.otelEndpoint | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

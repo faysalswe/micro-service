@@ -29,6 +29,8 @@ config:
   aspnetcoreEnvironment: "Production"
   paymentServiceUrl: "http://payment-service:50012"
   inventoryServiceUrl: "http://inventory-service:50013"
+  identityServiceUrl: "http://identity-service:50010"
+  pdfServiceUrl: "http://pdf-service:5015"
   otelEndpoint: "http://otel-collector:4317"
   lokiUrl: "http://loki:3100"
 
@@ -50,7 +52,7 @@ healthCheck:
 
 podAnnotations:
   prometheus.io/scrape: "true"
-  prometheus.io/port: "50011"
+  prometheus.io/port: "5011"
 
 nodeSelector: {}
 
