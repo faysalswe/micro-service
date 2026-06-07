@@ -40,6 +40,10 @@ type UpdateProductRequest struct {
 	Body ProductUpdateInput
 }
 
+type AdminDeleteRequest struct {
+	ID string `path:"id"`
+}
+
 type ReserveRequest struct {
 	Body ReserveInput
 }

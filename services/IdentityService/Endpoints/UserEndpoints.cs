@@ -4,9 +4,6 @@ using System.Text;
 using IdentityService.Data;
 using IdentityService.Models;
 using IdentityService.Configuration;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -39,7 +36,7 @@ public static class UserEndpoints
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Username),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Role, user.Role),
+                new Claim("role", user.Role),
                 new Claim("user_id", user.Id.ToString())
             };
 
@@ -68,11 +65,15 @@ public static class UserEndpoints
                 return Results.BadRequest(new { error = "Password must be at least 6 characters" });
             }
 
+            var role = (request.Role != null && SecurityRoles.All.Contains(request.Role) && !SecurityRoles.IsManagement(request.Role))
+                ? request.Role
+                : SecurityRoles.User;
+
             var user = new User
             {
                 Username = request.Username,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = request.Role ?? SecurityRoles.User,
+                Role = role,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -115,6 +116,7 @@ public static class UserEndpoints
             await db.SaveChangesAsync();
             return Results.NoContent();
         });
+
     }
 }
 

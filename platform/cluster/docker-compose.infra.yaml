@@ -115,6 +115,7 @@ services:
       KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
       KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl, 0.0.0.0:9080 http2, 0.0.0.0:9091 ssl http2
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PLUGINS: bundled,rbac
     ports:
       - "127.0.0.1:8000:8000"     # Local HTTP Proxy
       - "8443:8443"               # HTTPS Proxy (Open)
@@ -122,6 +123,7 @@ services:
       - "127.0.0.1:9080:9080"     # Local gRPC Proxy
     volumes:
       - ../config/gateway/kong.yml:/usr/local/kong/declarative/kong.yml:ro
+      - ../config/gateway/plugins/rbac:/usr/local/share/lua/5.1/kong/plugins/rbac:ro
     networks:
       - infra-network
 

@@ -8,7 +8,7 @@ import (
 )
 
 func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
-	
+
 	// Create a new product
 	huma.Register(api, huma.Operation{
 		OperationID: "create-product",
@@ -16,12 +16,7 @@ func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
 		Path:        "/api/inventory/active-products",
 		Summary:     "Create new product",
 		Tags:        []string{"Admin"},
-		Security:    []map[string][]string{{"bearerAuth": {}}},
 	}, func(ctx context.Context, input *CreateProductRequest) (*SuccessResponse, error) {
-		hctx := ctx.(huma.Context)
-		if err := ValidateAdminToken(hctx); err != nil {
-			return nil, err
-		}
 		success, msg, err := svc.CreateProduct(ctx, input.Body.ProductID, input.Body.Name, input.Body.Price, input.Body.Quantity)
 		if err != nil {
 			return nil, huma.Error500InternalServerError(err.Error())
@@ -38,12 +33,7 @@ func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
 		Path:        "/api/inventory/active-products/{id}",
 		Summary:     "Update product",
 		Tags:        []string{"Admin"},
-		Security:    []map[string][]string{{"bearerAuth": {}}},
 	}, func(ctx context.Context, input *UpdateProductRequest) (*SuccessResponse, error) {
-		hctx := ctx.(huma.Context)
-		if err := ValidateAdminToken(hctx); err != nil {
-			return nil, err
-		}
 		success, msg, err := svc.UpdateProduct(ctx, input.ID, input.Body.Name, input.Body.Price, input.Body.Quantity)
 		if err != nil {
 			return nil, huma.Error500InternalServerError(err.Error())
@@ -60,12 +50,7 @@ func RegisterAdminHandlers(api huma.API, svc service.InventoryService) {
 		Path:        "/api/inventory/active-products/{id}",
 		Summary:     "Delete product",
 		Tags:        []string{"Admin"},
-		Security:    []map[string][]string{{"bearerAuth": {}}},
-	}, func(ctx context.Context, input *ProductIDParam) (*SuccessResponse, error) {
-		hctx := ctx.(huma.Context)
-		if err := ValidateAdminToken(hctx); err != nil {
-			return nil, err
-		}
+	}, func(ctx context.Context, input *AdminDeleteRequest) (*SuccessResponse, error) {
 		success, msg, err := svc.DeleteProduct(ctx, input.ID)
 		if err != nil {
 			return nil, huma.Error500InternalServerError(err.Error())

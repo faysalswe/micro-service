@@ -23,15 +23,6 @@ func (h *InventoryHandler) SetupRoutes(r *gin.Engine) {
 	// We disable Huma's default docs to use our own Scalar UI
 	config.DocsPath = ""
 	
-	// Define Security Scheme for Docs
-	config.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
-		"bearerAuth": {
-			Type:         "http",
-			Scheme:       "bearer",
-			BearerFormat: "JWT",
-		},
-	}
-	
 	api := humagin.New(r, config)
 
 	// 2. Register all handlers

@@ -6,6 +6,7 @@ _transform: true
 # ============================================
 consumers:
   - username: microservice-app
+  - username: public-anon
 
 # ============================================
 # JWT Credentials for the consumer
@@ -20,7 +21,8 @@ jwt_secrets:
 # Services
 # ============================================
 services:
-  # Identity Service (HTTP REST) - PUBLIC/PROTECTED
+  # Identity Service - login/register are public, /users requires Admin
+  # anonymous consumer lets unauthenticated requests through jwt; rbac handles public/private split
   - name: identity-service
     url: http://identity-service:5010
     routes:
@@ -28,27 +30,20 @@ services:
         paths:
           - /api/identity
         strip_path: true
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              secret_is_base64: false
+              run_on_preflight: true
+              anonymous: public-anon
+          - name: rbac
 
-  # Public Inventory Service (No Plugins)
-  - name: inventory-public-service
-    url: http://inventory-service:5013
-    routes:
-      - name: offers-public
-        paths:
-          - /api/inventory/offer
-        methods: [GET]
-        strip_path: false
-      - name: inventory-list-public
-        paths:
-          - /api/inventory/active-products
-        methods: [GET]
-        strip_path: false
-
-  # Protected Inventory Service
+  # Inventory Service - public/private split managed by rbac plugin PUBLIC_ROUTES table
   - name: inventory-service
     url: http://inventory-service:5013
     routes:
-      - name: inventory-all-private
+      - name: inventory-api
         paths:
           - /api/inventory
         strip_path: false
@@ -58,6 +53,8 @@ services:
               key_claim_name: iss
               secret_is_base64: false
               run_on_preflight: true
+              anonymous: public-anon
+          - name: rbac
 
   # Order Service (REST API) - PROTECTED
   - name: order-service
@@ -73,6 +70,7 @@ services:
               key_claim_name: iss
               secret_is_base64: false
               run_on_preflight: true
+          - name: rbac
 
   # Payment Service (REST API) - PROTECTED
   - name: payment-service
@@ -88,6 +86,7 @@ services:
               key_claim_name: iss
               secret_is_base64: false
               run_on_preflight: true
+          - name: rbac
 
   # Inventory Service (gRPC)
   - name: inventory-grpc
@@ -126,7 +125,7 @@ services:
               secret_is_base64: false
               run_on_preflight: true
 
-  # PDF Service (Python REST API) - PROTECTED (Internal or Public download)
+  # PDF Service (Python REST API) - PROTECTED
   - name: pdf-service
     url: http://pdf-service:5015
     routes:
@@ -140,6 +139,7 @@ services:
               key_claim_name: iss
               secret_is_base64: false
               run_on_preflight: true
+          - name: rbac
 
   # MinIO Object Storage (Public Download)
   - name: storage-service

@@ -46,7 +46,6 @@ func RegisterInventoryHandlers(api huma.API, svc service.InventoryService) {
 		Path:        "/api/inventory/stock-out",
 		Summary:     "List out-of-stock products",
 		Tags:        []string{"Inventory"},
-		Security:    []map[string][]string{{"bearerAuth": {}}},
 	}, func(ctx context.Context, input *struct{}) (*ListProductsResponse, error) {
 		products, err := svc.ListProducts(ctx)
 		if err != nil {
