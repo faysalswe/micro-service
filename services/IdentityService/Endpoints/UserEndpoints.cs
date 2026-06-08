@@ -14,7 +14,7 @@ public static class UserEndpoints
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
         // Login endpoint - validates user credentials and returns JWT
-        app.MapPost("/login", async (LoginRequest request, IConfiguration config, IdentityDbContext db) =>
+        app.MapPost("/api/identity/login", async (LoginRequest request, IConfiguration config, IdentityDbContext db) =>
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
 
@@ -51,7 +51,7 @@ public static class UserEndpoints
         });
 
         // Register endpoint - creates a new user
-        app.MapPost("/register", async (RegisterRequest request, IdentityDbContext db) =>
+        app.MapPost("/api/identity/register", async (RegisterRequest request, IdentityDbContext db) =>
         {
             // Check if username already exists
             if (await db.Users.AnyAsync(u => u.Username == request.Username))
@@ -80,11 +80,11 @@ public static class UserEndpoints
             db.Users.Add(user);
             await db.SaveChangesAsync();
 
-            return Results.Created($"/users/{user.Id}", new { id = user.Id, username = user.Username, role = user.Role });
+            return Results.Created($"/api/identity/users/{user.Id}", new { id = user.Id, username = user.Username, role = user.Role });
         });
 
         // Get all users (admin only in production - simplified for learning)
-        app.MapGet("/users", async (IdentityDbContext db) =>
+        app.MapGet("/api/identity/users", async (IdentityDbContext db) =>
         {
             var users = await db.Users
                 .Select(u => new { u.Id, u.Username, u.Role, u.LoyaltyPoints, u.CreatedAt, u.LastLoginAt })
@@ -93,7 +93,7 @@ public static class UserEndpoints
         });
 
         // Get user by ID
-        app.MapGet("/users/{id:int}", async (int id, IdentityDbContext db) =>
+        app.MapGet("/api/identity/users/{id:int}", async (int id, IdentityDbContext db) =>
         {
             var user = await db.Users
                 .Where(u => u.Id == id)
@@ -104,7 +104,7 @@ public static class UserEndpoints
         });
 
         // Delete user by ID
-        app.MapDelete("/users/{id:int}", async (int id, IdentityDbContext db) =>
+        app.MapDelete("/api/identity/users/{id:int}", async (int id, IdentityDbContext db) =>
         {
             var user = await db.Users.FindAsync(id);
             if (user is null)

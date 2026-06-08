@@ -49,8 +49,6 @@ spec:
               value: {{ .Values.config.otelEndpoint | quote }}
             - name: LOKI_URL
               value: {{ .Values.config.lokiUrl | quote }}
-            - name: Cors__AllowedOrigins
-              value: {{ .Values.config.corsAllowedOrigins | quote }}
           envFrom:
             - secretRef:
                 name: {{ .Values.jwt.existingSecret }}

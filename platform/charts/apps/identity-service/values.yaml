@@ -29,7 +29,6 @@ config:
   aspnetcoreEnvironment: "Production"
   otelEndpoint: "http://otel-collector:4317"
   lokiUrl: "http://loki:3100"
-  corsAllowedOrigins: ""
 
 jwt:
   existingSecret: "jwt-secret"

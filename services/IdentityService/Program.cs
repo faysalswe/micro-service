@@ -47,28 +47,12 @@ try
     builder.Services.AddOpenApi();
     builder.Services.AddGrpc();
 
-    // Configure CORS for Storefront
-    var corsOrigins = builder.Configuration["Cors:AllowedOrigins"]!
-        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy("StorefrontPolicy", policy =>
-        {
-            policy.WithOrigins(corsOrigins)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-    });
-
     // Add SQLite database
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     builder.Services.AddDbContext<IdentityDbContext>(options =>
         options.UseSqlite(connectionString));
 
     var app = builder.Build();
-
-    // Use CORS policy
-    app.UseCors("StorefrontPolicy");
 
     // Apply migrations and seed default admin user
     using (var scope = app.Services.CreateScope())
