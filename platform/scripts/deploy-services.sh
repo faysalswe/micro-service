@@ -1,6 +1,7 @@
 #!/bin/bash
-# Builds images, pushes to local registry, creates secrets, and deploys services via Helm.
-# Run from the repo root: ./platform/cluster/deploy-services.sh
+# Builds images, pushes to local registry, and deploys app services via Helm.
+# Requires infra and observability to already be running (deploy-infra.sh).
+# Run from the repo root: ./platform/scripts/deploy-services.sh
 set -e
 
 # Load environment variables from root .env
@@ -184,31 +185,6 @@ for service in "${SELECTED_SERVICES[@]}"; do
   docker push ${REGISTRY}/${service}:latest
 done
 echo -e "${GREEN}Images pushed.${NC}"
-
-# Secrets + infra only on full deploy
-if [ ${#SELECTED_SERVICES[@]} -eq ${#ALL_SERVICES[@]} ]; then
-  echo -e "${BLUE}Creating Kubernetes secrets...${NC}"
-  ./platform/cluster/create-secrets.sh
-
-  echo -e "${BLUE}Deploying infrastructure...${NC}"
-  if helm status infrastructure --namespace ${NAMESPACE} > /dev/null 2>&1; then
-    helm upgrade infrastructure platform/charts/shared/infrastructure --namespace ${NAMESPACE} \
-      --set "kong.cors.origins={${KONG_CORS_ORIGINS}}"
-  else
-    helm install infrastructure platform/charts/shared/infrastructure --namespace ${NAMESPACE} \
-      --set "kong.cors.origins={${KONG_CORS_ORIGINS}}"
-  fi
-
-  echo -e "${BLUE}Waiting for databases to be ready...${NC}"
-  kubectl wait --namespace ${NAMESPACE} --for=condition=ready pod \
-    --selector=app.kubernetes.io/name=postgresql --timeout=120s
-  kubectl wait --namespace ${NAMESPACE} --for=condition=ready pod \
-    --selector=app.kubernetes.io/name=mongodb --timeout=120s
-  kubectl wait --namespace ${NAMESPACE} --for=condition=ready pod \
-    --selector=app.kubernetes.io/name=redis --timeout=120s
-  kubectl wait --namespace ${NAMESPACE} --for=condition=ready pod \
-    --selector=app.kubernetes.io/name=minio --timeout=120s
-fi
 
 # Deploy
 echo -e "${BLUE}Deploying services...${NC}"

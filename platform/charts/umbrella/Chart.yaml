@@ -42,10 +42,10 @@ dependencies:
   # Infrastructure and observability always deploy
   - name: infrastructure
     version: "0.1.0"
-    repository: "file://../shared/infrastructure"
+    repository: "file://../infra"
   - name: observability
     version: "0.1.0"
-    repository: "file://../../observability/observability"
+    repository: "file://../observability"
 
 keywords:
   - microservices

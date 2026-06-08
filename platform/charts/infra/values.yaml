@@ -1,5 +1,3 @@
-kong:
-
 postgresql:
   image:
     tag: latest

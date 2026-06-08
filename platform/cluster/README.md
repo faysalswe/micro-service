@@ -55,14 +55,15 @@ k9s reads your existing kubeconfig — no extra setup needed.
 
 | File | Purpose |
 |------|---------|
-| `setup-k3d.sh` | Creates k3d cluster + MetalLB + Kong |
-| `setup-kind.sh` | Creates kind cluster + MetalLB + Kong |
-| `k3d-cluster.yaml` | k3d cluster definition (3 control-planes, 3 workers, registry) |
-| `kind-cluster.yaml` | kind cluster definition (3 control-planes, 3 workers) |
-| `deploy-services.sh` | Build → push → secret → Helm deploy |
-| `create-secrets.sh` | Creates `db-credentials` Kubernetes secret from `.env` |
-| `docker-compose.infra.yaml` | Run databases locally (outside Kubernetes) |
-| `docker-compose.debug.yaml` | Debug configuration for local services |
+| `k3d/setup-k3d.sh` | Creates k3d cluster + MetalLB + Kong |
+| `k3d/k3d-cluster.yaml` | k3d cluster definition (3 control-planes, 3 workers, registry) |
+| `kind/setup-kind.sh` | Creates kind cluster + MetalLB + Kong |
+| `kind/kind-cluster.yaml` | kind cluster definition (3 control-planes, 3 workers) |
+| `compose/docker-compose.infra.yaml` | Run databases locally (outside Kubernetes) |
+| `compose/docker-compose.debug.yaml` | Debug configuration for local services |
+| `../scripts/deploy-services.sh` | Build → push → secret → Helm deploy (per service) |
+| `../scripts/deploy-umbrella.sh` | Build → push → Helm deploy (all via umbrella chart) |
+| `../scripts/create-secrets.sh` | Creates `db-credentials` Kubernetes secret from `.env` |
 
 ---
 

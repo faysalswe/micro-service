@@ -2,7 +2,7 @@
 set -e
 
 CLUSTER_NAME="kind-cluster"
-CONFIG_FILE="platform/cluster/kind-cluster.yaml"
+CONFIG_FILE="platform/cluster/kind/kind-cluster.yaml"
 REGISTRY_NAME="micro-registry"
 REGISTRY_PORT="5001"
 
@@ -111,4 +111,6 @@ kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-cont
 kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-gateway --timeout=180s
 
 echo -e "${GREEN}Setup complete.${NC}"
-echo -e "${BLUE}Next step: run ./platform/cluster/deploy-services.sh${NC}"
+echo -e "${BLUE}Next steps — choose one:${NC}"
+echo -e "${BLUE}  All at once : ./platform/scripts/deploy-umbrella.sh${NC}"
+echo -e "${BLUE}  Granular    : ./platform/scripts/deploy-infra.sh then ./platform/scripts/deploy-services.sh${NC}"

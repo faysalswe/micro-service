@@ -135,7 +135,7 @@ services:
     command: ["--config=/etc/otel-collector-config.yaml"]
     user: "0:0" # Run as root to read docker logs
     volumes:
-      - ../charts/observability/config/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+      - ../../charts/observability/config/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
@@ -166,7 +166,7 @@ services:
     restart: unless-stopped
     command: -config.file=/etc/loki/loki-config.yaml
     volumes:
-      - ../charts/observability/config/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - ../../charts/observability/config/loki-config.yaml:/etc/loki/loki-config.yaml:ro
       - loki_data:/loki
     ports:
       - "3100:3100"     # HTTP API (push/query logs)
@@ -187,7 +187,7 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
     volumes:
-      - ../charts/observability/config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../../charts/observability/config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     ports:
       - "9090:9090"     # Prometheus UI
@@ -209,7 +209,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
-      - ../charts/observability/config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../../charts/observability/config/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - infra-network
     depends_on:

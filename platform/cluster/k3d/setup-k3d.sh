@@ -1,10 +1,10 @@
 #!/bin/bash
 # Full k3d cluster setup: creates cluster, registry (with mirror), and installs Kong.
-# Run from the repo root: ./platform/cluster/setup-k3d.sh
+# Run from the repo root: ./platform/cluster/k3d/setup-k3d.sh
 set -e
 
 CLUSTER_NAME="micro-cluster"
-CONFIG_FILE="platform/cluster/k3d-cluster.yaml"
+CONFIG_FILE="platform/cluster/k3d/k3d-cluster.yaml"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -82,4 +82,6 @@ kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-cont
 kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-gateway --timeout=180s
 
 echo -e "${GREEN}Setup complete.${NC}"
-echo -e "${BLUE}Next step: run ./platform/cluster/deploy-services.sh${NC}"
+echo -e "${BLUE}Next steps — choose one:${NC}"
+echo -e "${BLUE}  All at once : ./platform/scripts/deploy-umbrella.sh${NC}"
+echo -e "${BLUE}  Granular    : ./platform/scripts/deploy-infra.sh then ./platform/scripts/deploy-services.sh${NC}"

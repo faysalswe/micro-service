@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds images, pushes to local registry, and deploys all services via the umbrella Helm chart.
 # Supports selecting specific services — unselected services are disabled in the release.
-# Run from the repo root: ./platform/cluster/deploy-umbrella.sh
+# Run from the repo root: ./platform/scripts/deploy-umbrella.sh
 set -e
 
 # Load environment variables from root .env
@@ -10,7 +10,7 @@ if [ -f ".env" ]; then
 fi
 
 REGISTRY="localhost:5001"
-UMBRELLA_DIR="platform/charts/shared/microservices-umbrella"
+UMBRELLA_DIR="platform/charts/umbrella"
 KUBE_CONTEXT="k3d-micro-cluster"
 NAMESPACE="default"
 
@@ -154,14 +154,14 @@ echo -e "${GREEN}Images pushed.${NC}"
 
 # Secrets (always required)
 echo -e "${BLUE}Creating Kubernetes secrets...${NC}"
-./platform/cluster/create-secrets.sh
+./platform/scripts/create-secrets.sh
 
 # Sync umbrella sub-charts
 echo -e "${BLUE}Updating umbrella chart dependencies...${NC}"
 helm dependency update "${UMBRELLA_DIR}"
 
 # Build --set flags: disable services not selected, set registry for selected ones
-HELM_FLAGS="--set infrastructure.kong.cors.origins={${KONG_CORS_ORIGINS}}"
+HELM_FLAGS=""
 
 for service in "${ALL_SERVICES[@]}"; do
   if is_selected "${service}"; then
