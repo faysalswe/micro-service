@@ -42,10 +42,10 @@ echo -e "${GREEN}Cluster ready.${NC}"
 echo -e "${BLUE}Installing MetalLB...${NC}"
 helm repo add metallb https://metallb.github.io/metallb 2>/dev/null || true
 helm repo update
-helm install metallb metallb/metallb --namespace metallb-system --create-namespace
+helm upgrade --install metallb metallb/metallb --namespace metallb-system --create-namespace
 
 echo -e "${BLUE}Waiting for MetalLB to be ready...${NC}"
-kubectl rollout status deployment/metallb-controller --namespace metallb-system --timeout=90s
+kubectl rollout status deployment/metallb-controller --namespace metallb-system --timeout=180s
 
 # Detect k3d Docker network subnet and assign last 50 IPs to MetalLB
 SUBNET=$(docker network inspect k3d-${CLUSTER_NAME} --format '{{(index .IPAM.Config 0).Subnet}}' | cut -d'.' -f1-3)
@@ -71,14 +71,15 @@ echo -e "${GREEN}MetalLB configured with pool ${SUBNET}.200-${SUBNET}.250${NC}"
 echo -e "${BLUE}Installing Kong ingress controller...${NC}"
 helm repo add kong https://charts.konghq.com 2>/dev/null || true
 helm repo update
-helm install kong kong/ingress \
+helm upgrade --install kong kong/ingress \
     --namespace kong \
     --create-namespace \
-    --set controller.ingressClass=kong
+    --set controller.ingressClass=kong \
+    --wait --timeout=3m
 
 echo -e "${BLUE}Waiting for Kong to be ready...${NC}"
-kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-controller --timeout=120s
-kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-gateway --timeout=120s
+kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-controller --timeout=180s
+kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-gateway --timeout=180s
 
 echo -e "${GREEN}Setup complete.${NC}"
 echo -e "${BLUE}Next step: run ./platform/cluster/deploy-services.sh${NC}"

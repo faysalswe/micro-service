@@ -3,6 +3,11 @@
 # Run from the repo root: ./platform/cluster/deploy-services.sh
 set -e
 
+# Load environment variables from root .env
+if [ -f ".env" ]; then
+  set -a && source .env && set +a
+fi
+
 REGISTRY="localhost:5001"
 CHARTS_DIR="platform/charts/apps"
 KUBE_CONTEXT="k3d-micro-cluster"
@@ -187,9 +192,11 @@ if [ ${#SELECTED_SERVICES[@]} -eq ${#ALL_SERVICES[@]} ]; then
 
   echo -e "${BLUE}Deploying infrastructure...${NC}"
   if helm status infrastructure --namespace ${NAMESPACE} > /dev/null 2>&1; then
-    helm upgrade infrastructure platform/charts/shared/infrastructure --namespace ${NAMESPACE}
+    helm upgrade infrastructure platform/charts/shared/infrastructure --namespace ${NAMESPACE} \
+      --set "kong.cors.origins={${KONG_CORS_ORIGINS}}"
   else
-    helm install infrastructure platform/charts/shared/infrastructure --namespace ${NAMESPACE}
+    helm install infrastructure platform/charts/shared/infrastructure --namespace ${NAMESPACE} \
+      --set "kong.cors.origins={${KONG_CORS_ORIGINS}}"
   fi
 
   echo -e "${BLUE}Waiting for databases to be ready...${NC}"
