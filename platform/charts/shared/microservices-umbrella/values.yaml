@@ -1,21 +1,58 @@
-# Global values shared across all sub-charts
 global:
   namespace: microservices
 
-# Order Service configuration
+# All app services enabled by default — deploy-umbrella.sh disables the ones not selected
 order-service:
+  enabled: true
   replicaCount: 2
+  image:
+    registry: ""
   config:
     aspnetcoreEnvironment: "Production"
 
-# Payment Service configuration
 payment-service:
+  enabled: true
   replicaCount: 2
+  image:
+    registry: ""
   config:
     nodeEnv: "production"
+    logLevel: "info"
 
-# Identity Service configuration
 identity-service:
+  enabled: true
   replicaCount: 2
+  image:
+    registry: ""
   config:
     aspnetcoreEnvironment: "Production"
+
+inventory-service:
+  enabled: true
+  replicaCount: 2
+  image:
+    registry: ""
+
+cart-service:
+  enabled: true
+  replicaCount: 2
+  image:
+    registry: ""
+
+pdf-service:
+  enabled: true
+  replicaCount: 1
+  image:
+    registry: ""
+
+storefront:
+  enabled: true
+  replicaCount: 2
+  image:
+    registry: ""
+
+back-office:
+  enabled: true
+  replicaCount: 2
+  image:
+    registry: ""
