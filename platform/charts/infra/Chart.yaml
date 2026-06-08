@@ -1,6 +1,6 @@
 apiVersion: v2
-name: microservice-infrastructure
-description: A Helm chart for PostgreSQL and MongoDB with PVCs
+name: infrastructure
+description: Helm chart for PostgreSQL, MongoDB, Redis, and MinIO
 type: application
 version: 0.1.0
 appVersion: "1.0.0"

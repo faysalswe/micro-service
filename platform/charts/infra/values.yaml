@@ -1,4 +1,5 @@
 postgresql:
+  fullnameOverride: "postgresql"
   image:
     tag: latest
     pullPolicy: IfNotPresent
@@ -28,6 +29,7 @@ postgresql:
 
 
 mongodb:
+  fullnameOverride: "mongodb"
   image:
     tag: latest
     pullPolicy: IfNotPresent

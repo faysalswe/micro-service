@@ -65,6 +65,10 @@ echo -e "${GREEN}Images pushed.${NC}"
 echo -e "${BLUE}Creating Kubernetes secrets...${NC}"
 ./platform/scripts/create-secrets.sh
 
+# Resolve infra sub-chart dependencies first (postgresql, mongodb from Bitnami)
+echo -e "${BLUE}Updating infra chart dependencies...${NC}"
+helm dependency update platform/charts/infra
+
 # Sync umbrella sub-charts
 echo -e "${BLUE}Updating umbrella chart dependencies...${NC}"
 helm dependency update "${UMBRELLA_DIR}"

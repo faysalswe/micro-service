@@ -23,6 +23,10 @@ kubectl config use-context "${KUBE_CONTEXT}"
 echo -e "${BLUE}Creating Kubernetes secrets...${NC}"
 ./platform/scripts/create-secrets.sh
 
+# Resolve infra sub-chart dependencies (postgresql, mongodb from Bitnami)
+echo -e "${BLUE}Updating infra chart dependencies...${NC}"
+helm dependency update platform/charts/infra
+
 # Infrastructure (PostgreSQL, MongoDB, Redis, MinIO)
 echo -e "${BLUE}Deploying infrastructure...${NC}"
 if helm status infrastructure --namespace ${NAMESPACE} > /dev/null 2>&1; then

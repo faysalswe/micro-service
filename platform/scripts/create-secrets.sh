@@ -18,13 +18,13 @@ kubectl create secret generic db-credentials \
   --namespace default \
   \
   `# --- OrderService (PostgreSQL) ---` \
-  --from-literal=ConnectionStrings__DefaultConnection="Host=infrastructure-postgresql;Port=5432;Database=${DB_NAME_ORDER};Username=${DB_USER};Password=${DB_PASSWORD}" \
+  --from-literal=ConnectionStrings__DefaultConnection="Host=postgresql;Port=5432;Database=${DB_NAME_ORDER};Username=${DB_USER};Password=${DB_PASSWORD}" \
   \
   `# --- PaymentService (MongoDB) ---` \
-  --from-literal=MONGO_URI="mongodb://root:${DB_PASSWORD}@infrastructure-mongodb:27017/${DB_NAME_PAYMENT}?authSource=admin" \
+  --from-literal=MONGO_URI="mongodb://root:${DB_PASSWORD}@mongodb:27017/${DB_NAME_PAYMENT}?authSource=admin" \
   \
   `# --- InventoryService (PostgreSQL) ---` \
-  --from-literal=INVENTORY_DB_HOST="infrastructure-postgresql" \
+  --from-literal=INVENTORY_DB_HOST="postgresql" \
   --from-literal=INVENTORY_DB_PORT="5432" \
   --from-literal=INVENTORY_DB_NAME="${DB_NAME_INVENTORY}" \
   --from-literal=INVENTORY_DB_USER="${DB_USER}" \
