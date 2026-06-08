@@ -43,6 +43,23 @@ This project is a polyglot microservices architecture used as a testing ground f
 | InventoryService | Go      | 5013  | —     |
 | OTel Collector   | —       | —     | 4317  |
 
+## Hard Rules (Non-Negotiable)
+
+> These rules override auto mode, task urgency, and any other instruction.
+
+### 1. Never commit without explicit user approval
+
+Before every `git commit`, you must:
+1. Show the proposed commit message and list every file being committed.
+2. **Stop and wait** for the user to say "go ahead", "commit", or "yes".
+3. Only then run `git commit`.
+
+This applies in all modes — auto, manual, agent. No exceptions.
+
+**Why:** The user must review every commit before it lands. Violated twice in prior sessions.
+
+---
+
 ## Tools to Master
 `kubectl`, `helm`, `k3s`, `k3d`, `Kong`, `OpenTelemetry`, `PromQL`, `LogQL`, `Jaeger`, `Cert-Manager`.
 
