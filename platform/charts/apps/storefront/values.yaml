@@ -12,7 +12,7 @@ service:
   targetPort: 3000
 
 config:
-  apiUrl: "http://localhost:8100"
+  apiUrl: ""
 
 resources:
   limits:

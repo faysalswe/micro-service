@@ -36,49 +36,46 @@ export const Z_INDEX = {
   TOOLTIP: 70,
 } as const;
 
+const API = '/api';
+
 /**
- * API endpoints (proxied through Vite dev server to avoid CORS)
- * Proxy configuration in vite.config.ts routes:
- *   /auth/* → IdentityService (5010)
- *   /api/orders/* → OrderService (5011)
- *   /api/payments/* → PaymentService (5012)
+ * API endpoints — routed through Kong gateway with /api prefix
  */
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/identity/login',
-    REGISTER: '/identity/register',
-    // Note: Other auth endpoints not implemented in backend
+    LOGIN: `${API}/identity/login`,
+    REGISTER: `${API}/identity/register`,
   },
   USERS: {
-    GET_ALL: '/identity/users',
-    GET_BY_ID: (id: string) => `/identity/users/${id}`,
-    // CREATE, UPDATE, DELETE not implemented in backend
+    GET_ALL: `${API}/identity/users`,
+    GET_BY_ID: (id: string) => `${API}/identity/users/${id}`,
   },
   ORDERS: {
-    LIST: '/orders',
-    DETAIL: (id: string) => `/orders/${id}`,
-    CREATE: '/orders',
-    CANCEL: (id: string) => `/orders/${id}`,
-    SAGA: (id: string) => `/orders/${id}/saga`,
+    LIST: `${API}/orders`,
+    DETAIL: (id: string) => `${API}/orders/${id}`,
+    CREATE: `${API}/orders`,
+    CANCEL: (id: string) => `${API}/orders/${id}`,
+    SAGA: (id: string) => `${API}/orders/${id}/saga`,
   },
   PAYMENTS: {
-    LIST: '/payments',
-    DETAIL: (id: string) => `/payments/${id}`,
-    REFUND: (id: string) => `/payments/${id}/refund`,
+    LIST: `${API}/payments`,
+    DETAIL: (id: string) => `${API}/payments/${id}`,
+    REFUND: (id: string) => `${API}/payments/${id}/refund`,
   },
   INVENTORY: {
-    LIST: '/inventory/active-products',
-    OFFERS: '/inventory/offer',
-    STOCK_OUT: '/inventory/stock-out',
-    DETAIL: (id: string) => `/inventory/active-products/${id}`,
-  },  CART: {
-    GET: (userId: string) => `/cart/${userId}`,
-    ADD_ITEM: (userId: string) => `/cart/${userId}/items`,
-    CLEAR: (userId: string) => `/cart/${userId}`,
-    CHECKOUT: (userId: string) => `/cart/${userId}/checkout`,
+    LIST: `${API}/inventory/active-products`,
+    OFFERS: `${API}/inventory/offer`,
+    STOCK_OUT: `${API}/inventory/stock-out`,
+    DETAIL: (id: string) => `${API}/inventory/active-products/${id}`,
+  },
+  CART: {
+    GET: (userId: string) => `${API}/cart/${userId}`,
+    ADD_ITEM: (userId: string) => `${API}/cart/${userId}/items`,
+    CLEAR: (userId: string) => `${API}/cart/${userId}`,
+    CHECKOUT: (userId: string) => `${API}/cart/${userId}/checkout`,
   },
   PDF: {
-    GENERATE_INVOICE: '/pdf/generate/invoice',
+    GENERATE_INVOICE: `${API}/pdf/generate/invoice`,
   },
 } as const;
 
