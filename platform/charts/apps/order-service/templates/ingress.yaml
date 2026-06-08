@@ -1,9 +1,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "order-service.fullname" . }}
+  name: {{ .Chart.Name }}
   labels:
-    {{- include "order-service.labels" . | nindent 4 }}
+    app: {{ .Chart.Name }}
 spec:
   ingressClassName: kong
   rules:
@@ -13,6 +13,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: {{ include "order-service.fullname" . }}
+            name: {{ .Chart.Name }}
             port:
-              number: 5011
+              number: {{ .Values.service.httpPort }}

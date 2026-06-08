@@ -1,19 +1,19 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "inventory-service.fullname" . }}
+  name: {{ .Chart.Name }}
   labels:
-    {{- include "inventory-service.labels" . | nindent 4 }}
+    app: {{ .Chart.Name }}
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: 5013
+    - port: {{ .Values.service.port }}
       targetPort: http
       protocol: TCP
       name: http
-    - port: 50013
+    - port: {{ .Values.service.grpcPort }}
       targetPort: grpc
       protocol: TCP
       name: grpc
   selector:
-    {{- include "inventory-service.selectorLabels" . | nindent 4 }}
+    app: {{ .Chart.Name }}

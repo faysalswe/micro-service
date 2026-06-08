@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "identity-service.fullname" . }}
+  name: {{ .Chart.Name }}
   labels:
-    {{- include "identity-service.labels" . | nindent 4 }}
+    app: {{ .Chart.Name }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -16,4 +16,4 @@ spec:
       protocol: TCP
       name: grpc
   selector:
-    {{- include "identity-service.selectorLabels" . | nindent 4 }}
+    app: {{ .Chart.Name }}

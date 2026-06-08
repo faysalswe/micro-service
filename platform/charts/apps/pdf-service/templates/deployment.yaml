@@ -1,21 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pdf-service
+  name: {{ .Chart.Name }}
   labels:
-    app: pdf-service
+    app: {{ .Chart.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: pdf-service
+      app: {{ .Chart.Name }}
   template:
     metadata:
       labels:
-        app: pdf-service
+        app: {{ .Chart.Name }}
     spec:
+      terminationGracePeriodSeconds: 30
       containers:
-        - name: pdf-service
+        - name: {{ .Chart.Name }}
           image: "{{ if .Values.image.registry }}{{ .Values.image.registry }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:

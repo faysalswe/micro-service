@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: pdf-service
+  name: {{ .Chart.Name }}
   labels:
-    app: pdf-service
+    app: {{ .Chart.Name }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -12,4 +12,4 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: pdf-service
+    app: {{ .Chart.Name }}

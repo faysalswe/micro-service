@@ -1,9 +1,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: pdf-service
+  name: {{ .Chart.Name }}
   labels:
-    app: pdf-service
+    app: {{ .Chart.Name }}
 spec:
   ingressClassName: kong
   rules:
@@ -13,6 +13,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: pdf-service
+            name: {{ .Chart.Name }}
             port:
               number: {{ .Values.service.port }}
