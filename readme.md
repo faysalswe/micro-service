@@ -11,26 +11,36 @@ A robust microservices architecture demonstrating a **Synchronous Orchestration 
 
 ## Quick Start
 
-### 1. Start Infrastructure (Databases & Observability)
 ```bash
-docker-compose up -d
+# 1. Start infrastructure (databases, redis, observability)
+make infra-up
+
+# 2. Run a service locally (bare-metal)
+make run-payment      # Node.js  — port 5012 / gRPC 50012
+make run-inventory    # Go       — port 5013 / gRPC 50013
+make run-order        # .NET     — port 5011 / gRPC 50011
+make run-identity     # .NET     — port 5010
+
+# 3. Or run all services in Docker debug mode
+make services-up
 ```
 
-### 2. Run All Services in Debug Mode (Docker)
-This starts all services with debug agents enabled and ports mapped.
-```bash
-docker-compose -f docker-compose.yaml -f docker-compose.debug.yaml up -d --build
-```
+Run `make` to see all available commands.
 
-### 3. Run Locally (Development)
-Ensure infrastructure is running first via Docker Compose.
+## Environment
 
-- **IdentityService (.NET)**: `dotnet run --project IdentityService/` (Port 5010)
-- **OrderService (.NET)**: `dotnet run --project OrderService/` (Port 5011)
-- **PaymentService (Node.js)**: `cd PaymentService && pnpm start` (Port 5012 / 50012)
-- **InventoryService (Go)**: `cd InventoryService && go run cmd/server/main.go` (Port 5013 / 50013)
-- **Storefront (React)**: `cd storefront && pnpm dev` (Port 5009)
-- **Back Office (Angular)**: `cd back-office && pnpm start` (Port 5008)
+Three files manage config across environments:
+
+| File | Used by | Contains |
+|---|---|---|
+| `.env` | bare-metal, VS Code, K8s | localhost URLs + all credentials |
+| `.env.docker` | Docker Compose only | Docker hostnames that differ from `.env` |
+| `services/*/.env` | bare-metal + VS Code | service-specific vars |
+
+- **Bare-metal** (`make run-*`): loads root `.env` → service `.env` fills in service-specific gaps
+- **Docker Compose** (`make infra-up` / `make services-up`): merges `.env` + `.env.docker`, Docker hostnames win
+- **VS Code** (F5): `envFile: .env` as base + `env` block for service-specific keys
+- **Kubernetes** (`make secrets`): reads credentials from root `.env` only; service URLs come from Helm
 
 ## Service Map
 
@@ -61,13 +71,13 @@ The project uses a unified port scheme where the last two digits identify the se
 ## Debugging in VS Code
 
 ### Docker Debugging (Recommended)
-1. Start the debug stack: `docker-compose -f docker-compose.yaml -f docker-compose.debug.yaml up -d`
+1. Start the debug stack: `make services-up`
 2. Go to **Run and Debug** (`Ctrl+Shift+D`).
 3. Select the appropriate **"Docker: Attach"** configuration:
-   - `Docker: Identity (.NET)`
-   - `Docker: Order (.NET)`
-   - `Docker: Payment (Node)`
-   - `Docker: Inventory (Go)`
+   - `Docker: Attach IdentityService`
+   - `Docker: Attach OrderService`
+   - `Docker: Attach PaymentService`
+   - `Docker: Attach InventoryService`
 4. Set breakpoints and enjoy.
 
 ### Local Debugging

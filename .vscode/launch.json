@@ -1,6 +1,9 @@
 {
   "version": "0.2.0",
   "configurations": [
+
+    // ── .NET Services ──────────────────────────────────────────────────────────
+
     {
       "name": "IdentityService",
       "type": "coreclr",
@@ -10,8 +13,16 @@
       "args": [],
       "cwd": "${workspaceFolder}/services/IdentityService",
       "stopAtEntry": false,
+      "envFile": "${workspaceFolder}/.env",
       "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Service__Name": "IdentityService",
+        "Jwt__Key": "ThisIsAVerySecretKeyForDevelopmentOnly123!",
+        "Jwt__Issuer": "IdentityService",
+        "Jwt__Audience": "MicroserviceApp",
+        "Cors__AllowedOrigins": "http://localhost:8080,http://localhost:8100",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+        "LOKI_URL": "http://localhost:3100"
       }
     },
     {
@@ -23,10 +34,22 @@
       "args": [],
       "cwd": "${workspaceFolder}/services/OrderService",
       "stopAtEntry": false,
+      "envFile": "${workspaceFolder}/.env",
       "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Service__Name": "OrderService",
+        "ConnectionStrings__DefaultConnection": "Host=localhost;Port=5432;Database=orders_db;Username=admin;Password=password123",
+        "GrpcSettings__PaymentServiceUrl": "http://localhost:50012",
+        "GrpcSettings__InventoryServiceUrl": "http://localhost:50013",
+        "GrpcSettings__IdentityServiceUrl": "http://localhost:50010",
+        "ExternalServices__PdfServiceUrl": "http://localhost:5015",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+        "LOKI_URL": "http://localhost:3100"
       }
     },
+
+    // ── Go Services ────────────────────────────────────────────────────────────
+
     {
       "name": "InventoryService",
       "type": "go",
@@ -34,8 +57,21 @@
       "mode": "auto",
       "program": "${workspaceFolder}/services/InventoryService/cmd/server/main.go",
       "cwd": "${workspaceFolder}/services/InventoryService",
-      "envFile": "${workspaceFolder}/services/InventoryService/.env"
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "SERVICE_NAME": "InventoryService",
+        "DB_HOST": "localhost",
+        "DB_PORT": "5433",
+        "DB_NAME": "inventory_db",
+        "REST_PORT": "5013",
+        "GRPC_PORT": "50013",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+        "LOKI_URL": "http://localhost:3100"
+      }
     },
+
+    // ── Node Services ──────────────────────────────────────────────────────────
+
     {
       "name": "PaymentService",
       "type": "node",
@@ -43,9 +79,55 @@
       "cwd": "${workspaceFolder}/services/PaymentService",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "start"],
-      "envFile": "${workspaceFolder}/services/PaymentService/.env",
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "SERVICE_NAME": "PaymentService",
+        "REST_PORT": "5012",
+        "GRPC_PORT": "50012",
+        "MONGO_URI": "mongodb://admin:password123@localhost:27017/payments_db?authSource=admin",
+        "MONGO_DB_NAME": "payments_db",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+        "LOKI_URL": "http://localhost:3100"
+      }
     },
+
+    // ── Python Services ────────────────────────────────────────────────────────
+
+    {
+      "name": "CartService",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/CartService/src/main.py",
+      "cwd": "${workspaceFolder}/services/CartService",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "SERVICE_NAME": "CartService",
+        "REST_PORT": "5014",
+        "REDIS_URL": "redis://localhost:6379/0",
+        "ORDER_SERVICE_URL": "localhost:50011",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317"
+      }
+    },
+    {
+      "name": "PdfService",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/PdfService/src/main.py",
+      "cwd": "${workspaceFolder}/services/PdfService",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "SERVICE_NAME": "PdfService",
+        "REST_PORT": "5015",
+        "S3_ENDPOINT": "http://localhost:9000",
+        "S3_ACCESS_KEY": "admin",
+        "S3_SECRET_KEY": "password123",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317"
+      }
+    },
+
+    // ── Frontend ───────────────────────────────────────────────────────────────
+
     {
       "name": "Storefront (React)",
       "type": "node",
@@ -65,6 +147,9 @@
       "runtimeArgs": ["run", "start"],
       "console": "integratedTerminal"
     },
+
+    // ── Docker Attach ──────────────────────────────────────────────────────────
+
     {
       "name": "Docker: Attach OrderService",
       "type": "coreclr",
@@ -114,21 +199,35 @@
       "sourceMaps": true
     }
   ],
+
   "compounds": [
     {
-      "name": "Run All Projects",
+      "name": "All Services",
       "configurations": [
         "IdentityService",
         "OrderService",
         "InventoryService",
         "PaymentService",
+        "CartService",
+        "PdfService"
+      ]
+    },
+    {
+      "name": "All Frontends",
+      "configurations": [
         "Storefront (React)",
         "Back Office (Angular)"
       ]
     },
     {
-      "name": "Run All Frontends",
+      "name": "All",
       "configurations": [
+        "IdentityService",
+        "OrderService",
+        "InventoryService",
+        "PaymentService",
+        "CartService",
+        "PdfService",
         "Storefront (React)",
         "Back Office (Angular)"
       ]

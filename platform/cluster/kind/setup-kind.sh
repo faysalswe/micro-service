@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-CLUSTER_NAME="kind-cluster"
+CLUSTER_NAME="micro-cluster"
 CONFIG_FILE="platform/cluster/kind/kind-cluster.yaml"
 REGISTRY_NAME="micro-registry"
 REGISTRY_PORT="5001"
@@ -66,17 +66,23 @@ EOF
 kubectl config use-context "kind-${CLUSTER_NAME}"
 
 # --- Install MetalLB ---
-# Added: gives kind real LoadBalancer support — removed NodePort workaround below
+echo -e "${BLUE}Pre-pulling MetalLB images on host...${NC}"
+METALLB_VERSION="v0.16.1"
+docker pull quay.io/metallb/controller:${METALLB_VERSION}
+docker pull quay.io/metallb/speaker:${METALLB_VERSION}
+kind load docker-image quay.io/metallb/controller:${METALLB_VERSION} --name "${CLUSTER_NAME}"
+kind load docker-image quay.io/metallb/speaker:${METALLB_VERSION} --name "${CLUSTER_NAME}"
+
 echo -e "${BLUE}Installing MetalLB...${NC}"
 helm repo add metallb https://metallb.github.io/metallb 2>/dev/null || true
 helm repo update
 helm upgrade --install metallb metallb/metallb --namespace metallb-system --create-namespace
 
 echo -e "${BLUE}Waiting for MetalLB to be ready...${NC}"
-kubectl rollout status deployment/metallb-controller --namespace metallb-system --timeout=180s
+kubectl rollout status deployment/metallb-controller --namespace metallb-system --timeout=600s
 
 # Detect kind Docker network subnet and assign last 50 IPs to MetalLB
-SUBNET=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}' | cut -d'.' -f1-3)
+SUBNET=$(docker network inspect kind --format '{{range .IPAM.Config}}{{.Subnet}}{{"\n"}}{{end}}' | grep '\.' | head -1 | cut -d'.' -f1-3)
 kubectl apply -f - <<EOF
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
@@ -96,7 +102,12 @@ EOF
 echo -e "${GREEN}MetalLB configured with pool ${SUBNET}.200-${SUBNET}.250${NC}"
 
 # --- Install Kong ---
-# Added: now runs directly (was only a printed tip before) — same command as k3d, no NodePort flags needed
+echo -e "${BLUE}Pre-pulling Kong images on host...${NC}"
+docker pull kong:3.9
+docker pull kong/kubernetes-ingress-controller:3.5
+kind load docker-image kong:3.9 --name "${CLUSTER_NAME}"
+kind load docker-image kong/kubernetes-ingress-controller:3.5 --name "${CLUSTER_NAME}"
+
 echo -e "${BLUE}Installing Kong ingress controller...${NC}"
 helm repo add kong https://charts.konghq.com 2>/dev/null || true
 helm repo update
@@ -104,13 +115,21 @@ helm upgrade --install kong kong/ingress \
     --namespace kong \
     --create-namespace \
     --set controller.ingressClass=kong \
-    --wait --timeout=3m
+    --wait --timeout=10m
 
 echo -e "${BLUE}Waiting for Kong to be ready...${NC}"
 kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-controller --timeout=180s
 kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-gateway --timeout=180s
 
+# Pin Kong's NodePorts to match kind's extraPortMappings (30080→localhost:80, 30443→localhost:443)
+echo -e "${BLUE}Pinning Kong NodePorts to 30080/30443...${NC}"
+kubectl patch svc kong-gateway-proxy -n kong --type='json' -p='[
+  {"op":"replace","path":"/spec/ports/0/nodePort","value":30080},
+  {"op":"replace","path":"/spec/ports/1/nodePort","value":30443}
+]'
+
 echo -e "${GREEN}Setup complete.${NC}"
+echo -e "${BLUE}Kong proxy: http://localhost:8100${NC}"
 echo -e "${BLUE}Next steps — choose one:${NC}"
 echo -e "${BLUE}  All at once : ./platform/scripts/deploy-umbrella.sh${NC}"
 echo -e "${BLUE}  Granular    : ./platform/scripts/deploy-infra.sh then ./platform/scripts/deploy-services.sh${NC}"
