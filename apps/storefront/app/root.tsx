@@ -28,9 +28,12 @@ import globalStyles from '~/styles/globals.css?url';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Notifications } from '@mantine/notifications';
 import { AuthProvider } from '~/contexts/auth-context';
+import { CartProvider } from '~/contexts/cart-context';
+import { useAuth } from '~/contexts/auth-context';
 import { queryClient } from '~/lib/react-query';
 import { Navigation } from '~/components/layout/navigation';
 import { useState } from 'react';
+import React from 'react';
 
 /**
  * Meta tags for the app
@@ -69,10 +72,6 @@ interface RootLoaderData {
   theme: Theme;
   language: SupportedLanguage;
   translations: Record<string, unknown>;
-  env: {
-    NODE_ENV: string;
-    API_URL?: string;
-  };
 }
 
 /**
@@ -94,18 +93,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
     theme,
     language,
     translations,
-    env: {
-      NODE_ENV: process.env['NODE_ENV'] ?? 'development',
-      API_URL: process.env['API_URL'],
-    },
   });
 }
 
 /**
  * Root component
  */
+function CartProviderWithAuth({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  return <CartProvider userId={user?.id}>{children}</CartProvider>;
+}
+
 export default function App() {
-  const { theme, language, translations, env } = useLoaderData<typeof loader>();
+  const { theme, language, translations } = useLoaderData<typeof loader>();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -120,16 +120,13 @@ export default function App() {
           <I18nProvider initialLanguage={language} initialResources={translations}>
             <QueryClientProvider client={queryClient}>
               <AuthProvider>
-                <Notifications />
-                <Navigation opened={mobileMenuOpen} toggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
-                <Outlet />
-                <ScrollRestoration />
-                <Scripts />
-                <script
-                  dangerouslySetInnerHTML={{
-                    __html: `window.ENV = ${JSON.stringify(env)}`,
-                  }}
-                />
+                <CartProviderWithAuth>
+                  <Notifications />
+                  <Navigation opened={mobileMenuOpen} toggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
+                  <Outlet />
+                  <ScrollRestoration />
+                  <Scripts />
+                </CartProviderWithAuth>
               </AuthProvider>
             </QueryClientProvider>
           </I18nProvider>

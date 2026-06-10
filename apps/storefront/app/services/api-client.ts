@@ -53,8 +53,7 @@ export class ApiClient {
   private onUnauthorized: () => void;
 
   private constructor(config: ApiClientConfig = {}) {
-    // Determine base URL: window.ENV.API_URL (injected by server) or empty string for proxy
-    this.baseUrl = config.baseUrl || this.getBaseUrl();
+    this.baseUrl = config.baseUrl ?? '';
     this.getToken = config.getToken || (() => localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN));
     this.onUnauthorized = config.onUnauthorized || (() => {
       console.warn('Unauthorized request detected');
@@ -70,18 +69,6 @@ export class ApiClient {
       ApiClient.instance = new ApiClient(config);
     }
     return ApiClient.instance;
-  }
-
-  /**
-   * Get base URL from environment
-   */
-  private getBaseUrl(): string {
-    // Server injects API_URL via window.ENV
-    if (typeof window !== 'undefined' && (window as any).ENV?.API_URL) {
-      return (window as any).ENV.API_URL;
-    }
-    // Empty string for development with Vite proxy
-    return '';
   }
 
   /**

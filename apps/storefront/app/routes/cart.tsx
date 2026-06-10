@@ -8,7 +8,7 @@ import { Container, Title, Text, Table, Button, Group, Stack, Box, Card, Loader,
 import { IconShoppingCart, IconTrash, IconCreditCard, IconAlertCircle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '~/contexts/auth-context';
-import { useCart } from '~/hooks/useCart';
+import { useCartContext } from '~/contexts/cart-context';
 import { apiClient, ApiError } from '~/services/api-client'; // Ensure ApiError is imported
 
 interface Product {
@@ -19,7 +19,7 @@ interface Product {
 
 export default function CartPage() {
   const { user, isLoading: authLoading } = useAuth(); // Use authLoading for initial auth state
-  const { items, loading: cartLoading, clearCart, checkout, itemCount } = useCart(user?.id);
+  const { items, loading: cartLoading, clearCart, checkout, itemCount } = useCartContext();
   const [products, setProducts] = useState<Record<string, Product>>({});
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [pointsToSpend, setPointsToSpend] = useState(0); // State for points the user wants to spend
