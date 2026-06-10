@@ -67,19 +67,28 @@ metadata:
 EOF
 echo -e "${GREEN}MetalLB configured with pool ${SUBNET}.200-${SUBNET}.250${NC}"
 
-# --- Install Kong ---
-echo -e "${BLUE}Installing Kong ingress controller...${NC}"
+# --- Deploy Kong ConfigMaps (from canonical source files) ---
+echo -e "${BLUE}Creating Kong ConfigMaps...${NC}"
+kubectl create configmap kong-config \
+    --from-file=kong.yml=platform/config/gateway/kong.yml \
+    --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl create configmap kong-plugin-rbac \
+    --from-file=handler.lua=platform/config/gateway/plugins/rbac/handler.lua \
+    --from-file=schema.lua=platform/config/gateway/plugins/rbac/schema.lua \
+    --dry-run=client -o yaml | kubectl apply -f -
+
+# --- Install Kong in DB-less mode (same behaviour as Docker Compose) ---
+echo -e "${BLUE}Installing Kong (DB-less mode)...${NC}"
 helm repo add kong https://charts.konghq.com 2>/dev/null || true
 helm repo update
-helm upgrade --install kong kong/ingress \
-    --namespace kong \
-    --create-namespace \
-    --set controller.ingressClass=kong \
-    --wait --timeout=3m
+helm upgrade --install kong kong/kong \
+    --namespace default \
+    -f platform/config/gateway/kong-k8s-values.yaml \
+    --wait --timeout=5m
 
 echo -e "${BLUE}Waiting for Kong to be ready...${NC}"
-kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-controller --timeout=180s
-kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-gateway --timeout=180s
+kubectl rollout status deployment/kong-kong --namespace default --timeout=180s
 
 echo -e "${GREEN}Setup complete.${NC}"
 echo -e "${BLUE}Next steps — choose one:${NC}"

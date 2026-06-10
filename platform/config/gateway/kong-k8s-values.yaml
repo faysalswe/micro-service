@@ -1,0 +1,62 @@
+## Kong DB-less mode — identical behaviour to Docker Compose
+## Both k3d and kind use this as the base values file.
+## The same kong.yml and rbac Lua files are mounted from ConfigMaps
+## created by the cluster setup scripts from the canonical source files.
+
+image:
+  repository: kong
+  tag: "3.4"
+
+env:
+  database: "off"
+  declarative_config: /usr/local/kong/declarative/kong.yml
+  plugins: "bundled,rbac"
+
+# Disable Ingress Controller — declarative config is the source of truth
+ingressController:
+  enabled: false
+
+proxy:
+  enabled: true
+  type: LoadBalancer
+  http:
+    enabled: true
+    servicePort: 80
+    containerPort: 8000
+  tls:
+    enabled: false
+
+admin:
+  enabled: true
+  type: ClusterIP
+  http:
+    enabled: true
+    servicePort: 8001
+    containerPort: 8001
+
+# Disable unused Enterprise components
+enterprise:
+  enabled: false
+manager:
+  enabled: false
+portal:
+  enabled: false
+portalapi:
+  enabled: false
+
+deployment:
+  userDefinedVolumes:
+    - name: kong-config
+      configMap:
+        name: kong-config
+    - name: rbac-plugin
+      configMap:
+        name: kong-plugin-rbac
+  userDefinedVolumeMounts:
+    - name: kong-config
+      mountPath: /usr/local/kong/declarative/kong.yml
+      subPath: kong.yml
+      readOnly: true
+    - name: rbac-plugin
+      mountPath: /usr/local/share/lua/5.1/kong/plugins/rbac
+      readOnly: true

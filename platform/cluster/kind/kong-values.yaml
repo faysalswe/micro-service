@@ -1,0 +1,10 @@
+## kind override — use NodePort so Kong is reachable via extraPortMappings
+## (kind's LoadBalancer IPs are on the Docker bridge, not accessible from host)
+## kind-cluster.yaml maps containerPort 30080 → hostPort 8100
+
+proxy:
+  type: NodePort
+  http:
+    nodePort: 30080
+  tls:
+    nodePort: 30443

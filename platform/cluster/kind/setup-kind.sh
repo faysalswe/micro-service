@@ -101,32 +101,33 @@ metadata:
 EOF
 echo -e "${GREEN}MetalLB configured with pool ${SUBNET}.200-${SUBNET}.250${NC}"
 
-# --- Install Kong ---
-echo -e "${BLUE}Pre-pulling Kong images on host...${NC}"
-docker pull kong:3.9
-docker pull kong/kubernetes-ingress-controller:3.5
-kind load docker-image kong:3.9 --name "${CLUSTER_NAME}"
-kind load docker-image kong/kubernetes-ingress-controller:3.5 --name "${CLUSTER_NAME}"
+# --- Deploy Kong ConfigMaps (from canonical source files) ---
+echo -e "${BLUE}Creating Kong ConfigMaps...${NC}"
+kubectl create configmap kong-config \
+    --from-file=kong.yml=platform/config/gateway/kong.yml \
+    --dry-run=client -o yaml | kubectl apply -f -
 
-echo -e "${BLUE}Installing Kong ingress controller...${NC}"
+kubectl create configmap kong-plugin-rbac \
+    --from-file=handler.lua=platform/config/gateway/plugins/rbac/handler.lua \
+    --from-file=schema.lua=platform/config/gateway/plugins/rbac/schema.lua \
+    --dry-run=client -o yaml | kubectl apply -f -
+
+# --- Install Kong in DB-less mode (same behaviour as Docker Compose) ---
+echo -e "${BLUE}Pre-pulling Kong image on host...${NC}"
+docker pull kong:3.4
+kind load docker-image kong:3.4 --name "${CLUSTER_NAME}"
+
+echo -e "${BLUE}Installing Kong (DB-less mode)...${NC}"
 helm repo add kong https://charts.konghq.com 2>/dev/null || true
 helm repo update
-helm upgrade --install kong kong/ingress \
-    --namespace kong \
-    --create-namespace \
-    --set controller.ingressClass=kong \
+helm upgrade --install kong kong/kong \
+    --namespace default \
+    -f platform/config/gateway/kong-k8s-values.yaml \
+    -f platform/cluster/kind/kong-values.yaml \
     --wait --timeout=10m
 
 echo -e "${BLUE}Waiting for Kong to be ready...${NC}"
-kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-controller --timeout=180s
-kubectl wait --namespace kong --for=condition=ready pod --selector=app=kong-gateway --timeout=180s
-
-# Pin Kong's NodePorts to match kind's extraPortMappings (30080→localhost:80, 30443→localhost:443)
-echo -e "${BLUE}Pinning Kong NodePorts to 30080/30443...${NC}"
-kubectl patch svc kong-gateway-proxy -n kong --type='json' -p='[
-  {"op":"replace","path":"/spec/ports/0/nodePort","value":30080},
-  {"op":"replace","path":"/spec/ports/1/nodePort","value":30443}
-]'
+kubectl rollout status deployment/kong-kong --namespace default --timeout=180s
 
 echo -e "${GREEN}Setup complete.${NC}"
 echo -e "${BLUE}Kong proxy: http://localhost:8100${NC}"
