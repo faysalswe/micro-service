@@ -3,54 +3,62 @@ import { roleGuard } from './guards/role.guard';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 
 export const routes: Routes = [
-  // Public Route: Login
-  { 
-    path: 'login', 
+  { path: 'login',
     loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent)
   },
-  
-  // Protected Routes: Wrapped in MainLayout
+
+  { path: 'unauthorized',
+    loadComponent: () => import('./components/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent)
+  },
+
   {
     path: '',
     component: MainLayoutComponent,
     canActivate: [roleGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { 
-        path: 'dashboard', 
-        loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent) 
+
+      { path: 'dashboard',
+        loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
-      { 
-        path: 'products/new', 
-        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent) 
+
+      { path: 'orders',
+        loadComponent: () => import('./components/order-list/order-list.component').then(m => m.OrderListComponent)
       },
-      { 
-        path: 'products/edit/:id', 
-        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent) 
+      { path: 'orders/:id',
+        loadComponent: () => import('./components/order-detail/order-detail.component').then(m => m.OrderDetailComponent)
       },
-      { 
-        path: 'products', 
-        loadComponent: () => import('./components/product-list/product-list.component').then(m => m.ProductListComponent) 
+
+      // Admin + Manager only
+      { path: 'payments',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Manager'] },
+        loadComponent: () => import('./components/payment-list/payment-list.component').then(m => m.PaymentListComponent)
       },
-      { 
-        path: 'users', 
-        loadComponent: () => import('./components/user-list/user-list.component').then(m => m.UserListComponent) 
+      { path: 'products',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Manager'] },
+        loadComponent: () => import('./components/product-list/product-list.component').then(m => m.ProductListComponent)
       },
-      { 
-        path: 'orders', 
-        loadComponent: () => import('./components/order-list/order-list.component').then(m => m.OrderListComponent) 
+
+      // Admin only
+      { path: 'products/new',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin'] },
+        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent)
       },
-      { 
-        path: 'orders/:id', 
-        loadComponent: () => import('./components/order-detail/order-detail.component').then(m => m.OrderDetailComponent) 
+      { path: 'products/edit/:id',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin'] },
+        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent)
       },
-      { 
-        path: 'payments', 
-        loadComponent: () => import('./components/payment-list/payment-list.component').then(m => m.PaymentListComponent) 
+      { path: 'users',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin'] },
+        loadComponent: () => import('./components/user-list/user-list.component').then(m => m.UserListComponent)
       },
     ]
   },
 
-  // Fallback
   { path: '**', redirectTo: '' }
 ];

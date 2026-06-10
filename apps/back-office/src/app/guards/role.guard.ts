@@ -6,23 +6,18 @@ export const roleGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Check if user is authenticated at all
-  const role = authService.currentUserRole();
+  const role = authService.currentUserRole() ?? (authService.getToken() ? 'User' : null);
 
-  if (role) {
-    return true;
+  if (!role) {
+    router.navigate(['/login']);
+    return false;
   }
 
-  // Double check if token exists but role hasn't updated yet (race condition)
-  const token = authService.getToken();
-  if (token) {
-    // If token exists, we can try to reload it or just trust it for this turn
-    // This handles the case where navigation happens immediately after setToken
-    return true;
+  const requiredRoles: string[] | undefined = route.data?.['roles'];
+  if (requiredRoles && !requiredRoles.includes(role)) {
+    router.navigate(['/unauthorized']);
+    return false;
   }
 
-  // If not authenticated, redirect to login
-  console.warn('Access Denied: No valid session. Redirecting to login.');
-  router.navigate(['/login']);
-  return false;
+  return true;
 };
