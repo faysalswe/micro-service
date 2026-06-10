@@ -122,8 +122,8 @@ services:
       - "127.0.0.1:8001:8001"     # Local Admin API
       - "127.0.0.1:9080:9080"     # Local gRPC Proxy
     volumes:
-      - ../config/gateway/kong.yml:/usr/local/kong/declarative/kong.yml:ro
-      - ../config/gateway/plugins/rbac:/usr/local/share/lua/5.1/kong/plugins/rbac:ro
+      - ../../config/gateway/kong.yml:/usr/local/kong/declarative/kong.yml:ro
+      - ../../config/gateway/plugins/rbac:/usr/local/share/lua/5.1/kong/plugins/rbac:ro
     networks:
       - infra-network
 

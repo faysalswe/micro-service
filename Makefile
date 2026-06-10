@@ -6,6 +6,7 @@ COMPOSE_SERVICES = platform/cluster/compose/docker-compose.debug.yaml
         infra-up infra-down \
         services-up services-down \
         run-payment run-inventory run-order run-identity run-cart run-pdf \
+        run-storefront run-back-office \
         secrets deploy-infra deploy-services deploy-umbrella deploy-kind-all deploy-k3d-all \
         logs-payment logs-inventory logs-order logs-identity logs-cart logs-pdf
 
@@ -22,6 +23,8 @@ help:
 	@echo "    make run-identity      Run IdentityService locally"
 	@echo "    make run-cart          Run CartService locally"
 	@echo "    make run-pdf           Run PdfService locally"
+	@echo "    make run-storefront    Run Storefront (React) dev server"
+	@echo "    make run-back-office   Run Back-Office (Angular) dev server"
 	@echo ""
 	@echo "  Docker Compose"
 	@echo "    make infra-up          Start databases, redis, kafka, observability"
@@ -69,19 +72,25 @@ run-cart:
 run-pdf:
 	cd services/PdfService && set -a && source ../../.env && set +a && python src/main.py
 
+run-storefront:
+	cd apps/storefront && npm run dev
+
+run-back-office:
+	cd apps/back-office && npm start
+
 # ── Docker Compose ─────────────────────────────────────────────────────────────
 
 infra-up:
 	docker compose -f $(COMPOSE_INFRA) --env-file .env --env-file .env.docker up -d
 
 infra-down:
-	docker compose -f $(COMPOSE_INFRA) down
+	docker compose -f $(COMPOSE_INFRA) --env-file .env --env-file .env.docker down
 
 services-up:
 	docker compose -f $(COMPOSE_SERVICES) --env-file .env --env-file .env.docker up -d
 
 services-down:
-	docker compose -f $(COMPOSE_SERVICES) down
+	docker compose -f $(COMPOSE_SERVICES) --env-file .env --env-file .env.docker down
 
 # ── Kubernetes ─────────────────────────────────────────────────────────────────
 
