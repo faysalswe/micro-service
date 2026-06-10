@@ -1,4 +1,8 @@
 local kong = kong
+local jwt_decoder = require "kong.plugins.jwt.jwt_parser"
+
+-- .NET JwtSecurityTokenHandler rewrites the "role" claim to this URI
+local DOTNET_ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
 
 -- Public routes: skip JWT and RBAC entirely (no token required)
 local PUBLIC_ROUTES = {
@@ -75,12 +79,27 @@ function RbacHandler:access()
 
     if is_public(path, method) then return end
 
-    local token = kong.ctx.shared.authenticated_jwt_token
-    if not token then
+    -- Kong's JWT plugin stores the raw JWT string here, not a parsed object
+    local token_str = kong.ctx.shared.authenticated_jwt_token
+    if not token_str then
         return kong.response.exit(401, { message = "Unauthorized" })
     end
 
-    local role = token.claims and token.claims.role or ""
+    local jwt, err = jwt_decoder:new(token_str)
+    if err then
+        return kong.response.exit(401, { message = "Invalid token" })
+    end
+
+    local claims = jwt.claims or {}
+
+    -- DEBUG: log every claim key/value to discover the actual role claim name
+    local keys = {}
+    for k, v in pairs(claims) do
+        keys[#keys + 1] = tostring(k) .. "=" .. tostring(v)
+    end
+    kong.log.warn("RBAC claims: ", table.concat(keys, " | "))
+
+    local role = claims.role or claims[DOTNET_ROLE_CLAIM] or ""
 
     if not is_allowed(role, path, method) then
         return kong.response.exit(403, { message = "Forbidden: role '" .. role .. "' cannot access " .. path })
