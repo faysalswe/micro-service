@@ -20,7 +20,6 @@
         "Jwt__Key": "ThisIsAVerySecretKeyForDevelopmentOnly123!",
         "Jwt__Issuer": "IdentityService",
         "Jwt__Audience": "MicroserviceApp",
-        "Cors__AllowedOrigins": "http://localhost:8080,http://localhost:8100",
         "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
         "LOKI_URL": "http://localhost:3100"
       }

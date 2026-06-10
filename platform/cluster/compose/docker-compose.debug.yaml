@@ -25,7 +25,6 @@ services:
       - Service__Version=${SERVICE_VERSION}
       - Jwt__Key=${JWT_SECRET}
       - Jwt__Issuer=IdentityService
-      - Cors__AllowedOrigins=${CORS_ALLOWED_ORIGINS}
 
   order-service:
     networks:

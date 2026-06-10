@@ -175,7 +175,6 @@ plugins:
       origins:
         - http://localhost:5008
         - http://localhost:5009
-        - http://localhost:8100
       methods:
         - GET
         - POST
