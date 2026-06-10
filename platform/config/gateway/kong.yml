@@ -29,7 +29,7 @@ services:
       - name: identity-api
         paths:
           - /api/identity
-        strip_path: true
+        strip_path: false
         plugins:
           - name: jwt
             config:
