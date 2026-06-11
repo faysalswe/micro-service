@@ -10,6 +10,7 @@ import { IconAlertCircle, IconCheck, IconClock, IconX, IconArrowLeft, IconFileDo
 import { getThemeFromRequest, getLanguageFromRequest } from '~/utils/theme.server';
 import { ProtectedRoute } from '~/components/auth/protected-route';
 import { useOrder } from '~/hooks';
+import { API_ENDPOINTS } from '~/constants';
 
 /**
  * Meta tags for order details page
@@ -173,7 +174,7 @@ export default function OrderDetailsPage() {
                     variant="outline" 
                     color="blue" 
                     leftSection={<IconFileDownload size={16} />}
-                    onClick={() => window.open(`http://localhost:9000/invoices/invoice_${order.id}.pdf`, '_blank')}
+                    onClick={() => window.open(API_ENDPOINTS.INVOICES.DOWNLOAD(order.id), '_blank')}
                   >
                     Download Invoice
                   </Button>

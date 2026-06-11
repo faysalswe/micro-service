@@ -1,0 +1,24 @@
+## Public ingress for MinIO invoice bucket — lets the storefront load PDFs via
+## the Kong public port (8090) instead of hitting MinIO directly on 9000.
+## The invoices bucket is configured with a public-read policy by PdfService,
+## so no auth plugin is attached here.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-invoices
+  labels:
+    app.kubernetes.io/name: minio
+  annotations:
+    konghq.com/strip-path: "false"
+spec:
+  ingressClassName: kong
+  rules:
+  - http:
+      paths:
+      - path: /invoices
+        pathType: Prefix
+        backend:
+          service:
+            name: infrastructure-minio
+            port:
+              number: 9000

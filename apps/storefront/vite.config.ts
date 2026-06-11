@@ -15,6 +15,10 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/invoices': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
   // Optimize deps for faster dev server startup

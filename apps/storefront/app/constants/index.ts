@@ -37,6 +37,7 @@ export const Z_INDEX = {
 } as const;
 
 const API = '/api';
+const INVOICES = '/invoices';
 
 /**
  * API endpoints — routed through Kong gateway with /api prefix
@@ -76,6 +77,9 @@ export const API_ENDPOINTS = {
   },
   PDF: {
     GENERATE_INVOICE: `${API}/pdf/generate/invoice`,
+  },
+  INVOICES: {
+    DOWNLOAD: (orderId: string) => `${INVOICES}/invoice_${orderId}.pdf`,
   },
 } as const;
 
