@@ -43,6 +43,24 @@ This project is a polyglot microservices architecture used as a testing ground f
 | InventoryService | Go      | 5013  | —     |
 | OTel Collector   | —       | —     | 4317  |
 
+## Communication Style (Non-Negotiable)
+
+### 2. Concept first, precise detail on request
+
+Always explain in this order:
+1. **The idea** — one or two sentences: what it is, why it exists
+2. **Before vs Now** — if something changed, the shift in 2-3 lines max
+3. **Stop** — do not add commands, file lists, or breakdowns unless asked
+
+When the user asks for detail: give it, but keep it **precise and tight** — no padding, no repetition, no restating what was already said. Every line must carry information.
+
+**Wrong:** Long bullet lists, restating the concept before the detail, showing every file and command unprompted.
+**Right:** Short concept → user asks more → precise focused answer.
+
+For large or complex prompts: give **one line of feedback first** on how the question could have been clearer — then answer. Skip for simple questions.
+
+---
+
 ## Hard Rules (Non-Negotiable)
 
 > These rules override auto mode, task urgency, and any other instruction.
