@@ -43,35 +43,33 @@ s3_client = boto3.client(
     aws_secret_access_key=CONFIG["S3_SECRET_KEY"]
 )
 
-def set_bucket_public_policy(bucket_name):
-    try:
-        policy = {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Principal": {"AWS": ["*"]},
-                    "Action": ["s3:GetObject"],
-                    "Resource": [f"arn:aws:s3:::{bucket_name}/*"]
-                }
-            ]
-        }
-        s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(policy))
-        logger.info(f"Public read policy set for bucket: {bucket_name}")
-    except Exception as e:
-        logger.error(f"Failed to set bucket policy: {e}")
+def _set_bucket_public_policy(bucket_name):
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"AWS": ["*"]},
+                "Action": ["s3:GetObject"],
+                "Resource": [f"arn:aws:s3:::{bucket_name}/*"]
+            }
+        ]
+    }
+    s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(policy))
+    logger.info(f"Public read policy set for bucket: {bucket_name}")
 
-# Ensure bucket exists and is public
-try:
-    s3_client.create_bucket(Bucket=INTERNAL_CONSTANTS["INVOICE_BUCKET"])
-    logger.info(f"Bucket created: {INTERNAL_CONSTANTS['INVOICE_BUCKET']}")
-    set_bucket_public_policy(INTERNAL_CONSTANTS["INVOICE_BUCKET"])
-except Exception as e:
-    # Try to set policy even if bucket creation fails (already exists)
+def ensure_invoice_bucket():
+    """Idempotent: head_bucket → create if missing → apply public-read policy.
+    Called lazily on each PDF generation so cluster cold-starts can't leave us
+    in a half-initialized state (race with MinIO readiness at app startup)."""
+    bucket = INTERNAL_CONSTANTS["INVOICE_BUCKET"]
     try:
-        set_bucket_public_policy(INTERNAL_CONSTANTS["INVOICE_BUCKET"])
-    except Exception:
-        pass 
+        s3_client.head_bucket(Bucket=bucket)
+        return
+    except s3_client.exceptions.ClientError:
+        logger.info(f"Bucket missing, creating: {bucket}")
+    s3_client.create_bucket(Bucket=bucket)
+    _set_bucket_public_policy(bucket)
 
 # --- PDF Generation Logic ---
 template_env = Environment(loader=FileSystemLoader("src/templates"))
@@ -84,6 +82,8 @@ async def health():
 async def generate_invoice(order_data: dict):
     logger.info(f"Generating invoice for Order ID: {order_data.get('order_id')}")
     try:
+        ensure_invoice_bucket()
+
         # 1. Prepare data for template
         order_data["date"] = datetime.now().strftime("%Y-%m-%d %H:%M")
         
