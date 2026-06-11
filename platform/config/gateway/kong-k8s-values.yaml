@@ -25,9 +25,11 @@ proxy:
   tls:
     enabled: false
 
+## Admin API — exposed for dev convenience (curl from laptop without port-forward).
+## NEVER do this in prod: the admin API can rewrite every route in Kong.
 admin:
   enabled: true
-  type: ClusterIP
+  type: LoadBalancer
   http:
     enabled: true
     servicePort: 8001

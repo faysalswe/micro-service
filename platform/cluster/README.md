@@ -96,7 +96,7 @@ k9s reads your existing kubeconfig — no extra setup needed.
 **`kind-cluster.yaml`:**
 - `3 control-plane nodes` — HA setup, kind auto-creates HAProxy for multi-control-plane routing
 - `3 worker nodes`
-- `extraPortMappings` on first control-plane — maps Mac ports `8100:80` and `8543:443` into cluster
+- `extraPortMappings` on first control-plane — maps Mac ports `8090:80` and `8543:443` into cluster
 - `containerdConfigPatches` — configures containerd to pull from local registry at `localhost:5001`
 
 **`setup-kind.sh`:**
@@ -110,7 +110,7 @@ k9s reads your existing kubeconfig — no extra setup needed.
 
 ```
 Your Mac
-  ├── localhost:8100 ──→ k3d HAProxy (serverlb) ──→ MetalLB (172.20.0.200) ──→ Kong
+  ├── localhost:8090 ──→ k3d HAProxy (serverlb) ──→ MetalLB (172.20.0.200) ──→ Kong
   │                                                                                ↓
   │                                                             ┌──────────────────┤
   │                                                             ↓                  ↓
@@ -122,7 +122,7 @@ Your Mac
 
 ### Traffic Flow
 ```
-curl localhost:8100/api/orders
+curl localhost:8090/api/orders
   → Kong (172.20.0.200:80)
     → Ingress rule: /api/orders → order-service:5011
       → order-service pod

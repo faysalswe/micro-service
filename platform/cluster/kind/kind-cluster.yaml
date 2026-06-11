@@ -8,11 +8,14 @@ nodes:
   - role: control-plane
     image: kindest/node:v1.32.2
     extraPortMappings:
-      - containerPort: 30080   # Kong HTTP NodePort → localhost:8100
-        hostPort: 8100
+      - containerPort: 32000   # Kong HTTP NodePort → localhost:8090
+        hostPort: 8090
         protocol: TCP
       - containerPort: 30443   # Kong HTTPS NodePort → localhost:8543
         hostPort: 8543
+        protocol: TCP
+      - containerPort: 32001   # Kong Admin NodePort → localhost:8100
+        hostPort: 8100
         protocol: TCP
   - role: control-plane
     image: kindest/node:v1.32.2

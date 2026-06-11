@@ -135,7 +135,8 @@ echo -e "${BLUE}Deploying Kong config (plugins, consumers)...${NC}"
 helm upgrade --install kong-config platform/charts/kong-config --namespace default
 
 echo -e "${GREEN}Setup complete.${NC}"
-echo -e "${BLUE}Kong proxy: http://localhost:8100${NC}"
+echo -e "${BLUE}Kong proxy: http://localhost:8090${NC}"
+echo -e "${BLUE}Kong admin: http://localhost:8100  (dev only — never expose in prod)${NC}"
 echo -e "${BLUE}Next steps — choose one:${NC}"
 echo -e "${BLUE}  All at once : ./platform/scripts/deploy-umbrella.sh${NC}"
 echo -e "${BLUE}  Granular    : ./platform/scripts/deploy-infra.sh then ./platform/scripts/deploy-services.sh${NC}"
