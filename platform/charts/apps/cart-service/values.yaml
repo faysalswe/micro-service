@@ -26,4 +26,12 @@ config:
 
 nodeSelector: {}
 tolerations: []
-affinity: {}
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: cart-service
+          topologyKey: kubernetes.io/hostname

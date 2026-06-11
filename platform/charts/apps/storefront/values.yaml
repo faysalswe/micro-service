@@ -25,3 +25,15 @@ resources:
 securityContext:
   runAsNonRoot: true
   allowPrivilegeEscalation: false
+
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: storefront
+          topologyKey: kubernetes.io/hostname

@@ -27,9 +27,9 @@ Master these tools through the implementation of the tasks below.
 
 ### Phase 1: Local HA Foundations
 - [x] **1.1 Multi-node k3d Cluster** (The Infrastructure)
-- [ ] **1.2 Pod Anti-Affinity** (High Availability Scheduling)
-- [~] **1.3 Kong Ingress Controller** (Traffic Management)
-- [ ] **1.4 Basic Ingress Routing** (North-South Traffic)
+- [x] **1.2 Pod Anti-Affinity** (High Availability Scheduling)
+- [x] **1.3 Kong Ingress Controller** (Traffic Management)
+- [x] **1.4 Basic Ingress Routing** (North-South Traffic)
 
 ### Phase 2: Persistence & State
 - [ ] **2.1 Helm-based PostgreSQL** (Package Management & Workloads)
@@ -178,4 +178,4 @@ Master these tools through the implementation of the tasks below.
     *   *Interview Answer:* "I integrated Azure Key Vault with AKS to meet enterprise security standards. This ensures that sensitive credentials like database passwords are encrypted in a dedicated vault and never stored in plain text or Git."
 
 ---
-*Last updated: Tuesday, April 21, 2026*
+*Last updated: Thursday, June 11, 2026*
