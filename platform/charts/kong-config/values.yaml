@@ -1,0 +1,11 @@
+jwt:
+  keyClaimName: iss
+  secretIsBase64: false
+  runOnPreflight: true
+  secret: ThisIsAVerySecretKeyForDevelopmentOnly123!
+
+cors:
+  origins:
+    - http://localhost:5008
+    - http://localhost:5009
+  maxAge: 3600

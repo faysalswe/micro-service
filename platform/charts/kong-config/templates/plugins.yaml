@@ -1,0 +1,66 @@
+---
+# Global CORS — applies to every route in the cluster
+apiVersion: configuration.konghq.com/v1
+kind: KongClusterPlugin
+metadata:
+  name: cors
+  labels:
+    global: "true"
+plugin: cors
+config:
+  origins:
+    {{- range .Values.cors.origins }}
+    - {{ . }}
+    {{- end }}
+  methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  headers:
+    - Accept
+    - Authorization
+    - Content-Type
+    - X-Correlation-ID
+  exposed_headers:
+    - X-Correlation-ID
+  credentials: true
+  max_age: {{ .Values.cors.maxAge }}
+
+---
+# JWT plugin for public/private split routes (identity, inventory).
+# Unauthenticated requests are identified as the public-anon consumer so the
+# rbac plugin can run next and decide per-route whether the path is public.
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: jwt-auth-public
+plugin: jwt
+config:
+  key_claim_name: {{ .Values.jwt.keyClaimName }}
+  secret_is_base64: {{ .Values.jwt.secretIsBase64 }}
+  run_on_preflight: {{ .Values.jwt.runOnPreflight }}
+  anonymous: public-anon
+
+---
+# JWT plugin for fully protected routes (orders, payments, cart, pdf).
+# No anonymous fallback — unauthenticated requests are rejected at this layer.
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: jwt-auth-protected
+plugin: jwt
+config:
+  key_claim_name: {{ .Values.jwt.keyClaimName }}
+  secret_is_base64: {{ .Values.jwt.secretIsBase64 }}
+  run_on_preflight: {{ .Values.jwt.runOnPreflight }}
+
+---
+# Custom RBAC Lua plugin — enforces role-based access on top of JWT.
+# The Lua files are mounted into Kong from the kong-plugin-rbac ConfigMap.
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: kong-rbac
+plugin: rbac

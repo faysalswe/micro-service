@@ -1,0 +1,39 @@
+---
+# Anonymous consumer — used as a fallback by jwt-auth-public.
+# Requests that carry no token are identified as this consumer,
+# allowing the rbac plugin to permit or deny them per-route.
+apiVersion: configuration.konghq.com/v1
+kind: KongConsumer
+metadata:
+  name: public-anon
+  annotations:
+    kubernetes.io/ingress.class: kong
+username: public-anon
+
+---
+# Authenticated consumer — represents the microservice app clients.
+# JWT credentials are stored in the secret below.
+apiVersion: configuration.konghq.com/v1
+kind: KongConsumer
+metadata:
+  name: microservice-app
+  annotations:
+    kubernetes.io/ingress.class: kong
+username: microservice-app
+credentials:
+  - microservice-app-jwt
+
+---
+# JWT credential for the microservice-app consumer.
+# key: matches the `iss` claim that IdentityService puts in tokens.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: microservice-app-jwt
+  labels:
+    konghq.com/credential: jwt
+type: Opaque
+stringData:
+  key: IdentityService
+  secret: {{ .Values.jwt.secret }}
+  algorithm: HS256

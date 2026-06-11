@@ -67,28 +67,34 @@ metadata:
 EOF
 echo -e "${GREEN}MetalLB configured with pool ${SUBNET}.200-${SUBNET}.250${NC}"
 
-# --- Deploy Kong ConfigMaps (from canonical source files) ---
+# --- Deploy Kong ConfigMaps (rbac Lua plugin only — routing is via Ingress CRDs) ---
 echo -e "${BLUE}Creating Kong ConfigMaps...${NC}"
-kubectl create configmap kong-config \
-    --from-file=kong.yml=platform/config/gateway/kong.yml \
-    --dry-run=client -o yaml | kubectl apply -f -
-
 kubectl create configmap kong-plugin-rbac \
     --from-file=handler.lua=platform/config/gateway/plugins/rbac/handler.lua \
     --from-file=schema.lua=platform/config/gateway/plugins/rbac/schema.lua \
     --dry-run=client -o yaml | kubectl apply -f -
 
-# --- Install Kong in DB-less mode (same behaviour as Docker Compose) ---
-echo -e "${BLUE}Installing Kong (DB-less mode)...${NC}"
+# --- Install Kong CRDs (raw kubectl — not Helm-owned, so no ownership conflicts) ---
+echo -e "${BLUE}Installing Kong CRDs...${NC}"
+kubectl apply -f https://raw.githubusercontent.com/Kong/charts/main/charts/kong/crds/custom-resource-definitions.yaml
+
+# --- Install Kong with Ingress Controller enabled ---
+echo -e "${BLUE}Installing Kong (Ingress Controller mode)...${NC}"
 helm repo add kong https://charts.konghq.com 2>/dev/null || true
 helm repo update
 helm upgrade --install kong kong/kong \
     --namespace default \
     -f platform/config/gateway/kong-k8s-values.yaml \
+    --skip-crds \
     --wait --timeout=5m
 
 echo -e "${BLUE}Waiting for Kong to be ready...${NC}"
 kubectl rollout status deployment/kong-kong --namespace default --timeout=180s
+
+# --- Deploy Kong config chart (KongPlugin, KongConsumer, JWT credentials) ---
+# jwt-auth-public uses anonymous: public-anon (username form) declared in the chart.
+echo -e "${BLUE}Deploying Kong config (plugins, consumers)...${NC}"
+helm upgrade --install kong-config platform/charts/kong-config --namespace default
 
 echo -e "${GREEN}Setup complete.${NC}"
 echo -e "${BLUE}Next steps — choose one:${NC}"

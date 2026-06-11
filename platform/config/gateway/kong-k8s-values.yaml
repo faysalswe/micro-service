@@ -1,7 +1,6 @@
-## Kong DB-less mode — identical behaviour to Docker Compose
-## Both k3d and kind use this as the base values file.
-## The same kong.yml and rbac Lua files are mounted from ConfigMaps
-## created by the cluster setup scripts from the canonical source files.
+## Kong DB-less mode with Ingress Controller enabled.
+## Routing is defined per-service via Kubernetes Ingress resources + KongPlugin CRDs.
+## The custom rbac Lua plugin is still mounted from a ConfigMap.
 
 image:
   repository: kong
@@ -9,12 +8,12 @@ image:
 
 env:
   database: "off"
-  declarative_config: /usr/local/kong/declarative/kong.yml
   plugins: "bundled,rbac"
 
-# Disable Ingress Controller — declarative config is the source of truth
+# Enable Ingress Controller — Ingress resources are the source of truth
 ingressController:
-  enabled: false
+  enabled: true
+  installCRDs: false
 
 proxy:
   enabled: true
@@ -46,17 +45,10 @@ portalapi:
 
 deployment:
   userDefinedVolumes:
-    - name: kong-config
-      configMap:
-        name: kong-config
     - name: rbac-plugin
       configMap:
         name: kong-plugin-rbac
   userDefinedVolumeMounts:
-    - name: kong-config
-      mountPath: /usr/local/kong/declarative/kong.yml
-      subPath: kong.yml
-      readOnly: true
     - name: rbac-plugin
       mountPath: /usr/local/share/lua/5.1/kong/plugins/rbac
       readOnly: true
