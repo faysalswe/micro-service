@@ -33,10 +33,6 @@ import { AvatarModule } from 'primeng/avatar';
           <a routerLink="/products" routerLinkActive="is-active" class="menu-item">
             <i class="pi pi-box"></i><span>Products</span>
           </a>
-          <a routerLink="/products/new" routerLinkActive="is-active" class="menu-item">
-            <i class="pi pi-plus-circle"></i><span>Add New SKU</span>
-          </a>
-          <a class="menu-item is-disabled"><i class="pi pi-tags"></i><span>Categories</span></a>
 
           <div class="menu-category">Operations</div>
           <a routerLink="/orders" routerLinkActive="is-active" class="menu-item">

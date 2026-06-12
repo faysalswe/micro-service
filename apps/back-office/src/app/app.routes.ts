@@ -42,16 +42,6 @@ export const routes: Routes = [
       },
 
       // Admin only
-      { path: 'products/new',
-        canActivate: [roleGuard],
-        data: { roles: ['Admin'] },
-        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent)
-      },
-      { path: 'products/edit/:id',
-        canActivate: [roleGuard],
-        data: { roles: ['Admin'] },
-        loadComponent: () => import('./components/product-form/product-form.component').then(m => m.ProductFormComponent)
-      },
       { path: 'users',
         canActivate: [roleGuard],
         data: { roles: ['Admin'] },
