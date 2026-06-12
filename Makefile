@@ -1,12 +1,16 @@
 COMPOSE_INFRA    = platform/cluster/compose/docker-compose.infra.yaml
 COMPOSE_SERVICES = platform/cluster/compose/docker-compose.debug.yaml
 
+# Pinned Python for Cart/Pdf services — pydantic-core has no wheels for >3.13.
+PYTHON ?= python3.13
+
 .PHONY: help \
         env \
-        infra-up infra-down \
+        infra-up infra-down kong-local kong-docker \
         services-up services-down \
         run-payment run-inventory run-order run-identity run-cart run-pdf \
         run-storefront run-back-office \
+        setup-cart setup-pdf setup-python \
         secrets deploy-infra deploy-services deploy-umbrella deploy-kind-all deploy-k3d-all \
         logs-payment logs-inventory logs-order logs-identity logs-cart logs-pdf
 
@@ -25,9 +29,12 @@ help:
 	@echo "    make run-pdf           Run PdfService locally"
 	@echo "    make run-storefront    Run Storefront (React) dev server"
 	@echo "    make run-back-office   Run Back-Office (Angular) dev server"
+	@echo "    make setup-python      Create venvs + install deps for Cart/Pdf services"
 	@echo ""
 	@echo "  Docker Compose"
-	@echo "    make infra-up          Start databases, redis, kafka, observability"
+	@echo "    make infra-up          Start all infrastructure (DBs, Redis, MinIO, Kong, observability)"
+	@echo "    make kong-local        Switch Kong to local mode  (no infra restart)"
+	@echo "    make kong-docker       Switch Kong to Docker mode (no infra restart)"
 	@echo "    make infra-down        Stop infrastructure containers"
 	@echo "    make services-up       Start all services (debug mode)"
 	@echo "    make services-down     Stop all service containers"
@@ -66,11 +73,30 @@ run-order:
 run-identity:
 	cd services/IdentityService && set -a && source ../../.env && set +a && dotnet run
 
-run-cart:
-	cd services/CartService && set -a && source ../../.env && set +a && python src/main.py
+run-cart: setup-cart
+	cd services/CartService && set -a && source ../../.env && set +a && PYTHONPATH=src:src/generated .venv/bin/python src/main.py
 
-run-pdf:
-	cd services/PdfService && set -a && source ../../.env && set +a && python src/main.py
+run-pdf: setup-pdf
+	cd services/PdfService && set -a && source ../../.env && set +a && .venv/bin/python src/main.py
+
+setup-cart:
+	@cd services/CartService && \
+	  if [ ! -x .venv/bin/python ]; then $(PYTHON) -m venv .venv; fi && \
+	  .venv/bin/pip install --quiet --upgrade pip && \
+	  .venv/bin/pip install --quiet -r requirements.txt
+
+setup-pdf:
+	@if ! pkg-config --exists cairo pango gdk-pixbuf-2.0; then \
+	  echo "PdfService needs native libs for weasyprint."; \
+	  echo "Run: brew install cairo pango gdk-pixbuf libffi"; \
+	  exit 1; \
+	fi
+	@cd services/PdfService && \
+	  if [ ! -x .venv/bin/python ]; then $(PYTHON) -m venv .venv; fi && \
+	  .venv/bin/pip install --quiet --upgrade pip && \
+	  .venv/bin/pip install --quiet -r requirements.txt
+
+setup-python: setup-cart setup-pdf
 
 run-storefront:
 	cd apps/storefront && npm run dev
@@ -82,6 +108,12 @@ run-back-office:
 
 infra-up:
 	docker compose -f $(COMPOSE_INFRA) --env-file .env --env-file .env.docker up -d
+
+kong-local:
+	KONG_CONFIG=kong.local.yml docker compose -f $(COMPOSE_INFRA) --env-file .env --env-file .env.docker up -d --no-deps --force-recreate kong
+
+kong-docker:
+	KONG_CONFIG=kong.yml docker compose -f $(COMPOSE_INFRA) --env-file .env --env-file .env.docker up -d --no-deps --force-recreate kong
 
 infra-down:
 	docker compose -f $(COMPOSE_INFRA) --env-file .env --env-file .env.docker down

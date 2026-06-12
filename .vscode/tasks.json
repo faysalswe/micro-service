@@ -57,6 +57,8 @@
         "setup-order",
         "setup-inventory",
         "setup-payment",
+        "setup-cart",
+        "setup-pdf",
         "setup-storefront",
         "setup-back-office"
       ],
@@ -109,6 +111,24 @@
       "options": {
         "cwd": "${workspaceFolder}/apps/back-office"
       }
+    },
+    {
+      "label": "setup-cart",
+      "command": "make",
+      "type": "process",
+      "args": ["setup-cart"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "silent", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "setup-pdf",
+      "command": "make",
+      "type": "process",
+      "args": ["setup-pdf"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "silent", "panel": "shared" },
+      "problemMatcher": []
     }
   ]
 }
