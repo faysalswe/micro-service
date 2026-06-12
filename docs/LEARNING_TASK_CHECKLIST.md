@@ -1,181 +1,124 @@
 # SRE & Observability Mastery Checklist
 
-This document tracks your journey from local development to production-grade SRE. 
-**Goal:** Implement independently and master the "Why" for technical interviews.
+**Goal:** implement independently, master the *why* for technical interviews.
+
+- **Section 1 — Local Dev:** runs entirely on this machine (k3d + Docker Compose). Ordered as a learning path — do top to bottom.
+- **Section 2 — Remote/Cloud:** needs a VM, public IP, or cloud account. Parked until infra exists.
+
+Every local task uses the same format: **Prove** (the skill), **Do** (the steps), **Pass** (binary check).
 
 ---
 
-## 🛠 Tools to Master (Learning Goals)
-Master these tools through the implementation of the tasks below.
+## 📊 Progress at a Glance
 
-| Tool | Focus Area | Primary Tasks |
-| :--- | :--- | :--- |
-| **kubectl** | Cluster Management | All Phases |
-| **k3d / k3s** | Infrastructure Provisioning | 1.1, 4.1, 4.4 |
-| **Helm** | Package & Lifecycle Management | 1.3, 2.1, 4.3 |
-| **Kong** | API Gateway & Ingress | 1.3, 1.4 |
-| **Jaeger** | Distributed Tracing | 3.1, 3.2, 5.3 |
-| **Prometheus** | Metrics & PromQL | 5.1, 5.2 |
-| **Loki** | Log Aggregation & LogQL | 3.2 |
-| **ArgoCD** | GitOps & Continuous Delivery | 6.1 |
-| **Cert-Manager** | Security & SSL Automation | 4.3 |
-| **Azure AKS** | Managed Cloud Kubernetes | 6.2 |
+| Status | Tasks |
+|---|---|
+| ✅ Done | Phase 1 (k3d, anti-affinity, Kong) · 4.1 k3s VM bootstrap |
+| 🎯 Now | 3.1 Jaeger gap → 3.2 Loki correlation (in order) |
+| 🟢 Queued | 2.2 PV/PVC · 4.3 Cert-Manager · 5.1 Pool · 5.2 P99 · 6.1 ArgoCD |
+| 🏁 Capstone | 5.3 Ghost Latency (after 3.x + 5.x) |
+| ☁️ Parked | 4.2 TLS-SAN · 4.3b Let's Encrypt · 4.4 Multi-node · 6.2 AKS |
 
 ---
 
-## 📋 Part 1: High-Level Roadmap (The Overview)
+# 🖥 Section 1 — Local Dev
 
-### Phase 1: Local HA Foundations
-- [x] **1.1 Multi-node k3d Cluster** (The Infrastructure)
-- [x] **1.2 Pod Anti-Affinity** (High Availability Scheduling)
-- [x] **1.3 Kong Ingress Controller** (Traffic Management)
-- [x] **1.4 Basic Ingress Routing** (North-South Traffic)
+## 🎯 Now
 
-### Phase 2: Persistence & State
-- [ ] **2.1 Helm-based PostgreSQL** (Package Management & Workloads)
-- [ ] **2.2 PV/PVC & Persistence Challenge** (Data Durability)
+### 1. Jaeger Trace Gap *(3.1)*
 
-### Phase 3: Observability Baseline
-- [ ] **3.1 Trace Gap Identification (Jaeger)** (Visualizing Latency)
-- [ ] **3.2 TraceID Correlation (Loki)** (Connecting Traces to Logs)
+- **Prove:** you can spot *invisible* latency — time a parent span spends doing nothing observable.
+- **Do:** generate ~50 requests through Kong → Jaeger UI → sort by duration → open the slowest → compare parent duration vs sum of children.
+- **Pass:** you can point at one trace and say which service owns the gap and how many ms it is.
 
-### Phase 4: Remote "Production" (k3s)
-- [x] **4.1 k3s VM Bootstrapping** (Bare Metal/VM Kubernetes)
-- [~] **4.2 TLS-SAN & Remote Access** (Secure Cluster Management)
-- [ ] **4.3 Cert-Manager & Let's Encrypt** (Automated Trust)
-- [ ] **4.4 Multi-Node Expansion** (Scaling the Control Plane/Workers)
+> *Interview:* "I found a 3s 'white space' gap in a request chain. Not slow code — a timeout waiting for an unresponsive downstream."
 
-### Phase 5: Advanced Diagnostics & Optimization
-- [ ] **5.1 Connection Pool Analysis (Prometheus)** (Identifying Saturation)
-- [ ] **5.2 P99 Latency Mapping** (Performance Benchmarking)
-- [ ] **5.3 The "Ghost Latency" Fix** (The Capstone Challenge)
+### 2. Loki TraceID Correlation *(3.2)*
 
-### Phase 6: GitOps & Cloud Scale
-- [ ] **6.1 ArgoCD & App-of-Apps** (Source of Truth Deployment)
-- [ ] **6.2 Azure AKS & Key Vault** (Public Cloud SRE)
+- **Prove:** one TraceID stitches every service's logs into a single timeline.
+- **Do:** copy the TraceID from task 1 → Grafana → Explore → Loki → `{job=~".+"} | json | trace_id="<id>"`.
+- **Pass:** logs from ≥3 services appear for that one request, in timestamp order.
+
+> *Interview:* "TraceID correlation is the glue. One ID, five services' logs on one screen — bug traced in under a minute."
+
+## 🟢 Queued
+
+### 3. PV/PVC Force-Delete Drill *(2.2 — 30 min)*
+
+- **Prove:** data outlives the pod, not the container.
+- **Do:** insert a marker row in Postgres → `kubectl delete pod postgresql-0 --force --grace-period=0` → wait for recreation → query the row.
+- **Pass:** the row survives. Bonus: explain `kubectl get pvc` before/after.
+
+> *Interview:* "Pods are cattle, volumes are pets. PVC decouples data from container lifecycle."
+
+### 4. Cert-Manager, Self-Signed *(4.3)*
+
+- **Prove:** certificate issuance is automated end-to-end — no manual openssl.
+- **Do:** Helm install cert-manager → self-signed `ClusterIssuer` → annotate one Ingress with `cert-manager.io/cluster-issuer` → watch the `Certificate` resource.
+- **Pass:** `kubectl get certificate` shows `READY=True` and `curl -kv` shows the issued cert on the Ingress.
+
+> *Interview:* "I automated SSL to eliminate the #1 self-inflicted outage class — expired certs."
+
+*Let's Encrypt half → Section 2 (needs public IP).*
+
+### 5. Connection Pool Analysis *(5.1)*
+
+- **Prove:** you can see pool saturation *before* it becomes an outage.
+- **Do:** find the metric in Prometheus (`go_sql_stats_connections_wait_duration` for InventoryService, or .NET/Node equivalent) → run load → graph waits vs pool max.
+- **Pass:** a saved PromQL query shows wait time rising under load, and you can state the pool limit it's hitting.
+
+> *Interview:* "Average latency is misleading. Pool saturation predicts the bottleneck before the crash."
+
+### 6. P99 Latency Mapping *(5.2)*
+
+- **Prove:** you can quantify worst-case user experience, not averages.
+- **Do:** Grafana panel with `histogram_quantile(0.99, sum(rate(<duration_bucket>[5m])) by (le, service))` → compare P50 vs P99 under load.
+- **Pass:** panel exists; you can name the service with the worst P50→P99 spread and why.
+
+> *Interview:* "P99 is the worst real user experience. Averages hide the 1% who wait 10 seconds."
+
+### 7. ArgoCD App-of-Apps *(6.1)*
+
+- **Prove:** Git is the source of truth — manual cluster changes get reverted automatically.
+- **Do:** Helm install ArgoCD → connect this repo → root App-of-Apps pointing at `platform/charts/` → `kubectl edit` a deployment by hand and watch.
+- **Pass:** the manual edit is auto-reverted and the app shows `Synced/Healthy`.
+
+> *Interview:* "Git becomes the source of truth. Drift is auto-reverted — manual changes can't survive."
+
+## 🏁 Capstone
+
+### 8. Ghost Latency Investigation *(5.3 — blocked on tasks 1–2, 5–6)*
+
+- **Prove:** all four skills combined — given a slow endpoint, produce a root-cause narrative using traces, logs, and metrics together.
+
+---
+
+# ☁️ Section 2 — Remote / Cloud
+
+Not practical locally — each needs something this machine can't fake. **Do not start** until the prerequisite exists; then move the task into Section 1 with Prove/Do/Pass.
+
+| Task | Why not local | Needs |
+|---|---|---|
+| **4.2** TLS-SAN & remote kubectl | The point is validating the API cert against a *remote public IP* — localhost defeats it | VM from 4.1 reachable over internet |
+| **4.3b** Let's Encrypt issuer | ACME HTTP-01 needs a public domain + port 80 open to the internet | Public DNS → VM |
+| **4.4** Multi-node k3s | Joining a real agent over the network (token, flannel across hosts) — k3d nodes share one kernel | Second VM |
+| **6.2** Azure AKS + Key Vault | Managed control plane, cloud IAM, CSI secrets driver — nothing local emulates it | Funded Azure account |
 
 ---
 
-## 🧠 Part 2: Deep Dive & Mastery Details
+## 🛠 Tool → Task Map
 
-### 1.1 Multi-node k3d Cluster
-*   **The Action:** Create a cluster using `k3d cluster create --servers 1 --agents 3`.
-*   **The Result:** A functioning 4-node Kubernetes environment on your local machine.
-*   **The Mastery:** 
-    *   *Understand:* The difference between the Control Plane (API Server, Scheduler, etcd) and Worker nodes (Kubelet, Container Runtime).
-    *   *Interview Answer:* "I run multiple worker nodes so that if one fails, the Control Plane can automatically reschedule my applications onto the remaining healthy nodes, preventing downtime."
-
-### 1.2 Pod Anti-Affinity
-*   **The Action:** Modify the `OrderService` deployment to include `podAntiAffinity` with `topologyKey: "kubernetes.io/hostname"`.
-*   **The Result:** Two replicas of the same service will never be scheduled on the same physical node.
-*   **The Mastery:** 
-    *   *Understand:* How the Scheduler evaluates affinity rules before placing a pod.
-    *   *Interview Answer:* "Anti-affinity is a 'hard' or 'soft' constraint that ensures high availability. It prevents a single node failure from taking down all instances of a critical service."
-
-### 1.3 Kong Ingress Controller
-*   **The Action:** Use Helm to install the Kong Ingress Controller into a dedicated namespace.
-*   **The Result:** A load balancer entry point that can receive and route traffic from outside the cluster.
-*   **The Mastery:** 
-    *   *Understand:* The role of an Ingress Controller as a reverse proxy and its interaction with the Kubernetes API.
-    *   *Interview Answer:* "I use Kong as an API Gateway because it centralizes security, rate-limiting, and routing at the edge of the cluster, rather than managing these in every individual microservice."
-
-### 1.4 Basic Ingress Routing
-*   **The Action:** Create an `Ingress` resource mapping paths (e.g., `/orders`) to backend services.
-*   **The Result:** Accessing `http://localhost/orders` successfully returns data from the `OrderService`.
-*   **The Mastery:** 
-    *   *Understand:* Host-based vs. Path-based routing and the concept of "North-South" traffic.
-    *   *Interview Answer:* "Ingress resources define how external requests are mapped to internal ClusterIP services. This allows me to expose multiple services through a single public IP/Domain."
-
-### 2.1 Helm-based PostgreSQL
-*   **The Action:** Deploy a production-ready PostgreSQL instance using a certified Helm chart.
-*   **The Result:** A database running in K8s with automated secret generation and configuration.
-*   **The Mastery:** 
-    *   *Understand:* How Helm templates simplify complex deployments and manage release versions.
-    *   *Interview Answer:* "Helm is the package manager for Kubernetes. I use it to deploy stateful workloads because it packages the deployment, service, secrets, and storage requirements into a single, version-controlled unit."
-
-### 2.2 Persistence Challenge
-*   **The Action:** Insert data into the DB, force-delete the pod, and wait for K8s to restart it.
-*   **The Result:** The new pod automatically re-mounts the same disk (PV) and the data is still there.
-*   **The Mastery:** 
-    *   *Understand:* The lifecycle of a Persistent Volume (PV) vs. a Persistent Volume Claim (PVC).
-    *   *Interview Answer:* "In Kubernetes, pods are ephemeral. By using PVs and PVCs, I decouple the data from the container lifecycle, ensuring that database state survives even if the underlying pod or node is replaced."
-
-### 3.1 Trace Gap Identification
-*   **The Action:** Analyze a request in Jaeger and find a "gap" where no work is being done.
-*   **The Result:** Identification of a specific service causing a 3-second delay.
-*   **The Mastery:** 
-    *   *Understand:* How OpenTelemetry spans are nested to show parent-child relationships in a request.
-    *   *Interview Answer:* "Distributed tracing allowed me to find a 3-second 'white space' gap in a request chain. This proved the issue wasn't slow code, but a timeout waiting for a downstream service that wasn't responding."
-
-### 3.2 TraceID Correlation
-*   **The Action:** Copy a TraceID from Jaeger and use it to filter logs in Loki/Grafana.
-*   **The Result:** A single view showing every log line from every service involved in that specific request.
-*   **The Mastery:** 
-    *   *Understand:* Why structured logging and TraceID injection are mandatory for microservice debugging.
-    *   *Interview Answer:* "Correlation is the 'glue' of observability. By using a TraceID, I can instantly see the logs of five different services on one screen, allowing me to trace a bug's path across the entire system."
-
-### 4.1 k3s VM Bootstrapping
-*   **The Action:** Execute the k3s install script on a clean Linux VM and verify the systemd service.
-*   **The Result:** A production-certified, lightweight Kubernetes cluster running on actual hardware/VMs.
-*   **The Mastery:** 
-    *   *Understand:* Why k3s is preferred for edge/small-scale production over "heavy" distributions like kubeadm.
-    *   *Interview Answer:* "I chose k3s for the production pilot because it's a single 50MB binary that replaces bloated cloud providers with lightweight alternatives (like SQLite instead of etcd), making it much faster to maintain."
-
-### 4.2 TLS-SAN & Remote Access
-*   **The Action:** Update k3s configuration with the VM's Public IP and copy the kubeconfig locally.
-*   **The Result:** Running `kubectl get nodes` from your laptop securely manages the remote VM cluster.
-*   **The Mastery:** 
-    *   *Understand:* How SSL certificates validate the identity of the API server to prevent man-in-the-middle attacks.
-    *   *Interview Answer:* "To manage the cluster remotely, I added the Public IP to the TLS-SAN (Subject Alternative Name) list. This ensures the API server's certificate is valid for remote connections, allowing secure 'kubectl' access from my local machine."
-
-### 4.3 Cert-Manager & Let's Encrypt
-*   **The Action:** Install Cert-Manager and a ClusterIssuer to automatically request SSL certificates.
-*   **The Result:** Your public URL shows a valid, trusted HTTPS connection in any browser.
-*   **The Mastery:** 
-    *   *Understand:* The ACME protocol and how automated certificate renewal prevents "expired certificate" outages.
-    *   *Interview Answer:* "I automated SSL with Cert-Manager and Let's Encrypt to ensure our services are always encrypted. This eliminates the manual risk of certificate expiration, which is a common cause of production downtime."
-
-### 4.4 Multi-Node Expansion
-*   **The Action:** Generate a token on the master node and use it to join a second VM as a worker.
-*   **The Result:** A truly distributed cluster spanning multiple physical or virtual hosts.
-*   **The Mastery:** 
-    *   *Understand:* How the Kubelet on the new node registers itself with the API server using the shared token.
-    *   *Interview Answer:* "Expanding the cluster horizontally is as simple as joining new nodes using a secure token. This allows the system to scale its compute power as the application demand grows."
-
-### 5.1 Connection Pool Analysis
-*   **The Action:** Create a PromQL query to monitor `go_sql_stats_connections_wait` in Grafana.
-*   **The Result:** A graph showing exactly when your app is "waiting" for a database connection.
-*   **The Mastery:** 
-    *   *Understand:* The concept of 'Saturation'—when a resource is not yet 'failed' but is too busy to respond.
-    *   *Interview Answer:* "Average latency can be misleading. By monitoring connection pool saturation (wait time), I can predict a database bottleneck before it causes the application to crash under high load."
-
-### 5.2 P99 Latency Mapping
-*   **The Action:** Configure Grafana to show the 99th percentile (P99) of request durations.
-*   **The Result:** Visibility into the worst user experiences that "averages" usually hide.
-*   **The Mastery:** 
-    *   *Understand:* Why P99 is the industry standard for SRE Service Level Objectives (SLOs).
-    *   *Interview Answer:* "I prioritize P99 latency over averages because it represents the actual experience of our most frustrated users. An 'average' of 200ms is useless if 1% of our users are waiting 10 seconds for a page to load."
-
-### 5.3 The "Ghost Latency" Fix
-*   **The Action:** Use Jaeger, Prometheus, and Loki together to solve the 3s bottleneck found in Task 3.1.
-*   **The Result:** A verified code or config change that removes the latency and stabilizes the P99 graph.
-*   **The Mastery:** 
-    *   *Understand:* The full debugging lifecycle: Detect (Prometheus) -> Trace (Jaeger) -> Diagnose (Loki) -> Fix.
-    *   *Interview Answer:* "I solved a 'ghost latency' issue where requests spiked intermittently. By correlating Jaeger traces with Prometheus metrics, I found it was a specific downstream timeout and fixed it by adjusting the retry policy."
-
-### 6.1 ArgoCD & App-of-Apps
-*   **The Action:** Connect ArgoCD to your Git repo and define a root "App-of-Apps" manifest.
-*   **Result:** The cluster automatically syncs to whatever is in your Git `main` branch.
-*   **The Mastery:** 
-    *   *Understand:* The 'Pull-based' GitOps model and the benefit of "Self-Healing" (drift detection).
-    *   *Interview Answer:* "With ArgoCD, Git is our single source of truth. If someone manually changes a deployment in the cluster, ArgoCD detects the 'drift' and automatically reverts it to match the code in Git."
-
-### 6.2 Azure AKS & Key Vault
-*   **The Action:** Provision a managed AKS cluster and use a CSI driver to inject secrets from Azure Key Vault.
-*   **The Result:** Your app reads sensitive keys as if they were local files, but they never touch the Git repo.
-*   **The Mastery:** 
-    *   *Understand:* The security difference between 'Base64 encoded' K8s secrets and 'Encrypted-at-rest' Key Vault secrets.
-    *   *Interview Answer:* "I integrated Azure Key Vault with AKS to meet enterprise security standards. This ensures that sensitive credentials like database passwords are encrypted in a dedicated vault and never stored in plain text or Git."
+| Tool | Where it's exercised |
+|---|---|
+| kubectl / Helm | every task |
+| Jaeger | 1, 8 |
+| Loki / LogQL | 2 |
+| Prometheus / PromQL | 5, 6, 8 |
+| Cert-Manager | 4, 4.3b |
+| ArgoCD | 7 |
+| k3s / k3d | 4.2, 4.4 |
+| Azure AKS | 6.2 |
 
 ---
-*Last updated: Thursday, June 11, 2026*
+
+*Last updated: Friday, June 12, 2026*
