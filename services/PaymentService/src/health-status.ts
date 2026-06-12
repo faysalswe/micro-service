@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { HealthCheckResponse_ServingStatus } from './generated/grpc/health/v1/health_pb.js';
+import { HealthCheckResponse_ServingStatus } from './generated/grpc/health/v1/health_pb';
 
 const statusMap = new Map<string, HealthCheckResponse_ServingStatus>([
   ['', HealthCheckResponse_ServingStatus.SERVING],
